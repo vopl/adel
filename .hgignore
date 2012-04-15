@@ -1,0 +1,9 @@
+syntax: regexp
+^build/
+^bin/
+^Debug/
+^Release/
+^RelWithDebInfo/
+^MinSizeRel/
+^log/
+

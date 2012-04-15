@@ -1,0 +1,35 @@
+#include "pch.hpp"
+#include "net/acceptor.hpp"
+#include "net/impl/acceptor.hpp"
+
+namespace net
+{
+	//////////////////////////////////////////////////////////////////////////
+	Acceptor::Acceptor()
+		: _impl(new impl::Acceptor)
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	Acceptor::~Acceptor()
+	{
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::signals2::connection Acceptor::connectOnAccept(const TOnAccept &f)
+	{
+		return _impl->connectOnAccept(f);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	async::Future<boost::system::error_code> Acceptor::listen(const char *host, const char *service, bool useSsl)
+	{
+		return _impl->listen(host, service, useSsl);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Acceptor::unlisten()
+	{
+		return _impl->unlisten();
+	}
+}
