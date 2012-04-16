@@ -20,6 +20,10 @@
 #endif
 
 
+#if defined(HAVE_VALGRIND)
+#	define USE_VALGRIND 1
+#endif
+
 
 //////////////////////////////////////////////////////////////////////////
 namespace async { namespace impl
@@ -78,6 +82,10 @@ namespace async { namespace impl
 
 		static ThreadLocalStorage<Fiber *>
 								_current;
+
+#if defined(USE_VALGRIND)
+		int _valgrindStackId;
+#endif
 	};
 }}
 

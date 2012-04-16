@@ -5,6 +5,10 @@
 #include "async/exception.hpp"
 #include "async/log.hpp"
 
+#if defined(USE_VALGRIND)
+#include <valgrind.h>
+#endif
+
 
 namespace async { namespace impl
 {
@@ -41,6 +45,9 @@ namespace async { namespace impl
 #elif defined(HAVE_UCONTEXT_H)
 		if(_context.uc_stack.ss_sp)
 		{
+#if defined(USE_VALGRIND)
+			VALGRIND_STACK_DEREGISTER(_valgrindStackId);
+#endif
 			free(_context.uc_stack.ss_sp);
 		}
 #else
@@ -75,6 +82,9 @@ namespace async { namespace impl
 		_context.uc_stack.ss_sp = (char *)malloc(_stacksize);
 		_context.uc_stack.ss_size = _stacksize;
 
+#if defined(USE_VALGRIND)
+    _valgrindStackId = VALGRIND_STACK_REGISTER(_context.uc_stack.ss_sp, (char *)_context.uc_stack.ss_sp + _context.uc_stack.ss_size);
+#endif
 #if PVOID_SIZE == INT_SIZE
 		int ithis = (int)(this);
 		makecontext(&_context, (void (*)(void))&Fiber::s_fiberProc, 1, ithis);

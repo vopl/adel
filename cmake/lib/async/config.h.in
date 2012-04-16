@@ -1,4 +1,8 @@
 
 #cmakedefine HAVE_UCONTEXT_H 1
 #cmakedefine HAVE_WINFIBER 1
+#cmakedefine HAVE_VALGRIND 1
+
+#define PVOID_SIZE ${PVOID_SIZE}
+#define INT_SIZE ${INT_SIZE}
 

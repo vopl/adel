@@ -65,6 +65,10 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 
 
 
+include_directories(${CMAKE_CURRENT_BINARY_DIR})
+include_directories(${PSRC})
+
+
 include(CheckFunctionExists)
 include(CheckLibraryExists)
 include(CheckIncludeFiles)
@@ -82,20 +86,21 @@ if(WIN32)
 		HAVE_WINFIBER)
 endif()
 
-check_type_size("void *" PVOID_SIZE)
-add_definitions(-D\"PVOID_SIZE=${PVOID_SIZE}\")
-
-check_type_size("int" INT_SIZE)
-add_definitions(-D\"INT_SIZE=${INT_SIZE}\")
+include(FindValgrind.cmake)
+if(VALGRIND_FOUND)
+    set(HAVE_VALGRIND TRUE)
+    message(STATUS "use valgrind: ${VALGRIND_PROGRAM}, ${VALGRIND_INCLUDE_DIR}")
+    include_directories(${VALGRIND_INCLUDE_DIR})
+endif()
 
 configure_file(${CMAKE_CURRENT_SOURCE_DIR}/config.h.in ${CMAKE_CURRENT_BINARY_DIR}/config.h)
-include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 
 
 
 
-include_directories(${PSRC})
+
+
 
 
 
