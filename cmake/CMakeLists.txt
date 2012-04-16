@@ -1,7 +1,7 @@
 
 
 if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
-	message(STATUS "-- ${CMAKE_CURRENT_BINARY_DIR}/local.cmake found, do inclusion")
+	message(STATUS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake found, do inclusion")
 	include("${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
 endif()
 

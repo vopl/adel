@@ -119,10 +119,8 @@ source_group(src/http/server/impl FILES ${SRC_HTTP_SERVER_IMPL_HDR})
 
 
 
-if(MSVC)
-	set(SRC_PCH ${PSRC}/pch.cpp)
-	source_group(src FILES ${SRC_PCH})
-endif()
+set(SRC_PCH ${PSRC}/pch.cpp)
+source_group(src FILES ${SRC_PCH})
 
 set(SRC_NOPCH
 )

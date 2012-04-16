@@ -9,7 +9,7 @@ ENDMACRO(TO_NATIVE_PATH)
 
 #######################################################################################
 IF(MSVC)
-	MESSAGE(STATUS "-- pch: MSVC")
+	MESSAGE(STATUS "pch: MSVC")
 	
 	MACRO(PCH_KEY2FILENAME pchfile key header)
 		GET_FILENAME_COMPONENT(filename ${header} NAME_WE)
@@ -34,7 +34,7 @@ IF(MSVC)
 		ENDFOREACH(i)
 	ENDMACRO(USE_PCH)
 ELSEIF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
-	MESSAGE(STATUS "-- pch: GCC")
+	MESSAGE(STATUS "pch: GCC")
 
 	MACRO(PCH_KEY2FILENAME pchfile header)
 		GET_FILENAME_COMPONENT(filename ${header} NAME)
@@ -50,7 +50,7 @@ ELSEIF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 
 
 
-	MACRO(CREATE_PCH target header)
+	MACRO(CREATE_PCH target header srcfile)
 	
 		PCH_KEY2FILENAME(pchfile ${header})
 		GET_FILENAME_COMPONENT(pchfile_path ${pchfile} PATH)
@@ -121,8 +121,8 @@ ELSEIF(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 	
 	
 ELSE()
-	MESSAGE(STATUS "-- pch: NO USE")
-	MACRO(CREATE_PCH target header)
+	MESSAGE(STATUS "pch: NO USE")
+	MACRO(CREATE_PCH target header srcfile)
 	ENDMACRO(CREATE_PCH)
 
 	MACRO(USE_PCH target header)

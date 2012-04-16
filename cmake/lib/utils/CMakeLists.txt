@@ -44,9 +44,9 @@ source_group(src FILES ${SRC_HDR})
 set(SRC_PCH
 	${PSRC}/pch.cpp
 )
-source_group(src FILES ${SRC})
+source_group(src FILES ${SRC_PCH})
 
 add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_HDR} ${SRC_PCH})
 
-create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
-use_pch(${PROJECT} ${PCH} ${SRC})
+create_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC_PCH})
+use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC})
