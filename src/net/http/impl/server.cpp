@@ -1,8 +1,11 @@
+#include "pch.hpp"
 #include "net/http/impl/server.hpp"
+#include "net/http/server/log.hpp"
 
 namespace net { namespace http { namespace impl
 {
 	namespace po = boost::program_options;
+	using namespace net::http::server;
 
 	////////////////////////////////////////////////////////////////////
 	utils::OptionsPtr Server::prepareOptions(const char *prefix)
@@ -81,15 +84,24 @@ namespace net { namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	Server::Server(async::Service asrv, utils::OptionsPtr options)
+	Server::Server()
 	{
-		assert(0);
 	}
 
 	////////////////////////////////////////////////////////////////////
 	Server::~Server()
 	{
-		assert(0);
+	}
+
+	////////////////////////////////////////////////////////////////////
+	void Server::init(async::Service asrv, utils::OptionsPtr options)
+	{
+		asrv.connectOnStart(boost::bind(&Server::start, shared_from_this()));
+		asrv.connectOnStop(boost::bind(&Server::stop, shared_from_this()));
+
+		utils::Options &o = *options;
+		_host = o["host"].as<std::string>();
+		_port = o["port"].as<std::string>();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -101,14 +113,36 @@ namespace net { namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void Server::start()
 	{
-		assert(0);
+		_connectionOnAccept = _acceptor.connectOnAccept(boost::bind(&Server::onAccept, shared_from_this(), _1, _2));
+		async::Future<boost::system::error_code> ret = _acceptor.listen(_host.c_str(), _port.c_str(), false);
+
+		if(ret.data())
+		{
+			_connectionOnAccept.disconnect();
+			ELOG("listen failed: "<<ret.data());
+			return;
+		}
+		ILOG("listen "<<_host<<":"<<_port);
+
 	}
 
 	////////////////////////////////////////////////////////////////////
 	void Server::stop()
 	{
-		assert(0);
+		_acceptor.unlisten();
+		_connectionOnAccept.disconnect();
 	}
+
+	////////////////////////////////////////////////////////////////////
+	void Server::onAccept(const boost::system::error_code &ec, Channel channel)
+	{
+		if(ec)
+		{
+			ELOG("accept failed: "<<ec);
+		}
+		//TLOG(__FUNCTION__);
+	}
+
 
 
 }}}

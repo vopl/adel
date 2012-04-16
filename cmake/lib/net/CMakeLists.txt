@@ -14,6 +14,7 @@ set(INCLUDE
 	${PINC}/acceptor.hpp
 	${PINC}/connector.hpp
 	${PINC}/message.hpp
+	${PINC}/log.hpp
 )
 source_group(include FILES ${INCLUDE})
 
@@ -135,7 +136,7 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 
 
 
-
+include_directories(${PSRC})
 
 add_library(${PROJECT} STATIC
     ${INCLUDE} 

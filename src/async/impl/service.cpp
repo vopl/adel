@@ -51,7 +51,7 @@ namespace async { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::signals2::connection Service::connectOnStop(const boost::function<void()> &f)
 	{
-		return _onStart.connect(f);
+		return _onStop.connect(f);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -77,8 +77,10 @@ namespace async { namespace impl
 	void Service::start(size_t numThreads)
 	{
 		ILOG("start");
-		_onStart();
 		balance(numThreads);
+
+		spawn(boost::bind(&Service::onStart, shared_from_this()));
+
 		ILOG("start done");
 	}
 
@@ -129,9 +131,8 @@ namespace async { namespace impl
 	void Service::stop()
 	{
 		ILOG("stop");
+		spawn(boost::bind(&Service::onStop, shared_from_this()));
 		balance(0);
-
-		_onStop();
 		ILOG("stop done");
 	}
 
@@ -212,6 +213,18 @@ namespace async { namespace impl
 			res = _global;
 		}
 		return res;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::onStart()
+	{
+		_onStart();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::onStop()
+	{
+		_onStop();
 	}
 
 	//////////////////////////////////////////////////////////////////////////

@@ -39,6 +39,11 @@ namespace utils
 			po::value<std::string>()->default_value("trace"),
 			"level, one of [trace, debug, info, warn, error, fatal, off]");
 
+		options.addOption(
+			"additivity",
+			po::value<bool>()->default_value(false),
+			"hierarhical additivity flag");
+
 
 		//файл уровень, паттерн, ротатор
 		options.addOption(
@@ -86,6 +91,7 @@ namespace utils
 		if(options.count("enable") && options["enable"].as<bool>())
 		{
 			instance.setLogLevel(level(options["level"].as<std::string>()));
+			instance.setAdditivity(options["additivity"].as<bool>());
 
 			if(options.count("file") && options["file"].as<bool>())
 			{

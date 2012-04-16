@@ -4,22 +4,36 @@
 #include "utils/options.hpp"
 #include "async/service.hpp"
 #include "net/http/server/request.hpp"
+#include "net/acceptor.hpp"
 #include <boost/signals2.hpp>
 
 namespace net { namespace http { namespace impl
 {
 	class Server
+		: public boost::enable_shared_from_this<Server>
 	{
 	public:
 		static utils::OptionsPtr prepareOptions(const char *prefix);
 
-		Server(async::Service asrv, utils::OptionsPtr options);
+		Server();
 		~Server();
+
+		void init(async::Service asrv, utils::OptionsPtr options);
 
 		boost::signals2::connection connectOnRequest(const boost::function<void(const net::http::server::Request &)> &f);
 		void start();
 		void stop();
+
+	private:
+		std::string _host;
+		std::string _port;
+		net::Acceptor _acceptor;
+		boost::signals2::connection _connectionOnAccept;
+	private:
+		void onAccept(const boost::system::error_code &ec, Channel channel);
 	};
+
+	typedef boost::shared_ptr<Server> ServerPtr;
 
 }}}
 

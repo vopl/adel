@@ -62,6 +62,8 @@ namespace async { namespace impl
 
 
 	public:
+		void onStart();
+		void onStop();
 		void onThreadStart();
 		void onThreadStop();
 

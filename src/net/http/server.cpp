@@ -1,19 +1,20 @@
 #include "net/http/server.hpp"
 #include "net/http/impl/server.hpp"
+#include "net/http/server/log.hpp"
 
 namespace net { namespace http
 {
-
 	///////////////////////////////////////////////////////////////////////////
 	utils::OptionsPtr Server::prepareOptions(const char *prefix)
 	{
-		return impl::Server::prepareOptions(prefix);
+		return net::http::impl::Server::prepareOptions(prefix);
 	}
 
 	///////////////////////////////////////////////////////////////////////////
 	Server::Server(async::Service asrv, utils::OptionsPtr options)
-		: _impl(new impl::Server(asrv, options))
+		: _impl(new net::http::impl::Server)
 	{
+		_impl->init(asrv, options);
 	}
 
 	///////////////////////////////////////////////////////////////////////////

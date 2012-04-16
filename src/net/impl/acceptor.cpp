@@ -102,12 +102,44 @@ namespace net { namespace impl
 			return;
 		}
 
+		boost::system::error_code ec;
+
 		//зарядить акцептор asio
-		acceptor->open(resolveRes.data2()->endpoint().protocol());
-		acceptor->set_option(ip::tcp::acceptor::reuse_address(true));
-		acceptor->set_option(socket_base::enable_connection_aborted(true));
-		acceptor->bind(*resolveRes.data2());
-		acceptor->listen();
+		acceptor->open(resolveRes.data2()->endpoint().protocol(), ec);
+		if(ec)
+		{
+			res(ec);
+			return;
+		}
+
+		acceptor->set_option(ip::tcp::acceptor::reuse_address(true), ec);
+		if(ec)
+		{
+			res(ec);
+			return;
+		}
+
+		acceptor->set_option(socket_base::enable_connection_aborted(true), ec);
+		if(ec)
+		{
+			res(ec);
+			return;
+		}
+
+		acceptor->bind(*resolveRes.data2(), ec);
+		if(ec)
+		{
+			res(ec);
+			return;
+		}
+
+		acceptor->listen(TSocket::max_connections, ec);
+		if(ec)
+		{
+			res(ec);
+			return;
+		}
+
 
 
 		spawn(bind(res, error_code()));
