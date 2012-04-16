@@ -75,6 +75,9 @@ include(CheckIncludeFiles)
 include(CheckPrototypeDefinition)
 include(CheckTypeSize)
 
+check_type_size("void *" PVOID_SIZE)
+check_type_size("int" INT_SIZE)
+
 check_include_files (ucontext.h HAVE_UCONTEXT_H)
 
 if(WIN32)
