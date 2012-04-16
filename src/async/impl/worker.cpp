@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "async/impl/worker.hpp"
 #include "async/impl/service.hpp"
 #include "async/log.hpp"

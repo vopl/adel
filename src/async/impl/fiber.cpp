@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "async/impl/fiber.hpp"
 #include "async/impl/fiberRoot.hpp"
 #include "async/impl/worker.hpp"

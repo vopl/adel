@@ -20,7 +20,7 @@ set(INC
 	
 	${PINC}/freeFunctions.hpp
 )
-SOURCE_GROUP(include FILES ${INC})
+source_group(include FILES ${INC})
 
 set(SRC
 	${PSRC}/pch.hpp
@@ -31,28 +31,37 @@ set(SRC
 	
 	${PSRC}/freeFunctions.cpp
 )
-SOURCE_GROUP(src FILES ${SRC})
+source_group(src FILES ${SRC})
+
+set(SRC_PCH
+	${PSRC}/pch.cpp
+)
+source_group(src FILES ${SRC_PCH})
 
 set(SRC_IMPL
-	${PSRC}/impl/service.hpp
 	${PSRC}/impl/service.cpp
-	${PSRC}/impl/event.hpp
 	${PSRC}/impl/event.cpp
-	${PSRC}/impl/mutex.hpp
 	${PSRC}/impl/mutex.cpp
 	
-	${PSRC}/impl/fiber.hpp
 	${PSRC}/impl/fiber.cpp
-	${PSRC}/impl/fiberRoot.hpp
 	${PSRC}/impl/fiberRoot.cpp
-	${PSRC}/impl/worker.hpp
 	${PSRC}/impl/worker.cpp
+)
+source_group(src/impl FILES ${SRC_IMPL})
+
+set(SRC_IMPL_HDR
+	${PSRC}/impl/service.hpp
+	${PSRC}/impl/event.hpp
+	${PSRC}/impl/mutex.hpp
+	
+	${PSRC}/impl/fiber.hpp
+	${PSRC}/impl/fiberRoot.hpp
+	${PSRC}/impl/worker.hpp
 
 	${PSRC}/impl/fiberPool.hpp
 	${PSRC}/impl/threadLocalStorage.hpp
 )
-SOURCE_GROUP(src/impl FILES ${SRC_IMPL})
-
+source_group(src/impl FILES ${SRC_IMPL_HDR})
 
 
 
@@ -64,7 +73,7 @@ include(CheckTypeSize)
 
 check_include_files (ucontext.h HAVE_UCONTEXT_H)
 
-if(WINDOWS)
+if(WIN32)
 	check_prototype_definition(
 		CreateFiberEx
 		"LPVOID WINAPI CreateFiberEx(SIZE_T dwStackCommitSize, SIZE_T dwStackReserveSize, DWORD dwFlags, LPFIBER_START_ROUTINE lpStartAddress, LPVOID lpParameter);"
@@ -89,11 +98,10 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 
 
 
-add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_IMPL})
+add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${SRC_IMPL} ${SRC_IMPL_HDR})
 
-set(PCH ${PSRC}/pch.hpp)
-create_pch(${PROJECT} ${PCH})
-use_pch(${PROJECT} ${PCH} ${SRC} ${SRC_IMPL})
+create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
+use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${SRC_IMPL})
 
 target_link_libraries(${PROJECT} utils)
 target_link_libraries(${PROJECT} ${Boost_LIBRARIES})

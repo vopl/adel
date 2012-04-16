@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "utils/logInitializer.hpp"
 
 #include <log4cplus/layout.h>

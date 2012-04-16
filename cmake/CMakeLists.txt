@@ -1,7 +1,7 @@
 
 
 if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
-	message("-- ${CMAKE_CURRENT_BINARY_DIR}/local.cmake found, do inclusion")
+	message(STATUS "-- ${CMAKE_CURRENT_BINARY_DIR}/local.cmake found, do inclusion")
 	include("${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
 endif()
 
@@ -61,7 +61,9 @@ message(STATUS "Found log4cplus ${l4cpl}")
 
 
 include(pch.cmake)
-
+if(MSVC)
+	add_definitions(-D_WIN32_WINNT=0x0501)
+endif()
 
 add_subdirectory(app)
 add_subdirectory(lib)

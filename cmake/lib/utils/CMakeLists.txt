@@ -17,28 +17,36 @@ set(INC
 	${PINC}/xton.hpp
 	${PINC}/variant.hpp
 )
-SOURCE_GROUP(include FILES ${INC})
+source_group(include FILES ${INC})
 
 set(SRC
-	${PSRC}/pch.hpp
 	${PSRC}/options.cpp
 	${PSRC}/logInitializer.cpp
-	${PSRC}/variantDumper.hpp
 	${PSRC}/variantLoadGrammar.cpp
-	${PSRC}/variantLoadScope.hpp
-	${PSRC}/variantConvertMatrix.hpp
-	${PSRC}/variantImpl.hpp
-	${PSRC}/variantLoadGrammar.hpp
 	${PSRC}/variantSerialization.cpp
 	${PSRC}/variant.cpp
 	${PSRC}/variantLoad.cpp
 	${PSRC}/variantLoadScope.cpp
 )
-SOURCE_GROUP(src FILES ${SRC})
+source_group(src FILES ${SRC})
+
+set(SRC_HDR
+	${PSRC}/pch.hpp
+	${PSRC}/variantDumper.hpp
+	${PSRC}/variantLoadScope.hpp
+	${PSRC}/variantConvertMatrix.hpp
+	${PSRC}/variantImpl.hpp
+	${PSRC}/variantLoadGrammar.hpp
+)
+source_group(src FILES ${SRC_HDR})
 
 
-add_library(${PROJECT} STATIC ${INC} ${SRC})
+set(SRC_PCH
+	${PSRC}/pch.cpp
+)
+source_group(src FILES ${SRC})
 
-set(PCH ${PSRC}/pch.hpp)
-create_pch(${PROJECT} ${PCH})
+add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_HDR} ${SRC_PCH})
+
+create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PCH} ${SRC})

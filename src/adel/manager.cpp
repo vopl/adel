@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "adel/manager.hpp"
 #include "adel/log.hpp"
 #include <boost/thread.hpp>

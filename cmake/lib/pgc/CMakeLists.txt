@@ -33,7 +33,12 @@ source_group(src/impl FILES ${SRC_IMPL})
 
 
 set(SRC_NOPCH
-	${PSRC}/pch.hpp
+	${PSRC}/pch.cpp
+)
+source_group(src FILES ${SRC_NOPCH})
+
+set(SRC_PCH
+	${PSRC}/pch.cpp
 )
 source_group(src FILES ${SRC_NOPCH})
 
@@ -47,11 +52,6 @@ set(SRC_IMPL_HDR
 )
 source_group(src/impl FILES ${SRC_IMPL_HDR})
 
-
-if(MSVC)
-	set(SRC_PCH ${pSRC}/pch.cpp)
-	source_group(src FILES ${SRC_PCH})
-endif()
 
 include_directories(${PSRC})
 
