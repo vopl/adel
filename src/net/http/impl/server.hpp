@@ -29,6 +29,9 @@ namespace net { namespace http { namespace impl
 		std::string _port;
 		net::Acceptor _acceptor;
 		boost::signals2::connection _connectionOnAccept;
+
+		boost::signals2::signal<void(const net::http::server::Request &)> _onRequest;
+
 	private:
 		void onAccept(const boost::system::error_code &ec, Channel channel);
 	};

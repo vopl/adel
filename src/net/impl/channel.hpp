@@ -64,6 +64,7 @@ namespace net { namespace impl
 		typedef std::deque<TReceive> TReceives;
 
 
+		void receive_f(async::Future2<boost::system::error_code, Packet> res, size_t maxSize);
 		void receiveLoop_f();
 		boost::mutex	_mtxReceive;
 		TReceives		_receives;
@@ -86,6 +87,8 @@ namespace net { namespace impl
 		boost::signals2::connection connectOnReceive(const TOnReceive &f);
 
 		void listen(size_t amount);
+
+		virtual async::Future2<boost::system::error_code, Packet> receive(size_t maxSize);
 		virtual Future<boost::system::error_code> send(const Packet &p);
 
 		void close();

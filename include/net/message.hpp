@@ -37,6 +37,13 @@ namespace net
 		};
 
 	public:
+		struct Sequence
+		{
+			Iterator _begin;
+			Iterator _end;
+		};
+
+	public:
 		Message();
 		~Message();
 

@@ -101,6 +101,25 @@ namespace net { namespace impl
 	}
 
 
+	//////////////////////////////////////////////////////////////////////////
+	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, size_t maxSize)
+	{
+		error_code			ec;
+		Packet				packet;
+
+		packet._size = maxSize;
+		packet._data.reset(new char[packet._size]);
+
+		Future2<error_code, size_t> readRes;
+		_sock.read(
+			buffer(packet._data.get(), packet._size),
+			readRes);
+
+		readRes.wait();
+		packet._size = readRes.data2NoWait();
+
+		res(ec, packet);
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::receiveLoop_f()
@@ -249,6 +268,14 @@ namespace net { namespace impl
 		{
 			spawn(bind(&Channel::receiveLoop_f, shared_from_this()));
 		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	async::Future2<boost::system::error_code, Packet> Channel::receive(size_t maxSize)
+	{
+		async::Future2<boost::system::error_code, Packet> res;
+		spawn(bind(&Channel::receive_f, shared_from_this(), res, maxSize));
+		return res;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

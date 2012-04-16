@@ -27,6 +27,12 @@ namespace net
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	async::Future2<boost::system::error_code, Packet> Channel::receive(size_t maxSize)
+	{
+		return _impl->receive(maxSize);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	async::Future<boost::system::error_code> Channel::send(const Packet &p)
 	{
 		return _impl->send(p);

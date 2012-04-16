@@ -2,6 +2,11 @@
 #include "net/http/impl/server.hpp"
 #include "net/http/server/log.hpp"
 
+#include "net/http/server/request.hpp"
+#include "net/http/server/impl/request.hpp"
+#include "net/http/statusCode.hpp"
+#include "utils/implAccess.hpp"
+
 namespace net { namespace http { namespace impl
 {
 	namespace po = boost::program_options;
@@ -14,12 +19,12 @@ namespace net { namespace http { namespace impl
 
 		options->addOption(
 			"host",
-			po::value<std::string>()->default_value("localhost"),
+			po::value<std::string>()->default_value("127.0.0.1"),
 			"host name for this server");
 
 		options->addOption(
 			"port",
-			po::value<std::string>()->default_value("80"),
+			po::value<std::string>()->default_value("8080"),
 			"port name or number for this server");
 /*
 		options->addOption(
@@ -107,7 +112,7 @@ namespace net { namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	boost::signals2::connection Server::connectOnRequest(const boost::function<void(const server::Request &)> &f)
 	{
-		assert(0);
+		return _onRequest.connect(f);
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -139,8 +144,60 @@ namespace net { namespace http { namespace impl
 		if(ec)
 		{
 			ELOG("accept failed: "<<ec);
+			return;
 		}
 		//TLOG(__FUNCTION__);
+
+		async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
+		res.wait();
+		//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
+
+		static const char buf[] =
+				"HTTP/1.1 200 OK\r\n"
+				"Content-Type: text/plain\r\n"
+				"Content-Length: 5\r\n"
+				"\r\n"
+				"hello";
+		Packet p;
+		p._size = sizeof(buf);
+		p._data.reset(new char[p._size+1]);
+		memcpy(p._data.get(), buf, p._size);
+		channel.send(p).wait();
+		channel.close();
+/*
+		net::http::server::impl::RequestPtr imp(new net::http::server::impl::Request(channel));
+		Request r = utils::ImplAccess<Request>(imp);
+
+		if(!r.readCaption())
+		{
+			return;
+		}
+		switch(r.method())
+		{
+		default:
+			r.ignoreContent();
+			r.response()
+					.status(esc_405)
+					.send();
+			return;
+		case Request::OPTIONS:
+			r.ignoreContent();
+			r.response()
+					.header("Allow: GET, POST")
+					.status(esc_200)
+					.send();
+			break;
+		case Request::GET:
+		case Request::POST:
+			break;
+		}
+
+		if(!r.readHeaders())
+		{
+			return;
+		}
+		_onRequest(r);
+*/
 	}
 
 

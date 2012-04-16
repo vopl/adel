@@ -64,6 +64,7 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 set(INCLUDE_HTTP
 	${PINC}/http/server.hpp
 	${PINC}/http/client.hpp
+		${PINC}/http/statusCode.hpp
 )
 source_group(include/http FILES ${INCLUDE_HTTP})
 
@@ -77,6 +78,7 @@ source_group(include/http/server FILES ${INCLUDE_HTTP_SERVER})
 set(SRC_HTTP
 	${PSRC}/http/server.cpp
 	${PSRC}/http/client.cpp
+	${PSRC}/http/statusCode.cpp
 )
 source_group(src/http FILES ${SRC_HTTP})
 
