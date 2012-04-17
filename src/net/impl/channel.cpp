@@ -172,7 +172,7 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void Channel::onReceive(const boost::system::error_code &ec, const Packet &p)
+	void Channel::onReceive(boost::system::error_code ec, Packet p)
 	{
 		_onReceive(ec, p);
 	}

@@ -59,7 +59,7 @@ namespace net { namespace impl
 	private:
 
 		typedef std::deque<std::pair<Future<boost::system::error_code>, Packet> > TSends;
-		typedef boost::function<void(const boost::system::error_code &ec, const Packet &p)> TOnReceive;
+		typedef boost::function<void(boost::system::error_code ec, Packet p)> TOnReceive;
 		typedef size_t TReceive;
 		typedef std::deque<TReceive> TReceives;
 
@@ -73,11 +73,11 @@ namespace net { namespace impl
 		TSends			_sends;
 		bool			_sendInProcess;
 
-		boost::signals2::signal<void(const boost::system::error_code &ec, const Packet &p)> _onReceive;
+		boost::signals2::signal<void(boost::system::error_code ec, Packet p)> _onReceive;
 	private:
 		void send_f();
 
-		void onReceive(const boost::system::error_code &ec, const Packet &p);
+		void onReceive(boost::system::error_code ec, Packet p);
 
 	public:
 		Channel(TSocketPtr socket);

@@ -139,7 +139,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	void Server::onAccept(const boost::system::error_code &ec, Channel channel)
+	void Server::onAccept(boost::system::error_code ec, Channel channel)
 	{
 		if(ec)
 		{

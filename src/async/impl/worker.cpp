@@ -192,11 +192,13 @@ namespace async { namespace impl
 						else
 						{
 							fiber.reset();
+							ELOG("fibers initialization failed");
 						}
 					}
 					catch(...)
 					{
 						fiber.reset();
+						ELOG("fibers initialization failed (exception)");
 					}
 				}
 				else

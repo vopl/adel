@@ -34,6 +34,8 @@ IF(MSVC)
  	SET(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
 ENDIF(MSVC)
 
+add_definitions(-D_REENTRANT)
+add_definitions(-D_THREAD_SAFE)
 
 ###################################################################
 set(Boost_USE_STATIC_LIBS        ON)

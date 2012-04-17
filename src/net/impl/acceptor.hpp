@@ -26,7 +26,7 @@ namespace net { namespace impl
 		TSslContextPtr	_sslContext;
 
 		typedef net::Acceptor::TOnAccept TOnAccept;
-		boost::signals2::signal<void(const boost::system::error_code &, net::Channel)> _onAccept;
+		boost::signals2::signal<void(boost::system::error_code, net::Channel)> _onAccept;
 
 	private:
 		std::string onSslPassword();

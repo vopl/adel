@@ -30,10 +30,10 @@ namespace net { namespace http { namespace impl
 		net::Acceptor _acceptor;
 		boost::signals2::connection _connectionOnAccept;
 
-		boost::signals2::signal<void(const net::http::server::Request &)> _onRequest;
+		boost::signals2::signal<void(net::http::server::Request)> _onRequest;
 
 	private:
-		void onAccept(const boost::system::error_code &ec, Channel channel);
+		void onAccept(boost::system::error_code ec, Channel channel);
 	};
 
 	typedef boost::shared_ptr<Server> ServerPtr;
