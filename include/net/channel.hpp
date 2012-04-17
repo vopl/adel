@@ -34,7 +34,7 @@ namespace net
 		boost::signals2::connection connectOnReceive(const TOnReceive &f);
 		void listen(size_t amount=(size_t)-1);
 
-		async::Future2<boost::system::error_code, Packet> receive(size_t maxSize=1024*64);
+		async::Future2<boost::system::error_code, Packet> receive(boost::uint32_t maxSize=1024);
 		async::Future<boost::system::error_code> send(const Packet &p);
 
 		void close();

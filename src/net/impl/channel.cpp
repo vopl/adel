@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "net/pch.hpp"
 #include "net/impl/channel.hpp"
 #include "utils/fixEndian.hpp"
@@ -102,7 +103,7 @@ namespace net { namespace impl
 
 
 	//////////////////////////////////////////////////////////////////////////
-	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, size_t maxSize)
+	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, boost::uint32_t maxSize)
 	{
 		error_code			ec;
 		Packet				packet;
@@ -116,7 +117,7 @@ namespace net { namespace impl
 			readRes);
 
 		readRes.wait();
-		packet._size = readRes.data2NoWait();
+		packet._size = (boost::uint32_t)readRes.data2NoWait();
 
 		res(ec, packet);
 	}
@@ -271,7 +272,7 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	async::Future2<boost::system::error_code, Packet> Channel::receive(size_t maxSize)
+	async::Future2<boost::system::error_code, Packet> Channel::receive(boost::uint32_t maxSize)
 	{
 		async::Future2<boost::system::error_code, Packet> res;
 		spawn(bind(&Channel::receive_f, shared_from_this(), res, maxSize));

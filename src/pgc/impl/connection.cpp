@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "pgc/impl/connection.hpp"
 
 namespace pgc { namespace impl

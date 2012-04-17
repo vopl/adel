@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "async/impl/mutex.hpp"
 #include "async/impl/worker.hpp"
 #include "async/exception.hpp"

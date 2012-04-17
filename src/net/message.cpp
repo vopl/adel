@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "net/message.hpp"
 
 namespace net

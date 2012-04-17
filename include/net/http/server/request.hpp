@@ -27,14 +27,14 @@ namespace net { namespace http { namespace server
 	public:
 		enum Method
 		{
-			OPTIONS,
-			GET,
-			POST,
-			HEAD,
-			TRACE,
-			PUT,
-			DELETE,
-			CONNECT,
+			em_OPTIONS,
+			em_GET,
+			em_POST,
+			em_HEAD,
+			em_TRACE,
+			em_PUT,
+			em_DELETE,
+			em_CONNECT,
 		};
 
 		struct Version

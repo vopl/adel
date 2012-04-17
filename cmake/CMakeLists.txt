@@ -26,18 +26,25 @@ set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG ${TOPDIR}/Debug)
 INCLUDE_DIRECTORIES(${INCDIR})
 INCLUDE_DIRECTORIES(${SRCDIR})
 
+#######################################################################################
+IF(MSVC)
+ 	SET(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE} /Ot /Og /Oi /Ox /Oy /GL /Zi")
+ 	SET(CMAKE_EXE_LINKER_FLAGS_RELEASE "${CMAKE_EXE_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+ 	SET(CMAKE_MODULE_LINKER_FLAGS_RELEASE "${CMAKE_MODULE_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+ 	SET(CMAKE_SHARED_LINKER_FLAGS_RELEASE "${CMAKE_SHARED_LINKER_FLAGS_RELEASE} /LTCG /DEBUG")
+ENDIF(MSVC)
+
+
 ###################################################################
 set(Boost_USE_STATIC_LIBS        ON)
 set(Boost_USE_MULTITHREADED      ON)
-set(Boost_USE_STATIC_RUNTIME    ON)
+set(Boost_USE_STATIC_RUNTIME     OFF)
 
 find_package( Boost 1.48.0 REQUIRED COMPONENTS system date_time filesystem thread random program_options)
 if (Boost_FOUND)
-    set(Boost_USE_STATIC_LIBS ON)
-    set(Boost_USE_MULTI_THREADED ON)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
-
+add_definitions(-DBOOST_ALL_NO_LIB)
 ###################################################################
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 include(FindThreads)
@@ -63,6 +70,9 @@ message(STATUS "Found log4cplus ${l4cpl}")
 include(pch.cmake)
 if(MSVC)
 	add_definitions(-D_WIN32_WINNT=0x0501)
+	add_definitions(-DNOMINMAX)
+	add_definitions(-D_CRT_SECURE_NO_WARNINGS)
+	add_definitions(-D_SCL_SECURE_NO_WARNINGS)
 endif()
 
 add_subdirectory(app)

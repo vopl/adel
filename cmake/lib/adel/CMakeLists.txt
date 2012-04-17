@@ -22,7 +22,7 @@ set(SRC_PCH
 )
 source_group(src FILES ${SRC_PCH})
 
-add_library(${PROJECT} STATIC ${INC} ${SRC})
+add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH})
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC})
 

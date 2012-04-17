@@ -10,6 +10,7 @@
 #include "utils/ntoa.hpp"
 #include "utils/xton.hpp"
 #include "utils/fixEndian.hpp"
+#include <algorithm>
 
 namespace utils
 {

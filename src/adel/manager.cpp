@@ -92,17 +92,17 @@ namespace adel
 		double d = ops["fiber.gc.period"].as<double>();
 		_fiber_gc_period =
 				boost::posix_time::seconds(long(d)) +
-				boost::posix_time::microseconds((d-long(d))*1000000);
+				boost::posix_time::microseconds(boost::int64_t(d-long(d))*1000000);
 		ILOG("_fiber_gc_period: "<<_fiber_gc_period);
 
 		//_fiber_gc_spare_all(200)
 		d = ops["fiber.gc.spare.all"].as<double>();
-		_fiber_gc_spare_all = double(_fiber_maxAmount) * d /100;
+		_fiber_gc_spare_all = boost::int64_t(double(_fiber_maxAmount) * d /100);
 		ILOG("_fiber_gc_spare_all: "<<_fiber_gc_spare_all);
 
 		//_fiber_gc_spare_idle(200)
 		d = ops["fiber.gc.spare.idle"].as<double>();
-		_fiber_gc_spare_idle = double(_fiber_maxAmount) * d /100;
+		_fiber_gc_spare_idle = boost::int64_t(double(_fiber_maxAmount) * d /100);
 		ILOG("_fiber_gc_spare_idle: "<<_fiber_gc_spare_idle);
 
 

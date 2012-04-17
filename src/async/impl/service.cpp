@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "async/impl/service.hpp"
 #include "async/log.hpp"
 #include "async/freeFunctions.hpp"

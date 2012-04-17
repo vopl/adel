@@ -1,3 +1,4 @@
+#include "pch.hpp"
 #include "net/pch.hpp"
 #include "net/impl/acceptor.hpp"
 #include "net/log.hpp"
@@ -159,7 +160,11 @@ namespace net { namespace impl
 			mutex::scoped_lock sl(_mtx);
 			if(!_inProcess)
 			{
-				_onAccept(make_error_code(errc::operation_not_permitted), net::Channel());
+				spawn(bind(
+					&Acceptor::onAccept,
+					shared_from_this(),
+					make_error_code(errc::operation_not_permitted),
+					net::Channel()));
 				return;
 			}
 			assert(_acceptor);
@@ -202,7 +207,7 @@ namespace net { namespace impl
 			}
 
 			WLOG("async_accept failed: "<<ec.message()<<"("<<ec.value()<<")");
-			return;
+			//return;
 		}
 		spawn(bind(&Acceptor::accept_f, shared_from_this(), useSsl));
 

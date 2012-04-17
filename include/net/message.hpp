@@ -16,6 +16,8 @@ namespace net
 			Iterator(const Iterator &i);
 			~Iterator();
 
+			typedef size_t size_type;
+
 		private:
 			friend class boost::iterator_core_access;
 
@@ -32,8 +34,8 @@ namespace net
 			friend class Message;
 			Iterator(Message *message, difference_type chunkIndex, difference_type offsetInChunk);
 			Message *			_message;
-			difference_type		_chunkIndex;
-			difference_type		_offsetInChunk;
+			size_type		_chunkIndex;
+			size_type		_offsetInChunk;
 		};
 
 	public:
