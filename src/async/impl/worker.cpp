@@ -94,7 +94,7 @@ namespace async { namespace impl
 
 
 	//////////////////////////////////////////////////////////////////////////
-	void Worker::processReadyFibers()
+	bool Worker::processReadyFibers()
 	{
 		std::deque<FiberPtr> fibersNotActivated;
 
@@ -131,7 +131,11 @@ namespace async { namespace impl
 				_fiberPool->_fibersReady.end(),
 				fibersNotActivated.begin(),
 				fibersNotActivated.end());
+
+			return false;
 		}
+
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -150,7 +154,7 @@ namespace async { namespace impl
 
 		//потом отложенные задачи
 		//потом входящую задачу
-		std::set<FiberPtr>	fibersNotActivated;
+		std::deque<FiberPtr>	fibersNotActivated;
 		for(;;)
 		{
 			FiberPtr fiber;
@@ -213,7 +217,7 @@ namespace async { namespace impl
 				{
 					if(!fiber->execute(tasksFromQueue))
 					{
-						fibersNotActivated.insert(fiber);
+						fibersNotActivated.push_back(fiber);
 						continue;
 					}
 				}
@@ -221,7 +225,7 @@ namespace async { namespace impl
 				{
 					if(!fiber->execute(task))
 					{
-						fibersNotActivated.insert(fiber);
+						fibersNotActivated.push_back(fiber);
 						continue;
 					}
 					break;
@@ -246,7 +250,7 @@ namespace async { namespace impl
 		}
 
 		//теперь снова готовые
-		processReadyFibers();
+		while(!processReadyFibers());
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -261,7 +265,8 @@ namespace async { namespace impl
 			return;
 		}
 
-		service()->io().post(bridge(bind(&Worker::fiberReady, shared_from_this(), fiber)));
+		Worker::current()->fiberReady(fiber);
+		//service()->io().post(bridge(bind(&Worker::fiberReady, shared_from_this(), fiber)));
 		fiberYield();
 	}
 

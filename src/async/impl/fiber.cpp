@@ -132,7 +132,9 @@ namespace async { namespace impl
 		_code = code;
 
 
-		return activate(true);
+		bool activateResult = activate(true);
+		assert(activateResult);
+		return activateResult;
 	}
 
 	//////////////////////////////////////////////////////////////////////////

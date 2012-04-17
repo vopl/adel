@@ -165,6 +165,7 @@ namespace net { namespace impl
 					shared_from_this(),
 					make_error_code(errc::operation_not_permitted),
 					net::Channel()));
+				WLOG("async_accept impossible, listen not in progress");
 				return;
 			}
 			assert(_acceptor);
@@ -194,7 +195,6 @@ namespace net { namespace impl
 		{
 			acceptor->async_accept(*sock, async::bridge(ecRes));
 		}
-
 		ec = ecRes;
 
 		if(ec)
@@ -203,6 +203,7 @@ namespace net { namespace impl
 			if(errc::operation_canceled == ec || error::operation_aborted == ec)
 			{
 				//ok
+				ILOG("async_accept canceled");
 				return;
 			}
 
@@ -224,6 +225,7 @@ namespace net { namespace impl
 				if(errc::operation_canceled == ec)
 				{
 					//ok
+					ILOG("async_handshake canceled");
 					return;
 				}
 

@@ -39,7 +39,7 @@ namespace async { namespace impl
 		void threadProc();
 
 	private:
-		void processReadyFibers();
+		bool processReadyFibers();
 
 	public://для фиберов
 
