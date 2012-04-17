@@ -250,7 +250,7 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void Acceptor::onAccept(const boost::system::error_code & ec, net::Channel channel)
+	void Acceptor::onAccept(boost::system::error_code ec, net::Channel channel)
 	{
 		_onAccept(ec, channel);
 	}

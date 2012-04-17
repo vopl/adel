@@ -40,7 +40,7 @@ namespace net { namespace impl
 
 		void accept_f(bool useSsl);
 
-		void onAccept(const boost::system::error_code & ec, net::Channel channel);
+		void onAccept(boost::system::error_code ec, net::Channel channel);
 
 	public:
 		Acceptor();
