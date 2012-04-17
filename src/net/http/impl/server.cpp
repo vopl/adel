@@ -160,7 +160,7 @@ namespace net { namespace http { namespace impl
 		static const char buf[] =
 				"HTTP/1.1 200 OK\r\n"
 				"Content-Type: text/plain\r\n"
-				"Content-Length: 5\r\n"
+				//"Content-Length: 5\r\n"
 				"\r\n"
 				"hello";
 		Packet p;
