@@ -150,6 +150,11 @@ namespace net { namespace http { namespace impl
 
 		async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
 		res.wait();
+		if(res.data1NoWait())
+		{
+			TLOG("receive failed: "<<res.data1NoWait());
+			return;
+		}
 		//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
 
 		static const char buf[] =
@@ -160,7 +165,7 @@ namespace net { namespace http { namespace impl
 				"hello";
 		Packet p;
 		p._size = sizeof(buf);
-		p._data.reset(new char[p._size+1]);
+		p._data.reset(new char[p._size]);
 		memcpy(p._data.get(), buf, p._size);
 		channel.send(p).wait();
 		channel.close();

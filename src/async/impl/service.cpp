@@ -32,6 +32,7 @@ namespace async { namespace impl
 		, _fiberPool(new FiberPool)
 		, _stackSize(1024*64)
 		, _maxFibers(1000)
+		, _workersAmount(0)
 	{
 		TLOG("constructed");
 	}
@@ -92,7 +93,7 @@ namespace async { namespace impl
 
 		std::vector<WorkerPtr>	stopped;
 		{
-			boost::mutex::scoped_lock sl(_mtx);
+			boost::mutex::scoped_lock sl(_mtxWorkers);
 
 			while(_workers.size() > numThreads)
 			{
@@ -116,13 +117,23 @@ namespace async { namespace impl
 			}
 		}
 
-		if(!_workers.empty())
+		//ждать пока воркеры запустятся/остановятся
 		{
-			_work.reset(new boost::asio::io_service::work(_io));
-		}
-		else
-		{
-			cancelAllTimeouts();
+		    boost::unique_lock<boost::mutex> lock(_mtxWorkers);
+			if(!_workers.empty())
+			{
+				_work.reset(new boost::asio::io_service::work(_io));
+			}
+			else
+			{
+				cancelAllTimeouts();
+			}
+
+		    while(_workers.size() != _workersAmount)
+		    {
+		    	_cvWorkersAmount.wait(lock);
+		    }
+			//TLOG(__FUNCTION__<<": "<<_workersAmount);
 		}
 
 		ILOG("balance done");
@@ -232,6 +243,16 @@ namespace async { namespace impl
 	void Service::onThreadStart()
 	{
 		_current = this;
+
+		{
+			{
+				boost::lock_guard<boost::mutex> lock(_mtxWorkers);
+				_workersAmount++;
+				//TLOG(__FUNCTION__<<": "<<_workersAmount);
+			}
+			_cvWorkersAmount.notify_one();
+		}
+
 		_onWorkerStart();
 	}
 
@@ -239,6 +260,16 @@ namespace async { namespace impl
 	void Service::onThreadStop()
 	{
 		_onWorkerStop();
+
+		{
+			{
+				boost::lock_guard<boost::mutex> lock(_mtxWorkers);
+				_workersAmount--;
+				//TLOG(__FUNCTION__<<": "<<_workersAmount);
+			}
+			_cvWorkersAmount.notify_one();
+		}
+
 		_current = NULL;
 	}
 

@@ -105,7 +105,6 @@ namespace net { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, boost::uint32_t maxSize)
 	{
-		error_code			ec;
 		Packet				packet;
 
 		packet._size = maxSize;
@@ -119,7 +118,7 @@ namespace net { namespace impl
 		readRes.wait();
 		packet._size = (boost::uint32_t)readRes.data2NoWait();
 
-		res(ec, packet);
+		res(readRes.data1NoWait(), packet);
 	}
 
 	//////////////////////////////////////////////////////////////////////////

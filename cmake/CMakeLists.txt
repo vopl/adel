@@ -44,7 +44,10 @@ find_package( Boost 1.48.0 REQUIRED COMPONENTS system date_time filesystem threa
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()
-add_definitions(-DBOOST_ALL_NO_LIB)
+
+if(MSVC)
+    add_definitions(-DBOOST_ALL_NO_LIB)
+endif()
 ###################################################################
 set(CMAKE_THREAD_PREFER_PTHREAD ON)
 include(FindThreads)

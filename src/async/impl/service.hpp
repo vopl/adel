@@ -18,7 +18,6 @@ namespace async { namespace impl
 		boost::shared_ptr<boost::asio::io_service::work>
 									_work;
 
-		std::vector<WorkerPtr>		_workers;
 		FiberPoolPtr				_fiberPool;
 
 		boost::signals2::signal<void ()> _onStart;
@@ -27,14 +26,18 @@ namespace async { namespace impl
 		boost::signals2::signal<void ()> _onWorkerStart;
 		boost::signals2::signal<void ()> _onWorkerStop;
 
-		boost::mutex				_mtx;
-
 		static ThreadLocalStorage<Service *>
 									_current;
 		static Service				*_global;
 
 		size_t _stackSize;
 		size_t _maxFibers;
+
+	private:
+		boost::mutex				_mtxWorkers;
+		std::vector<WorkerPtr>		_workers;
+		boost::condition_variable	_cvWorkersAmount;
+		size_t						_workersAmount;
 
 	private:
 		typedef boost::shared_ptr<boost::asio::deadline_timer> TTimerPtr;

@@ -26,7 +26,7 @@ namespace async { namespace impl
 		assert(_current == this);
 		_current = NULL;
 		
-// 		leave();
+ 		//leave();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -49,8 +49,8 @@ namespace async { namespace impl
 #endif
 		_current = this;
 		
-// 		bool b = enter();
-// 		assert(b);
+ 		//bool b = enter();
+ 		//assert(b);
 
 		return true;
 	}

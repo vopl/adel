@@ -26,7 +26,7 @@ namespace net
 		Acceptor();
 		~Acceptor();
 
-		typedef boost::function<void(const boost::system::error_code &, Channel)> TOnAccept;
+		typedef boost::function<void(boost::system::error_code, Channel)> TOnAccept;
 		boost::signals2::connection connectOnAccept(const TOnAccept &f);
 		async::Future<boost::system::error_code> listen(const char *host, const char *service, bool useSsl=false);
 		void unlisten();
