@@ -41,7 +41,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("set_options failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("set_options failed: "<<ec);
 					res(ec, net::Channel());
 					return;
 				}
@@ -51,7 +51,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_certificate_chain_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_certificate_chain_file failed: "<<ec);
 					res(ec, net::Channel());
 					return;
 				}
@@ -60,7 +60,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_private_key_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_private_key_file failed: "<<ec);
 					res(ec, net::Channel());
 					return;
 				}
@@ -69,7 +69,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_tmp_dh_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_tmp_dh_file failed: "<<ec);
 					res(ec, net::Channel());
 					return;
 				}
@@ -94,7 +94,7 @@ namespace net { namespace impl
 		if(ec)
 		{
 			//неудача, вернуть ее
-			WLOG("async_resolve failed: "<<ec.message()<<"("<<ec.value()<<")");
+			WLOG("async_resolve failed: "<<ec);
 			res(ec, net::Channel());
 			return;
 		}
@@ -136,7 +136,7 @@ namespace net { namespace impl
 				{
 					break;
 				}
-				WLOG("async_connect failed: "<<ec.message()<<"("<<ec.value()<<")");
+				WLOG("async_connect failed: "<<ec);
 			}
 
 			if(ec || riter==rend)
@@ -154,7 +154,7 @@ namespace net { namespace impl
 
 				if(ec)
 				{
-					WLOG("handshake failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("handshake failed: "<<ec);
 					continue;
 				}
 				//успех

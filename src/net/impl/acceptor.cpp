@@ -45,7 +45,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("set_options failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("set_options failed: "<<ec);
 					res(ec);
 					return;
 				}
@@ -55,7 +55,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_certificate_chain_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_certificate_chain_file failed: "<<ec);
 					res(ec);
 					return;
 				}
@@ -64,7 +64,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_private_key_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_private_key_file failed: "<<ec);
 					res(ec);
 					return;
 				}
@@ -73,7 +73,7 @@ namespace net { namespace impl
 				assert(!ec);
 				if(ec)
 				{
-					WLOG("use_tmp_dh_file failed: "<<ec.message()<<"("<<ec.value()<<")");
+					WLOG("use_tmp_dh_file failed: "<<ec);
 					res(ec);
 					return;
 				}
@@ -207,7 +207,7 @@ namespace net { namespace impl
 				return;
 			}
 
-			WLOG("async_accept failed: "<<ec.message()<<"("<<ec.value()<<")");
+			WLOG("async_accept failed: "<<ec);
 			//return;
 		}
 		spawn(bind(&Acceptor::accept_f, shared_from_this(), useSsl));
@@ -229,7 +229,7 @@ namespace net { namespace impl
 					return;
 				}
 
-				WLOG("async_handshake failed: "<<ec.message()<<"("<<ec.value()<<")");
+				WLOG("async_handshake failed: "<<ec);
 				return;
 			}
 
