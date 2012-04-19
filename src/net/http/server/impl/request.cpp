@@ -159,12 +159,14 @@ namespace net { namespace http { namespace server { namespace impl
 	bool Request::readBody()
 	{
 		assert(0);
+		return false;
 	}
 
 	//////////////////////////////////////////////////////////////
 	bool Request::ignoreBody()
 	{
 		assert(0);
+		return false;
 	}
 
 	//////////////////////////////////////////////////////////////
