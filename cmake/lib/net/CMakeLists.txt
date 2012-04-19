@@ -35,6 +35,7 @@ set(SRC_IMPL
 	${PSRC}/impl/connector.cpp
 	${PSRC}/impl/acceptor.cpp
 	${PSRC}/impl/channel.cpp
+	${PSRC}/impl/message.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 
@@ -42,6 +43,7 @@ set(SRC_IMPL_HDR
 	${PSRC}/impl/connector.hpp
 	${PSRC}/impl/acceptor.hpp
 	${PSRC}/impl/channel.hpp
+	${PSRC}/impl/message.hpp
 )
 source_group(src/impl FILES ${SRC_IMPL_HDR})
 
@@ -64,7 +66,9 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 set(INCLUDE_HTTP
 	${PINC}/http/server.hpp
 	${PINC}/http/client.hpp
-		${PINC}/http/statusCode.hpp
+	${PINC}/http/statusCode.hpp
+	${PINC}/http/method.hpp
+	${PINC}/http/version.hpp
 )
 source_group(include/http FILES ${INCLUDE_HTTP})
 

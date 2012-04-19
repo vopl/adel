@@ -3,17 +3,59 @@
 
 #include "net/channel.hpp"
 #include <boost/shared_ptr.hpp>
+#include "net/http/method.hpp"
+#include "net/http/version.hpp"
+#include "net/impl/message.hpp"
+
+namespace net { namespace http { namespace impl
+{
+	class Server;
+	typedef boost::shared_ptr<Server> ServerPtr;
+}}}
 
 namespace net { namespace http { namespace server { namespace impl
 {
 	class Request
+		: public net::impl::Message
 	{
 	public:
-		Request(const Channel &channel);
+		typedef net::Message::Segment Segment;
+
+	public:
+		Request(const net::http::impl::ServerPtr &server, const Channel &channel);
 		~Request();
 
+		bool readRequestLine();
+		bool readHeaders();
+
+		//method uri version
+		Segment requestLine_() const;
+
+		EMethod method() const;
+		Segment method_() const;
+
+		Version version() const;
+		Segment version_() const;
+
+		Segment uri_() const;
+
 	private:
-		Channel _channel;
+		net::http::impl::ServerPtr	_server;
+		Channel						_channel;
+
+		virtual bool obtainMoreChunks();
+
+	private:
+		Segment	_readedContent;
+
+		Segment _requestLine_;
+		EMethod _method;
+		Segment _method_;
+		Segment _uri_;
+		Version _version;
+		Segment _version_;
+
+
 	};
 	typedef boost::shared_ptr<Request> RequestPtr;
 

@@ -2,21 +2,36 @@
 #define _NET_MESSAGE_HPP_
 
 # include <boost/iterator/iterator_facade.hpp>
+# include <boost/range.hpp>
 #include "net/packet.hpp"
 
 namespace net
 {
+	namespace impl
+	{
+		class Message;
+		typedef boost::shared_ptr<Message> MessagePtr;
+	}
+	///////////////////////////////////////////////////////////////
 	class Message
 	{
+	protected:
+		typedef impl::MessagePtr ImplPtr;
+		ImplPtr	_impl;
+
 	public:
 		class Iterator
 			: public boost::iterator_facade<Iterator, char, boost::random_access_traversal_tag>
 		{
 		public:
+			Iterator();
 			Iterator(const Iterator &i);
 			~Iterator();
 
 			typedef size_t size_type;
+
+			static const difference_type _badOffset = -1;
+
 
 		private:
 			friend class boost::iterator_core_access;
@@ -31,19 +46,15 @@ namespace net
 			difference_type absolutePosition() const;
 
 		private:
-			friend class Message;
-			Iterator(Message *message, difference_type chunkIndex, difference_type offsetInChunk);
-			Message *			_message;
-			size_type		_chunkIndex;
-			size_type		_offsetInChunk;
+			friend class impl::Message;
+			Iterator(Message::ImplPtr message, difference_type chunkIndex, difference_type offsetInChunk);
+			Message::ImplPtr	_message;
+			size_type			_chunkIndex;
+			size_type			_offsetInChunk;
 		};
 
 	public:
-		struct Sequence
-		{
-			Iterator _begin;
-			Iterator _end;
-		};
+		typedef boost::iterator_range<Iterator> Segment;
 
 	public:
 		Message();
@@ -52,20 +63,6 @@ namespace net
 		Iterator begin();
 		Iterator end();
 		Iterator endInfinity();
-
-	private:
-		friend class Iterator;
-		struct SChunk
-		{
-			Iterator::difference_type	_offset;
-			Packet						_packet;
-		};
-		typedef std::vector<SChunk> TVChunks;
-		TVChunks _chunks;
-		Iterator::difference_type _size;
-
-
-		bool obtainMoreChunks();
 	};
 }
 

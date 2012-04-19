@@ -4,6 +4,8 @@
 #include "net/http/server/response.hpp"
 #include "net/channel.hpp"
 #include "net/message.hpp"
+#include "net/http/method.hpp"
+#include "net/http/version.hpp"
 
 namespace net { namespace http { namespace server
 {
@@ -25,39 +27,19 @@ namespace net { namespace http { namespace server
 		Request();
 
 	public:
-		enum Method
-		{
-			em_OPTIONS,
-			em_GET,
-			em_POST,
-			em_HEAD,
-			em_TRACE,
-			em_PUT,
-			em_DELETE,
-			em_CONNECT,
-		};
-
-		struct Version
-		{
-			unsigned short _hi;
-			unsigned short _lo;
-		};
-
-
-	public:
 		~Request();
 
-		bool readCaption();
+		bool readRequestLine();
 		bool readHeaders();
 
 		//method uri version
-		Method method() const;
-		Sequence method_() const;
+		EMethod method() const;
+		Segment method_() const;
 
 		Version version() const;
-		Sequence version_() const;
+		Segment version_() const;
 
-		Sequence uri_() const;
+		Segment uri_() const;
 
 		//headers
 

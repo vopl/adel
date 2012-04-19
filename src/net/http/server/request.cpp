@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "net/http/server/request.hpp"
+#include "net/http/server/impl/request.hpp"
 
 namespace net { namespace http { namespace server
 {
@@ -14,6 +15,48 @@ namespace net { namespace http { namespace server
 	Request::~Request()
 	{
 
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool Request::readRequestLine()
+	{
+		return _impl->readRequestLine();
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool Request::readHeaders()
+	{
+		return _impl->readHeaders();
+	}
+
+	//////////////////////////////////////////////////////////////
+	EMethod Request::method() const
+	{
+		return _impl->method();
+	}
+
+	//////////////////////////////////////////////////////////////
+	Message::Segment Request::method_() const
+	{
+		return _impl->method_();
+	}
+
+	//////////////////////////////////////////////////////////////
+	Version Request::version() const
+	{
+		return _impl->version();
+	}
+
+	//////////////////////////////////////////////////////////////
+	Message::Segment Request::version_() const
+	{
+		return _impl->version_();
+	}
+
+
+	Message::Segment Request::uri_() const
+	{
+		return _impl->uri_();
 	}
 
 }}}

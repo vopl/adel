@@ -24,9 +24,14 @@ namespace net { namespace http { namespace impl
 		void start();
 		void stop();
 
+	public:
+		boost::uint32_t requestReadGranula() const;
+
 	private:
 		std::string _host;
 		std::string _port;
+		boost::uint32_t _requestReadGranula;
+
 		net::Acceptor _acceptor;
 		boost::signals2::connection _connectionOnAccept;
 

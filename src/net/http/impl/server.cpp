@@ -26,6 +26,13 @@ namespace net { namespace http { namespace impl
 			"port",
 			po::value<std::string>()->default_value("8080"),
 			"port name or number for this server");
+
+		options->addOption(
+			"request.readGranula",
+			po::value<boost::uint32_t>()->default_value(1024),
+			"buffer size during read request data");
+
+
 /*
 		options->addOption(
 			"ssl",
@@ -90,6 +97,9 @@ namespace net { namespace http { namespace impl
 
 	////////////////////////////////////////////////////////////////////
 	Server::Server()
+		: _host("localhost")
+		, _port("8080")
+		, _requestReadGranula(1024)
 	{
 	}
 
@@ -107,6 +117,7 @@ namespace net { namespace http { namespace impl
 		utils::Options &o = *options;
 		_host = o["host"].as<std::string>();
 		_port = o["port"].as<std::string>();
+		_requestReadGranula = o["request.readGranula"].as<boost::uint32_t>();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -139,6 +150,41 @@ namespace net { namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
+	boost::uint32_t Server::requestReadGranula() const
+	{
+		return _requestReadGranula;
+	}
+
+
+	namespace
+	{
+		void heloWorld(Channel channel)
+		{
+			//async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
+			//res.wait();
+			//if(res.data1NoWait())
+			//{
+//				TLOG("receive failed: "<<res.data1NoWait());
+//				return;
+//			}
+			//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
+
+			static const char buf[] =
+					"HTTP/1.1 200 OK\r\n"
+					"Content-Type: text/plain\r\n"
+					//"Content-Length: 11\r\n"
+					"\r\n"
+					"hello world";
+			Packet p;
+			p._size = sizeof(buf);
+			p._data.reset(new char[p._size]);
+			memcpy(p._data.get(), buf, p._size);
+			channel.send(p).wait();
+			channel.close();
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////
 	void Server::onAccept(boost::system::error_code ec, Channel channel)
 	{
 		if(ec)
@@ -148,35 +194,17 @@ namespace net { namespace http { namespace impl
 		}
 		//TLOG(__FUNCTION__);
 
-		async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
-		res.wait();
-		if(res.data1NoWait())
-		{
-			TLOG("receive failed: "<<res.data1NoWait());
-			return;
-		}
-		//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
-
-		static const char buf[] =
-				"HTTP/1.1 200 OK\r\n"
-				"Content-Type: text/plain\r\n"
-				//"Content-Length: 5\r\n"
-				"\r\n"
-				"hello";
-		Packet p;
-		p._size = sizeof(buf);
-		p._data.reset(new char[p._size]);
-		memcpy(p._data.get(), buf, p._size);
-		channel.send(p).wait();
-		channel.close();
-/*
-		net::http::server::impl::RequestPtr imp(new net::http::server::impl::Request(channel));
+		net::http::server::impl::RequestPtr imp(new net::http::server::impl::Request(shared_from_this(), channel));
 		Request r = utils::ImplAccess<Request>(imp);
 
-		if(!r.readCaption())
+		if(!r.readRequestLine())
 		{
 			return;
 		}
+
+		heloWorld(channel);
+
+/*
 		switch(r.method())
 		{
 		default:
