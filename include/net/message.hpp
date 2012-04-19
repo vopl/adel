@@ -47,8 +47,8 @@ namespace net
 
 		private:
 			friend class impl::Message;
-			Iterator(Message::ImplPtr message, difference_type chunkIndex, difference_type offsetInChunk);
-			Message::ImplPtr	_message;
+			Iterator(impl::Message *message, difference_type chunkIndex, difference_type offsetInChunk);
+			impl::Message		*_message;
 			size_type			_chunkIndex;
 			size_type			_offsetInChunk;
 		};

@@ -160,13 +160,14 @@ namespace net { namespace http { namespace impl
 	{
 		void heloWorld(Channel channel)
 		{
-			//async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
-			//res.wait();
-			//if(res.data1NoWait())
-			//{
-//				TLOG("receive failed: "<<res.data1NoWait());
-//				return;
-//			}
+			/*async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
+			res.wait();
+			if(res.data1NoWait())
+			{
+				TLOG("receive failed: "<<res.data1NoWait());
+				return;
+			}
+			*/
 			//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
 
 			static const char buf[] =
@@ -202,6 +203,12 @@ namespace net { namespace http { namespace impl
 			return;
 		}
 
+		/*if(!r.readHeaders())
+		{
+			return;
+		}
+		*/
+
 		heloWorld(channel);
 
 /*
@@ -225,10 +232,6 @@ namespace net { namespace http { namespace impl
 			break;
 		}
 
-		if(!r.readHeaders())
-		{
-			return;
-		}
 		_onRequest(r);
 */
 	}

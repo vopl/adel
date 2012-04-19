@@ -46,8 +46,9 @@ namespace net { namespace http { namespace server { namespace impl
 		virtual bool obtainMoreChunks();
 
 	private:
-		Segment	_readedContent;
+		Segment	_request_;
 
+		////////////////////////////////
 		Segment _requestLine_;
 		EMethod _method;
 		Segment _method_;
@@ -55,7 +56,18 @@ namespace net { namespace http { namespace server { namespace impl
 		Version _version;
 		Segment _version_;
 
+		////////////////////////////////
+		Segment _headers_;
+		struct SHeader
+		{
+			Segment _header_;
+			Segment _name_;
+			Segment _value_;
+		};
+		std::vector<SHeader> _headersVector;
 
+
+		Segment _body_;
 	};
 	typedef boost::shared_ptr<Request> RequestPtr;
 

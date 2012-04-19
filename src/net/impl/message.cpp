@@ -19,19 +19,19 @@ namespace net { namespace impl
 	///////////////////////////////////////////////////////
 	Message::Iterator Message::begin()
 	{
-		return Iterator(shared_from_this(), 0, 0);
+		return Iterator(this, 0, 0);
 	}
 
 	///////////////////////////////////////////////////////
 	Message::Iterator Message::end()
 	{
-		return Iterator(shared_from_this(), chunks().size(), 0);
+		return Iterator(this, chunks().size(), 0);
 	}
 
 	///////////////////////////////////////////////////////
 	Message::Iterator Message::endInfinity()
 	{
-		return Iterator(shared_from_this(), Iterator::_badOffset, Iterator::_badOffset);
+		return Iterator(this, Iterator::_badOffset, Iterator::_badOffset);
 	}
 
 	///////////////////////////////////////////////////////

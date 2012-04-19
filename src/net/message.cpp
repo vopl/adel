@@ -212,7 +212,7 @@ namespace net
 	}
 
 	///////////////////////////////////////////////////////////////
-	Message::Iterator::Iterator(impl::MessagePtr message, difference_type chunkIndex, difference_type offsetInChunk)
+	Message::Iterator::Iterator(impl::Message *message, difference_type chunkIndex, difference_type offsetInChunk)
 		: _message(message)
 		, _chunkIndex(chunkIndex)
 		, _offsetInChunk(offsetInChunk)
