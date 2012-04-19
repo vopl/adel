@@ -156,6 +156,18 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
+	bool Request::readBody()
+	{
+		assert(0);
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool Request::ignoreBody()
+	{
+		assert(0);
+	}
+
+	//////////////////////////////////////////////////////////////
 	net::Message::Segment Request::requestLine_() const
 	{
 		return _requestLine_;

@@ -193,47 +193,41 @@ namespace net { namespace http { namespace impl
 			ELOG("accept failed: "<<ec);
 			return;
 		}
-		//TLOG(__FUNCTION__);
 
 		net::http::server::impl::RequestPtr imp(new net::http::server::impl::Request(shared_from_this(), channel));
 		Request r = utils::ImplAccess<Request>(imp);
 
-		if(!r.readRequestLine())
+		if(	!r.readRequestLine() ||
+			!r.readHeaders())
 		{
 			return;
 		}
 
-		/*if(!r.readHeaders())
-		{
-			return;
-		}
-		*/
-
-		heloWorld(channel);
-
-/*
 		switch(r.method())
 		{
 		default:
-			r.ignoreContent();
-			r.response()
-					.status(esc_405)
-					.send();
+			if(!r.ignoreBody()) return;
+			/*r.response()
+				.writeStatus(esc_405)
+				.flush();*/
 			return;
-		case Request::OPTIONS:
-			r.ignoreContent();
-			r.response()
-					.header("Allow: GET, POST")
-					.status(esc_200)
-					.send();
+		case em_OPTIONS:
+			/*r.response()
+				.writeStatus(esc_200)
+				.writeHeader("Allow: GET, POST")
+				.flush();*/
+			return;
+		case em_GET:
+			heloWorld(channel);
 			break;
-		case Request::GET:
-		case Request::POST:
+		case em_POST:
+			if(!r.readBody()) return;
+			heloWorld(channel);
 			break;
 		}
 
-		_onRequest(r);
-*/
+
+		//_onRequest(r);
 	}
 
 

@@ -31,6 +31,8 @@ namespace net { namespace http { namespace server
 
 		bool readRequestLine();
 		bool readHeaders();
+		bool readBody();
+		bool ignoreBody();
 
 		//method uri version
 		EMethod method() const;

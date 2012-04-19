@@ -30,6 +30,18 @@ namespace net { namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
+	bool Request::readBody()
+	{
+		return _impl->readBody();
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool Request::ignoreBody()
+	{
+		return _impl->ignoreBody();
+	}
+
+	//////////////////////////////////////////////////////////////
 	EMethod Request::method() const
 	{
 		return _impl->method();

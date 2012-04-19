@@ -27,6 +27,8 @@ namespace net { namespace http { namespace server { namespace impl
 
 		bool readRequestLine();
 		bool readHeaders();
+		bool readBody();
+		bool ignoreBody();
 
 		//method uri version
 		Segment requestLine_() const;
