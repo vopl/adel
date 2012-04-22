@@ -35,6 +35,8 @@ namespace net { namespace impl
 	protected:
 		TVChunks _chunks;
 		Iterator::difference_type _size;
+		void pushChunk(const Packet &packet);
+
 	};
 
 	typedef boost::shared_ptr<Message> MessagePtr;

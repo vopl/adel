@@ -23,6 +23,10 @@
 #include <boost/spirit/include/qi_char.hpp>
 #include <boost/spirit/include/qi_lit.hpp>
 
+#include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/karma_string.hpp>
+#include <boost/spirit/include/karma_char.hpp>
+
 #include <boost/spirit/include/phoenix_statement.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>

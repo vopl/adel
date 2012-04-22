@@ -219,9 +219,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 			if(ret.data2NoWait()._size)
 			{
-				SChunk chunk = {_size, ret.data2NoWait()};
-				_chunks.push_back(chunk);
-				_size += ret.data2NoWait()._size;
+				pushChunk(ret.data2NoWait());
 				return true;
 			}
 
@@ -230,6 +228,19 @@ namespace net { namespace http { namespace server { namespace impl
 
 		assert(!"never here");
 		return false;
+	}
+
+	//////////////////////////////////////////////////////////////
+	ResponsePtr Request::response()
+	{
+		if(!_response)
+		{
+			_response.reset(new Response(_server, _channel));
+			_response->statusCode(esc_200);
+			_response->version(_version);
+		}
+
+		return _response;
 	}
 
 }}}}

@@ -57,6 +57,8 @@ namespace net { namespace http { namespace server
 
 		//params all
 
+	public:
+		Response response();
 	};
 }}}
 

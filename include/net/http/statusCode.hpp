@@ -98,5 +98,59 @@ namespace net { namespace http
 		esc_504=504,// Gateway Timeout
 		esc_505=505,// HTTP Version Not Supported
 	};
+
+	inline const char *reasonPhrase(const EStatusCode &statusCode)
+	{
+		switch(statusCode)
+		{
+		case esc_100: return "Continue";
+		case esc_101: return "Switching Protocols";
+		case esc_200: return "OK";
+		case esc_201: return "Created";
+		case esc_202: return "Accepted";
+		case esc_203: return "Non-Authoritative Information";
+		case esc_204: return "No Content";
+		case esc_205: return "Reset Content";
+		case esc_206: return "Partial Content";
+		case esc_300: return "Multiple Choices";
+		case esc_301: return "Moved Permanently";
+		case esc_302: return "Found";
+		case esc_303: return "See Other";
+		case esc_304: return "Not Modified";
+		case esc_305: return "Use Proxy";
+		case esc_307: return "Temporary Redirect";
+		case esc_400: return "Bad Request";
+		case esc_401: return "Unauthorized";
+		case esc_402: return "Payment Required";
+		case esc_403: return "Forbidden";
+		case esc_404: return "Not Found";
+		case esc_405: return "Method Not Allowed";
+		case esc_406: return "Not Acceptable";
+		case esc_407: return "Proxy Authentication Required";
+		case esc_408: return "Request Timeout";
+		case esc_409: return "Conflict";
+		case esc_410: return "Gone";
+		case esc_411: return "Length Required";
+		case esc_412: return "Precondition Failed";
+		case esc_413: return "Request Entity Too Large";
+		case esc_414: return "Request-URI Too Long";
+		case esc_415: return "Unsupported Media Type";
+		case esc_416: return "Requested Range Not Satisfiable";
+		case esc_417: return "Expectation Failed";
+		case esc_500: return "Internal Server Error";
+		case esc_501: return "Not Implemented";
+		case esc_502: return "Bad Gateway";
+		case esc_503: return "Service Unavailable";
+		case esc_504: return "Gateway Timeout";
+		case esc_505: return "HTTP Version Not Supported";
+		default:
+			assert(0);
+			return "Unknown";
+		}
+
+		assert(!"never here");
+		return "Unknown";
+	}
+
 }}
 #endif

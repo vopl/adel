@@ -6,6 +6,7 @@
 #include "net/http/method.hpp"
 #include "net/http/version.hpp"
 #include "net/impl/message.hpp"
+#include "net/http/server/impl/response.hpp"
 
 namespace net { namespace http { namespace impl
 {
@@ -15,6 +16,7 @@ namespace net { namespace http { namespace impl
 
 namespace net { namespace http { namespace server { namespace impl
 {
+	///////////////////////////////////////////////////////////////////////////
 	class Request
 		: public net::impl::Message
 	{
@@ -40,6 +42,9 @@ namespace net { namespace http { namespace server { namespace impl
 		Segment version_() const;
 
 		Segment uri_() const;
+
+	public:
+		ResponsePtr response();
 
 	private:
 		net::http::impl::ServerPtr	_server;
@@ -70,6 +75,9 @@ namespace net { namespace http { namespace server { namespace impl
 
 
 		Segment _body_;
+
+	private:
+		ResponsePtr _response;
 	};
 	typedef boost::shared_ptr<Request> RequestPtr;
 

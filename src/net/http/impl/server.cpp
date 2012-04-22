@@ -32,6 +32,11 @@ namespace net { namespace http { namespace impl
 			po::value<boost::uint32_t>()->default_value(1024),
 			"buffer size during read request data");
 
+		options->addOption(
+			"response.writeGranula",
+			po::value<boost::uint32_t>()->default_value(1024),
+			"buffer size during write response data");
+
 
 /*
 		options->addOption(
@@ -100,6 +105,7 @@ namespace net { namespace http { namespace impl
 		: _host("localhost")
 		, _port("8080")
 		, _requestReadGranula(1024)
+		, _responseWriteGranula(1024)
 	{
 	}
 
@@ -118,6 +124,7 @@ namespace net { namespace http { namespace impl
 		_host = o["host"].as<std::string>();
 		_port = o["port"].as<std::string>();
 		_requestReadGranula = o["request.readGranula"].as<boost::uint32_t>();
+		_responseWriteGranula = o["response.writeGranula"].as<boost::uint32_t>();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -153,6 +160,12 @@ namespace net { namespace http { namespace impl
 	boost::uint32_t Server::requestReadGranula() const
 	{
 		return _requestReadGranula;
+	}
+
+	////////////////////////////////////////////////////////////////////
+	boost::uint32_t Server::responseWriteGranula() const
+	{
+		return _responseWriteGranula;
 	}
 
 
@@ -194,40 +207,66 @@ namespace net { namespace http { namespace impl
 			return;
 		}
 
-		net::http::server::impl::RequestPtr imp(new net::http::server::impl::Request(shared_from_this(), channel));
-		Request r = utils::ImplAccess<Request>(imp);
+		net::http::server::impl::RequestPtr requestImpl(new net::http::server::impl::Request(shared_from_this(), channel));
+		Request request = utils::ImplAccess<Request>(requestImpl);
 
-		if(	!r.readRequestLine() ||
-			!r.readHeaders())
+		if(	!request.readRequestLine() ||
+			!request.readHeaders())
 		{
 			return;
 		}
 
-		switch(r.method())
+		switch(request.method())
 		{
 		default:
-			if(!r.ignoreBody()) return;
-			/*r.response()
-				.writeStatus(esc_405)
-				.flush();*/
+			if(!request.ignoreBody()) return;
+
+			{
+				Response response = request.response();
+				response
+					.statusCode(esc_405)
+					.header("Connection: Close");
+				if(!response.flush(true))
+				{
+					//connection lost? ok
+				}
+			}
 			return;
 		case em_OPTIONS:
-			/*r.response()
-				.writeStatus(esc_200)
-				.writeHeader("Allow: GET, POST")
-				.flush();*/
+			{
+				Response response = request.response();
+				response
+					.statusCode(esc_200)
+					.header("Allow: GET, POST");
+				if(!response.flush(true))
+				{
+					//connection lost? ok
+				}
+			}
 			return;
 		case em_GET:
-			heloWorld(channel);
+			//heloWorld(channel);
+			{
+				Response response = request.response();
+				response
+					.statusCode(esc_200)
+					.header("Content-Type: text/plain")
+					.body("hello world");
+				if(!response.flush(true))
+				{
+					//connection lost? ok
+				}
+			}
+
 			break;
 		case em_POST:
-			if(!r.readBody()) return;
+			if(!request.readBody()) return;
 			heloWorld(channel);
 			break;
 		}
 
 
-		//_onRequest(r);
+		//_onRequest(request);
 	}
 
 

@@ -1,6 +1,8 @@
 #include "pch.hpp"
 #include "net/http/server/request.hpp"
 #include "net/http/server/impl/request.hpp"
+#include "net/http/server/impl/response.hpp"
+#include "utils/implAccess.hpp"
 
 namespace net { namespace http { namespace server
 {
@@ -65,10 +67,16 @@ namespace net { namespace http { namespace server
 		return _impl->version_();
 	}
 
-
+	//////////////////////////////////////////////////////////////
 	Message::Segment Request::uri_() const
 	{
 		return _impl->uri_();
+	}
+
+	//////////////////////////////////////////////////////////////
+	Response Request::response()
+	{
+		return utils::ImplAccess<Response>(_impl->response());
 	}
 
 }}}

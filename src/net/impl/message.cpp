@@ -52,5 +52,14 @@ namespace net { namespace impl
 		return false;
 	}
 
+	///////////////////////////////////////////////////////
+	void Message::pushChunk(const Packet &packet)
+	{
+		SChunk chunk = {_size, packet};
+		_chunks.push_back(chunk);
+		_size += packet._size;
+	}
+
+
 
 }}

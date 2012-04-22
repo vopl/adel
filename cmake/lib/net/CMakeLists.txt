@@ -69,6 +69,8 @@ set(INCLUDE_HTTP
 	${PINC}/http/statusCode.hpp
 	${PINC}/http/method.hpp
 	${PINC}/http/version.hpp
+	${PINC}/http/contentEncoding.hpp
+	${PINC}/http/transferEncoding.hpp
 )
 source_group(include/http FILES ${INCLUDE_HTTP})
 
