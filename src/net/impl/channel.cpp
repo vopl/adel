@@ -180,22 +180,25 @@ namespace net { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::send_f()
 	{
+		bool localSendInProcess = false;
 		for(;;)
 		{
 			std::pair<Future<error_code>, Packet> op;
 			{
 				mutex::scoped_lock sl(_mtxSends);
-				if(_sendInProcess)
+				if(!localSendInProcess && _sendInProcess)
 				{
 					return;
 				}
 				if(_sends.empty())
 				{
+					_sendInProcess = false;
 					return;
 				}
 				op = _sends[0];
 				_sends.erase(_sends.begin());
 				_sendInProcess = true;
+				localSendInProcess = true;
 			}
 
 			size_t				transferedSize = 0;
@@ -227,8 +230,8 @@ namespace net { namespace impl
 			transferedSize = 0;
 
 			op.first(error_code());
-			mutex::scoped_lock sl(_mtxSends);
-			_sendInProcess = false;
+			//mutex::scoped_lock sl(_mtxSends);
+			//_sendInProcess = false;
 		}
 	}
 

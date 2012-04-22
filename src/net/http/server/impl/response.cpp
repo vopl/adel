@@ -17,10 +17,11 @@ namespace net { namespace http { namespace server { namespace impl
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel)
-		: _server(server)
+		: net::http::impl::ContentFilter(NULL)
+		, _server(server)
 		, _channel(channel)
 		, _ewp(ewp_statusLine)
-		, _sendChunk(0)
+		, _mostContentFilter(this)
 	{
 		if(obtainMoreChunks())
 		{
@@ -31,6 +32,7 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(0);
 			_writePosition = endInfinity();
 		}
+		_bodyPosition = endInfinity();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -75,7 +77,6 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(0);
 			return;
 		}
-		flush();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -97,7 +98,6 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(0);
 			return;
 		}
-		flush();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -110,11 +110,13 @@ namespace net { namespace http { namespace server { namespace impl
 			statusLine();
 			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
+			_bodyPosition = _writePosition;
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
 		case ewp_headers:
 			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
+			_bodyPosition = _writePosition;
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
 		case ewp_body:
@@ -124,55 +126,111 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(0);
 			return;
 		}
-		flush();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::flush(bool withTail)
+	bool Response::flush()
 	{
-		for(; _sendChunk+1 < _chunks.size(); _sendChunk++)
+		if(_chunks.empty())
 		{
-			assert(_chunks[_sendChunk]._packet._data);
-
-			async::Future<boost::system::error_code> sendRes = _channel.send(_chunks[_sendChunk]._packet);
-			if(sendRes.data())
-			{
-				return false;
-			}
-
-			_chunks[_sendChunk]._packet._data.reset();
+			return true;
 		}
 
-		if(withTail && !_chunks.empty())
+		SChunk &lastChunk = _chunks.back();
+
+		if(lastChunk._packet._data)
 		{
-			size_t totalLength = _writePosition - begin();
-			size_t tailLength = totalLength - _chunks.back()._offset;
+			assert(_writePosition.absolutePosition() >= lastChunk._offset);
+			assert(_writePosition.absolutePosition() < lastChunk._offset+lastChunk._packet._size);
 
-			if(tailLength)
+			lastChunk._packet._size = _writePosition.absolutePosition() - lastChunk._offset;
+			if(lastChunk._packet._size)
 			{
-				Packet tail = _chunks.back()._packet;
-				assert(tailLength <= tail._size);
-				tail._size = tailLength;
-
-				async::Future<boost::system::error_code> sendRes = _channel.send(tail);
-				if(sendRes.data())
-				{
-					return false;
-				}
+				pushLastChunk();
 			}
 		}
+		_mostContentFilter->filterFlush();
 
+		//_channel.close();
+		//keep alive
 		return true;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::pushLastChunk()
+	{
+		if(_chunks.empty())
+		{
+			return;
+		}
+
+		SChunk &lastChunk = _chunks.back();
+		if(	_mostContentFilter != this &&
+			_bodyPosition.chunkIndex() != Iterator::_badOffset)
+		{
+			Iterator::size_type curChunkIndex = (Iterator::size_type)(_chunks.size()-1);
+
+			if(curChunkIndex < _bodyPosition.chunkIndex())
+			{
+				/*this->*/filterPush(lastChunk._packet, 0);
+			}
+			else if(curChunkIndex == _bodyPosition.chunkIndex())
+			{
+				Packet headersPart = lastChunk._packet;
+				headersPart._size = _bodyPosition.offsetInChunk();
+				/*this->*/filterPush(headersPart, 0);
+				_mostContentFilter->filterPush(lastChunk._packet, _bodyPosition.offsetInChunk());
+			}
+			else// curChunkIndex > _bodyPosition.chunkIndex()
+			{
+				_mostContentFilter->filterPush(lastChunk._packet, 0);
+			}
+		}
+		else
+		{
+			/*this->*/filterPush(lastChunk._packet, 0);
+		}
+
+		lastChunk._packet._data.reset();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::obtainMoreChunks()
 	{
+		pushLastChunk();
+
 		boost::uint32_t size = _server->responseWriteGranula();
 		Packet packet(boost::shared_array<char>(new char[size]), size);
 		pushChunk(packet);
 		return true;
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	size_t Response::filterPush(const Packet &packet, size_t offset)
+	{
+		assert(packet._size > offset);
+
+		if(offset)
+		{
+			Packet p(
+				boost::shared_array<char>(new char[packet._size - offset]),
+				packet._size - offset);
+			memcpy(p._data.get(), packet._data.get()+offset, p._size);
+
+			_channel.send(p);
+			return p._size;
+		}
+
+		_channel.send(packet);
+		return packet._size;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	size_t Response::filterFlush()
+	{
+		return 0;
+	}
+
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()

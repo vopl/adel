@@ -212,6 +212,24 @@ namespace net
 	}
 
 	///////////////////////////////////////////////////////////////
+	impl::Message *Message::Iterator::message() const
+	{
+		return _message;
+	}
+
+	///////////////////////////////////////////////////////////////
+	Message::Iterator::size_type Message::Iterator::chunkIndex() const
+	{
+		return _chunkIndex;
+	}
+
+	///////////////////////////////////////////////////////////////
+	Message::Iterator::size_type Message::Iterator::offsetInChunk() const
+	{
+		return _offsetInChunk;
+	}
+
+	///////////////////////////////////////////////////////////////
 	Message::Iterator::Iterator(impl::Message *message, difference_type chunkIndex, difference_type offsetInChunk)
 		: _message(message)
 		, _chunkIndex(chunkIndex)

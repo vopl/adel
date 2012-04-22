@@ -8,6 +8,7 @@
 #include "net/http/contentEncoding.hpp"
 #include "net/http/transferEncoding.hpp"
 #include "net/impl/message.hpp"
+#include "net/http/impl/contentFilter.hpp"
 
 namespace net { namespace http { namespace impl
 {
@@ -19,6 +20,8 @@ namespace net { namespace http { namespace server { namespace impl
 {
 	class Response
 		: public net::impl::Message
+		, public net::http::impl::ContentFilter
+
 	{
 	public:
 		typedef net::Message::Segment Segment;
@@ -34,13 +37,20 @@ namespace net { namespace http { namespace server { namespace impl
 		void header(const char *data, size_t size);
 		void body(const char *data, size_t size);
 
-		bool flush(bool withTail = false);
+		bool flush();
 
 	private:
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
 
+		void pushLastChunk();
+
 		virtual bool obtainMoreChunks();
+
+		net::http::impl::ContentFilter *_mostContentFilter;
+		virtual boost::uint32_t filterPush(const Packet &packet, boost::uint32_t offset);
+		virtual boost::uint32_t filterFlush();
+
 
 	private:
 		void systemHeaders();
@@ -55,7 +65,7 @@ namespace net { namespace http { namespace server { namespace impl
 		} _ewp;
 
 		Iterator	_writePosition;
-		size_t		_sendChunk;
+		Iterator	_bodyPosition;
 
 
 		Version _version;

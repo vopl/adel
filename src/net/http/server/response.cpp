@@ -74,9 +74,9 @@ namespace net { namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::flush(bool withTail)
+	bool Response::flush()
 	{
-		return _impl->flush(withTail);
+		return _impl->flush();
 	}
 
 }}}

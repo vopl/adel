@@ -101,12 +101,22 @@ source_group(src/http FILES ${SRC_HTTP_HDR})
 set(SRC_HTTP_IMPL
 	${PSRC}/http/impl/server.cpp
 	${PSRC}/http/impl/client.cpp
+	${PSRC}/http/impl/contentFilter.cpp
+	${PSRC}/http/impl/contentFilterEncodeZlib.cpp
+	${PSRC}/http/impl/contentFilterEncodeChunked.cpp
+	${PSRC}/http/impl/contentFilterDecodeZlib.cpp
+	${PSRC}/http/impl/contentFilterDecodeChunked.cpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL})
 
 set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/server.hpp
 	${PSRC}/http/impl/client.hpp
+	${PSRC}/http/impl/contentFilter.hpp
+	${PSRC}/http/impl/contentFilterEncodeZlib.hpp
+	${PSRC}/http/impl/contentFilterEncodeChunked.hpp
+	${PSRC}/http/impl/contentFilterDecodeZlib.hpp
+	${PSRC}/http/impl/contentFilterDecodeChunked.hpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL_HDR})
 

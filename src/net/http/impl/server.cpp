@@ -168,36 +168,6 @@ namespace net { namespace http { namespace impl
 		return _responseWriteGranula;
 	}
 
-
-	namespace
-	{
-		void heloWorld(Channel channel)
-		{
-			/*async::Future2<boost::system::error_code, Packet> res = channel.receive(1024);
-			res.wait();
-			if(res.data1NoWait())
-			{
-				TLOG("receive failed: "<<res.data1NoWait());
-				return;
-			}
-			*/
-			//TLOG("receive: "<<std::string(res.data2()._data.get(), res.data2()._data.get()+res.data2()._size));
-
-			static const char buf[] =
-					"HTTP/1.1 200 OK\r\n"
-					"Content-Type: text/plain\r\n"
-					//"Content-Length: 11\r\n"
-					"\r\n"
-					"hello world";
-			Packet p;
-			p._size = sizeof(buf);
-			p._data.reset(new char[p._size]);
-			memcpy(p._data.get(), buf, p._size);
-			channel.send(p).wait();
-			channel.close();
-		}
-	}
-
 	////////////////////////////////////////////////////////////////////
 	void Server::onAccept(boost::system::error_code ec, Channel channel)
 	{
@@ -226,7 +196,7 @@ namespace net { namespace http { namespace impl
 				response
 					.statusCode(esc_405)
 					.header("Connection: Close");
-				if(!response.flush(true))
+				if(!response.flush())
 				{
 					//connection lost? ok
 				}
@@ -238,21 +208,20 @@ namespace net { namespace http { namespace impl
 				response
 					.statusCode(esc_200)
 					.header("Allow: GET, POST");
-				if(!response.flush(true))
+				if(!response.flush())
 				{
 					//connection lost? ok
 				}
 			}
 			return;
 		case em_GET:
-			//heloWorld(channel);
 			{
 				Response response = request.response();
 				response
 					.statusCode(esc_200)
 					.header("Content-Type: text/plain")
 					.body("hello world");
-				if(!response.flush(true))
+				if(!response.flush())
 				{
 					//connection lost? ok
 				}
@@ -261,7 +230,6 @@ namespace net { namespace http { namespace impl
 			break;
 		case em_POST:
 			if(!request.readBody()) return;
-			heloWorld(channel);
 			break;
 		}
 

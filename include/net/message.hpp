@@ -33,7 +33,7 @@ namespace net
 			static const difference_type _badOffset = -1;
 
 
-		private:
+		public:
 			friend class boost::iterator_core_access;
 
 			reference dereference() const;
@@ -43,7 +43,11 @@ namespace net
 			void advance(difference_type n);
 			difference_type distance_to(const Iterator &i) const;
 			
+		public:
 			difference_type absolutePosition() const;
+			impl::Message	*message() const;
+			size_type		chunkIndex() const;
+			size_type		offsetInChunk() const;
 
 		private:
 			friend class impl::Message;

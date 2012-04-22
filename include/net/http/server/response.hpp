@@ -36,7 +36,7 @@ namespace net { namespace http { namespace server
 		Response &body(const char *line);
 		Response &body(const std::string &line);
 
-		bool flush(bool withTail = false);
+		bool flush();
 	};
 }}}
 
