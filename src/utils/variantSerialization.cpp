@@ -14,10 +14,10 @@ namespace utils
 		template <uint16_t signature>
 		class Serializer
 		{
-			typedef std::map<VariantPtr, uint32_t> TMPtrKey;
+			typedef std::map<VariantPtr, uint64_t> TMPtrKey;
 			TMPtrKey _mPtrKey;
 
-			typedef std::map<uint32_t, VariantPtr> TMKeyPtr;
+			typedef std::map<uint64_t, VariantPtr> TMKeyPtr;
 			TMKeyPtr _mKeyPtr;
 
 #pragma pack (push, 1)
@@ -25,7 +25,7 @@ namespace utils
 			{
 				uint16_t	_signature;//некая магическая константа
 				uint16_t	_crc;//покрывает _size и все данные
-				uint32_t	_size;//размер данных
+				uint64_t	_size;//размер данных
 			};
 #pragma pack (pop)
 
@@ -48,10 +48,10 @@ namespace utils
 			}
 
 			//////////////////////////////////////////////////////////////////////////
-			shared_array<char> serialize(const Variant &v, uint32_t &size)
+			shared_array<char> serialize(const Variant &v, size_t &size)
 			{
 				//первый проход, вычислить длину
-				uint32_t vsize = calcSize(v);
+				uint64_t vsize = calcSize(v);
 				_mPtrKey.clear();
 
 				shared_array<char> data(new char[sizeof(Header) + vsize]);
@@ -77,7 +77,7 @@ namespace utils
 			}
 
 			//////////////////////////////////////////////////////////////////////////
-			bool deserialize(Variant &v, shared_array<char> data, uint32_t size)
+			bool deserialize(Variant &v, shared_array<char> data, size_t size)
 			{
 				if(size < sizeof(Header)+2)
 				{
@@ -93,7 +93,7 @@ namespace utils
 					return false;
 				}
 
-				uint32_t vsize = litEndian(ph->_size);
+				int64_t vsize = litEndian(ph->_size);
 				if(vsize != size - sizeof(Header))
 				{
 					assert(!"size mismatch");
@@ -126,13 +126,13 @@ namespace utils
 
 		private:
 			//////////////////////////////////////////////////////////////////////////
-			uint32_t calcSize(const Variant &v)
+			size_t calcSize(const Variant &v)
 			{
 				//_et
-				uint32_t size = 2;
+				size_t size = 2;
 
-				//размер зазмера
-				static const uint32_t S = sizeof(uint32_t);
+				//размер размера
+				static const size_t S = sizeof(uint64_t);
 
 				if(v.isNull())
 				{
@@ -149,7 +149,7 @@ namespace utils
 						break;
 					case Variant::etString:
 						size += S;
-						size += (uint32_t)v.as<Variant::String>().size();
+						size += v.as<Variant::String>().size();
 						break;
 					case Variant::etFloat:
 						size += 4;
@@ -183,7 +183,7 @@ namespace utils
 						break;
 					case Variant::etVectorChar:
 						size += S;
-						size += (uint32_t)v.as<Variant::VectorChar>().size();
+						size += v.as<Variant::VectorChar>().size();
 						break;
 					case Variant::etDate:
 						size += 4;
@@ -204,7 +204,7 @@ namespace utils
 						{
 							//key
 							size += S;
-							size += (uint32_t)el.first.size();
+							size += el.first.size();
 							//value
 							size += calcSize(el.second);
 						}
@@ -261,7 +261,7 @@ namespace utils
 						{
 							//key
 							size += S;
-							size += (uint32_t)el.first.size();
+							size += el.first.size();
 							//value
 							size += calcSize(el.second);
 						}
@@ -320,7 +320,7 @@ namespace utils
 								if(_mPtrKey.end() == iter)
 								{
 									//сформировать новый ключ и запомнить его в карте
-									_mPtrKey.insert(std::make_pair(p, (uint32_t)_mPtrKey.size()+1));
+									_mPtrKey.insert(std::make_pair(p, _mPtrKey.size()+1));
 									size += calcSize(*p);
 								}
 								else
@@ -338,7 +338,7 @@ namespace utils
 			}
 
 			//////////////////////////////////////////////////////////////////////////
-			void writeBinary(const char *data, uint32_t size)
+			void writeBinary(const char *data, size_t size)
 			{
 				assert(_bufEnd-_bufIter >= (int)size);
 				memcpy(_bufIter, data, size);
@@ -357,7 +357,7 @@ namespace utils
 			//////////////////////////////////////////////////////////////////////////
 			void write(const std::string &value)
 			{
-				uint32_t size = (uint32_t)value.size();
+				uint64_t size = (uint64_t)value.size();
 				writeIntegral(size);
 				if(size)
 				{
@@ -386,7 +386,7 @@ namespace utils
 			template <class Map>
 			void writeMap(const Map &value)
 			{
-				uint32_t size = (uint32_t)value.size();
+				uint64_t size = (uint64_t)value.size();
 				writeIntegral(size);
 				if(size)
 				{
@@ -404,7 +404,7 @@ namespace utils
 			template <class Seq>
 			void writeSeq(const Seq &value)
 			{
-				uint32_t size = (uint32_t)value.size();
+				uint64_t size = (uint64_t)value.size();
 				writeIntegral(size);
 				if(size)
 				{
@@ -471,7 +471,7 @@ namespace utils
 					case Variant::etVectorChar:
 						{
 							const Variant::VectorChar &raw = v.as<Variant::VectorChar>();
-							uint32_t size = (uint32_t)raw.size();
+							uint64_t size = (uint64_t)raw.size();
 							writeIntegral(size);
 							if(size)
 							{
@@ -601,7 +601,7 @@ namespace utils
 								if(_mPtrKey.end() == iter)
 								{
 									//сформировать новый ключ и запомнить его в карте
-									uint32_t key = (uint32_t)_mPtrKey.size()+1;
+									uint64_t key = (uint64_t)_mPtrKey.size()+1;
 									_mPtrKey.insert(std::make_pair(p,key));
 
 									writeIntegral(key);
@@ -615,7 +615,7 @@ namespace utils
 							}
 							else
 							{
-								uint32_t key = 0;
+								uint64_t key = 0;
 								writeIntegral(key);
 							}
 						}
@@ -654,7 +654,7 @@ namespace utils
 			//////////////////////////////////////////////////////////////////////////
 			//////////////////////////////////////////////////////////////////////////
 			//////////////////////////////////////////////////////////////////////////
-			bool readBinary(char *data, uint32_t size)
+			bool readBinary(char *data, size_t size)
 			{
 				if(_bufEnd-_bufIter < (int)size)
 				{
@@ -672,7 +672,7 @@ namespace utils
 			template <class T>
 			bool readIntegral(T &value)
 			{
-				if(_bufEnd-_bufIter < (int)sizeof(T))
+				if(_bufEnd-_bufIter < (ptrdiff_t)sizeof(T))
 				{
 					assert(0);
 					return false;
@@ -687,7 +687,7 @@ namespace utils
 			//////////////////////////////////////////////////////////////////////////
 			bool read(std::string &value)
 			{
-				uint32_t size;
+				uint64_t size;
 				if(!readIntegral(size))
 				{
 					return false;
@@ -734,7 +734,7 @@ namespace utils
 			bool readMap(Map &value)
 			{
 				value.clear();
-				uint32_t size;
+				uint64_t size;
 				if(!readIntegral(size))
 				{
 					return false;
@@ -759,7 +759,7 @@ namespace utils
 			bool readSeq_insertable(Seq &value)
 			{
 				value.clear();
-				uint32_t size;
+				uint64_t size;
 				if(!readIntegral(size))
 				{
 					return false;
@@ -782,7 +782,7 @@ namespace utils
 			template <class Seq>
 			bool readSeq_indexable(Seq &value)
 			{
-				uint32_t size;
+				uint64_t size;
 				if(!readIntegral(size))
 				{
 					return false;
@@ -855,7 +855,7 @@ namespace utils
 					return readIntegral(v.as<Variant::UInt64>(true));
 				case Variant::etVectorChar:
 					{
-						uint32_t size;
+						uint64_t size;
 						if(!readIntegral(size))
 						{
 							return false;
@@ -1043,7 +1043,7 @@ namespace utils
 					return true;
 				case Variant::etVariantPtr:
 					{
-						uint32_t key;
+						uint64_t key;
 						if(!readIntegral(key))
 						{
 							return false;
@@ -1086,14 +1086,14 @@ namespace utils
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	shared_array<char> Variant::serialize(uint32_t &size) const
+	shared_array<char> Variant::serialize(size_t &size) const
 	{
 		Serializer<0x472e> s;
 		return s.serialize(*this, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool Variant::deserialize(shared_array<char> data, uint32_t size)
+	bool Variant::deserialize(shared_array<char> data, size_t size)
 	{
 		if(data)
 		{

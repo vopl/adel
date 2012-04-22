@@ -15,8 +15,8 @@ namespace net { namespace http { namespace impl
 		ContentFilter(ContentFilter* upstream);
 		virtual ~ContentFilter();
 		
-		virtual boost::uint32_t filterPush(const Packet &packet, boost::uint32_t offset=0)=0;
-		virtual boost::uint32_t filterFlush()=0;
+		virtual size_t filterPush(const Packet &packet, size_t offset=0)=0;
+		virtual size_t filterFlush()=0;
 
 	protected:
 		ContentFilter* _upstream;

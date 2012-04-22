@@ -27,7 +27,7 @@ namespace net
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	async::Future2<boost::system::error_code, Packet> Channel::receive(boost::uint32_t maxSize)
+	async::Future2<boost::system::error_code, Packet> Channel::receive(size_t maxSize)
 	{
 		return _impl->receive(maxSize);
 	}

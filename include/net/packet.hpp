@@ -11,14 +11,14 @@ namespace net
 	struct Packet
 	{
 		boost::shared_array<char> _data;
-		boost::uint32_t _size;
+		size_t _size;
 
 		Packet()
 			: _size(0)
 		{
 		}
 
-		Packet(boost::shared_array<char> data, boost::uint32_t size)
+		Packet(boost::shared_array<char> data, size_t size)
 			: _data(data)
 			, _size(size)
 		{

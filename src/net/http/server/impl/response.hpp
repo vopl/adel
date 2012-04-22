@@ -48,8 +48,8 @@ namespace net { namespace http { namespace server { namespace impl
 		virtual bool obtainMoreChunks();
 
 		net::http::impl::ContentFilter *_mostContentFilter;
-		virtual boost::uint32_t filterPush(const Packet &packet, boost::uint32_t offset);
-		virtual boost::uint32_t filterFlush();
+		virtual size_t filterPush(const Packet &packet, size_t offset);
+		virtual size_t filterFlush();
 
 
 	private:

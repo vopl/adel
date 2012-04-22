@@ -16,13 +16,13 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::uint32_t ContentFilterDecodeZlib::filterPush(const Packet &packet, boost::uint32_t offset)
+	size_t ContentFilterDecodeZlib::filterPush(const Packet &packet, size_t offset)
 	{
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::uint32_t ContentFilterDecodeZlib::filterFlush()
+	size_t ContentFilterDecodeZlib::filterFlush()
 	{
 		return _upstream->filterFlush();
 	}

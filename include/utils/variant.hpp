@@ -800,7 +800,7 @@ namespace utils
 			Сериализация портабельна между разрядностью операционной среды (32, 64), 
 			между различными порядками байт (endians).
 		*/
-		boost::shared_array<char> serialize(boost::uint32_t &size) const;
+		boost::shared_array<char> serialize(size_t &size) const;
 
 		/*!	\brief Десериализация
 
@@ -810,7 +810,7 @@ namespace utils
 			\retval true если вариант успешно восстановлен
 			\retval false если вариант не восстановлен (данные испорчены)
 		*/
-		bool deserialize(boost::shared_array<char> data, boost::uint32_t size);
+		bool deserialize(boost::shared_array<char> data, size_t size);
 
 		/*!	\brief Загрузка значения из текстового файла
 			

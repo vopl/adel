@@ -25,14 +25,14 @@ namespace net { namespace http { namespace impl
 		void stop();
 
 	public:
-		boost::uint32_t requestReadGranula() const;
-		boost::uint32_t responseWriteGranula() const;
+		size_t requestReadGranula() const;
+		size_t responseWriteGranula() const;
 
 	private:
 		std::string _host;
 		std::string _port;
-		boost::uint32_t _requestReadGranula;
-		boost::uint32_t _responseWriteGranula;
+		size_t _requestReadGranula;
+		size_t _responseWriteGranula;
 
 		net::Acceptor _acceptor;
 		boost::signals2::connection _connectionOnAccept;

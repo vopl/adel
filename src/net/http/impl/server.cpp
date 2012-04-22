@@ -29,12 +29,12 @@ namespace net { namespace http { namespace impl
 
 		options->addOption(
 			"request.readGranula",
-			po::value<boost::uint32_t>()->default_value(1024),
+			po::value<size_t>()->default_value(1024),
 			"buffer size during read request data");
 
 		options->addOption(
 			"response.writeGranula",
-			po::value<boost::uint32_t>()->default_value(1024),
+			po::value<size_t>()->default_value(1024),
 			"buffer size during write response data");
 
 
@@ -123,8 +123,8 @@ namespace net { namespace http { namespace impl
 		utils::Options &o = *options;
 		_host = o["host"].as<std::string>();
 		_port = o["port"].as<std::string>();
-		_requestReadGranula = o["request.readGranula"].as<boost::uint32_t>();
-		_responseWriteGranula = o["response.writeGranula"].as<boost::uint32_t>();
+		_requestReadGranula = o["request.readGranula"].as<size_t>();
+		_responseWriteGranula = o["response.writeGranula"].as<size_t>();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -157,13 +157,13 @@ namespace net { namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	boost::uint32_t Server::requestReadGranula() const
+	size_t Server::requestReadGranula() const
 	{
 		return _requestReadGranula;
 	}
 
 	////////////////////////////////////////////////////////////////////
-	boost::uint32_t Server::responseWriteGranula() const
+	size_t Server::responseWriteGranula() const
 	{
 		return _responseWriteGranula;
 	}

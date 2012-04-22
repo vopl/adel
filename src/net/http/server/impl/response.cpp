@@ -199,7 +199,7 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		pushLastChunk();
 
-		boost::uint32_t size = _server->responseWriteGranula();
+		size_t size = _server->responseWriteGranula();
 		Packet packet(boost::shared_array<char>(new char[size]), size);
 		pushChunk(packet);
 		return true;
