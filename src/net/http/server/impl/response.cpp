@@ -108,10 +108,12 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 		case ewp_statusLine:
 			statusLine();
+			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
 		case ewp_headers:
+			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
@@ -130,11 +132,15 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		for(; _sendChunk+1 < _chunks.size(); _sendChunk++)
 		{
+			assert(_chunks[_sendChunk]._packet._data);
+
 			async::Future<boost::system::error_code> sendRes = _channel.send(_chunks[_sendChunk]._packet);
 			if(sendRes.data())
 			{
 				return false;
 			}
+
+			_chunks[_sendChunk]._packet._data.reset();
 		}
 
 		if(withTail && !_chunks.empty())
@@ -166,6 +172,15 @@ namespace net { namespace http { namespace server { namespace impl
 		Packet packet(boost::shared_array<char>(new char[size]), size);
 		pushChunk(packet);
 		return true;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::systemHeaders()
+	{
+		header("Server: Apache/2.2.15 (CentOS)", 30);
+		//keep alive
+		//content-encoding
+		//transfer-encoding
 	}
 
 }}}}

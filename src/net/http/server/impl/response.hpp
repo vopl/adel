@@ -43,6 +43,9 @@ namespace net { namespace http { namespace server { namespace impl
 		virtual bool obtainMoreChunks();
 
 	private:
+		void systemHeaders();
+
+	private:
 
 		enum EWritePart// что пишется в текущий момент
 		{
