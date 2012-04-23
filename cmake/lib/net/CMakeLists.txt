@@ -153,6 +153,12 @@ endif()
 include_directories(${OPENSSL_INCLUDE_DIR})
 
 
+include(FindZLIB)
+if(NOT ZLIB_FOUND)
+	message(FATAL_ERROR "zlib required")
+endif()
+include_directories(${ZLIB_INCLUDE_DIR})
+
 
 include_directories(${PSRC})
 
@@ -181,6 +187,7 @@ use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${SRC_IMPL} ${SRC_HTTP} ${SRC_HTTP_IMP
 
 target_link_libraries(${PROJECT} utils async)
 target_link_libraries(${PROJECT} ${OPENSSL_LIBRARIES})
+target_link_libraries(${PROJECT} ${ZLIB_LIBRARIES})
 
 
 if((CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG) AND WINDOWS)

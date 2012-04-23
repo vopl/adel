@@ -6,6 +6,7 @@ namespace net { namespace http
 
 	enum EContentEncoding
 	{
+		ece_unknown,
 		ece_identity,
 		ece_gzip,
 		ece_compress,

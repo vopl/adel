@@ -2,6 +2,8 @@
 #define _NET_HTTP_IMPL_CONTENTFILTERENCODEZLIB_HPP_
 
 #include "net/http/impl/contentFilter.hpp"
+#include "net/http/contentEncoding.hpp"
+#include <zlib.h>
 
 namespace net { namespace http { namespace impl
 {
@@ -9,13 +11,21 @@ namespace net { namespace http { namespace impl
 		: public ContentFilter
 	{
 	public:
-		ContentFilterEncodeZlib(ContentFilter* upstream);
+		ContentFilterEncodeZlib(ContentFilter* upstream, EContentEncoding ece, int level, size_t granula);
 		virtual ~ContentFilterEncodeZlib();
 
 		virtual bool filterPush(const Packet &packet, size_t offset=0);
 		virtual bool filterFlush();
 
 	protected:
+		EContentEncoding	_ece;
+		int 				_level;
+		size_t				_granula;
+
+		z_stream	_z_stream;
+
+		Packet		_output;
+		size_t		_outputOffset;
 	};
 }}}
 #endif

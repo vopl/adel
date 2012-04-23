@@ -2,6 +2,7 @@
 #include "net/http/server/impl/response.hpp"
 #include "net/http/impl/server.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
+#include "net/http/impl/contentFilterEncodeZlib.hpp"
 
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_string.hpp>
@@ -111,12 +112,14 @@ namespace net { namespace http { namespace server { namespace impl
 			statusLine();
 			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
+			_ewp = ewp_body;
 			_bodyPosition = _writePosition;
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
 		case ewp_headers:
 			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
+			_ewp = ewp_body;
 			_bodyPosition = _writePosition;
 			_writePosition = std::copy(data, data+size, _writePosition);
 			break;
@@ -235,10 +238,23 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::systemHeaders()
 	{
 		header("Server: Apache/2.2.15 (CentOS)", 30);
-		header("Transfer-encoding: chunked", 26);
 
-		ContentFilter * ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter);
+		ContentFilter * ch;
+		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter);
 		_mostContentFilter = ch;
+		header("Transfer-Encoding: chunked", 26);
+		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+
+		ch = new net::http::impl::ContentFilterEncodeZlib(
+			_mostContentFilter,
+			net::http::ece_deflate,
+			1,
+			_server->responseWriteGranula());
+
+		_mostContentFilter = ch;
+		header("Content-Encoding: deflate", 25);
+		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+
 
 		//keep alive
 		//content-encoding

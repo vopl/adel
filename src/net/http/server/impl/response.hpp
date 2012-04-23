@@ -48,6 +48,7 @@ namespace net { namespace http { namespace server { namespace impl
 		virtual bool obtainMoreChunks();
 
 		net::http::impl::ContentFilter *_mostContentFilter;
+		std::vector<net::http::impl::ContentFilterPtr> _filterKeeper;
 		virtual bool filterPush(const Packet &packet, size_t offset);
 		virtual bool filterFlush();
 

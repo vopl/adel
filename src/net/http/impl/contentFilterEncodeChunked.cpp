@@ -1,6 +1,16 @@
 #include "pch.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
 
+#include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/karma_string.hpp>
+#include <boost/spirit/include/karma_char.hpp>
+#include <boost/spirit/include/karma_uint.hpp>
+
+#include <boost/spirit/include/phoenix_statement.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_container.hpp>
+
 
 namespace net { namespace http { namespace impl
 {
@@ -25,7 +35,17 @@ namespace net { namespace http { namespace impl
 		{
 			Packet header;
 			header._data.reset(new char[32]);//16+2=18 max
-			header._size = sprintf(header._data.get(), "%zx\r\n", pushSize);
+
+			using namespace boost::spirit::karma;
+			namespace karma = boost::spirit::karma;
+			namespace px = boost::phoenix;
+
+			char *iter = header._data.get();
+			bool genResult = generate(iter, uint_generator<size_t, 16>()[karma::_1 = pushSize]<<"\r\n");
+			assert(genResult);
+			(void)genResult;
+
+			header._size = iter - header._data.get();
 			assert(header._size < 32);
 
 			return
