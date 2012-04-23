@@ -126,32 +126,65 @@ namespace adel
 		_asrv.setupFibers(_fiber_stackSize, _fiber_maxAmount);
 		_asrv.start(_numWorkers);
 
-		{
-			boost::asio::signal_set ss(_asrv.io(), SIGINT, SIGTERM);
-			ss.async_wait(boost::bind(&Manager::onSignal, this, _1, _2));
+		boost::asio::signal_set ss(_asrv.io());
+//Сигнал прерывания (Ctrl-C) с терминала
+#ifdef SIGINT
+		ss.add(SIGINT);
+#endif
 
-			setvbuf(stdin, (char *)NULL, _IONBF, 0);
-			//////////////////////////////////////////////////////////////////////////
-			bool bStop = false;
-			while(!bStop)
+//Сигнал завершения (сигнал по умолчанию для утилиты kill)
+#ifdef SIGTERM
+		ss.add(SIGTERM);
+#endif
+
+//Ctrl-Break sequence
+#ifdef SIGBREAK
+		ss.add(SIGBREAK);
+#endif
+
+//Закрытие терминала
+#ifdef SIGHUP
+		ss.add(SIGHUP);
+#endif
+
+//Безусловное завершение
+#ifdef SIGKILL
+		ss.add(SIGKILL);
+#endif
+
+//Сигнал «Quit» с терминала (Ctrl-\)
+#ifdef SIGQUIT
+		ss.add(SIGQUIT);
+#endif
+
+//Сигнал остановки с терминала (Ctrl-Z)
+#ifdef SIGTSTP
+		ss.add(SIGTSTP);
+#endif
+
+		ss.async_wait(boost::bind(&Manager::onSignal, this, _1, _2));
+
+		setvbuf(stdin, (char *)NULL, _IONBF, 0);
+		//////////////////////////////////////////////////////////////////////////
+		bool bStop = false;
+		while(!bStop)
+		{
+			int ch = fgetc(stdin);
+			switch(ch)
 			{
-				int ch = fgetc(stdin);
-				switch(ch)
-				{
-				case 'e':
-					ILOG("exit request");
-					bStop = true;
-					break;
-				case EOF:
-					bStop = true;
-					break;
-				default:
-					ILOG("?");
-					break;
-				}
-			};
-			ss.cancel();
-		}
+			case 'e':
+				ILOG("exit request");
+				bStop = true;
+				break;
+			case EOF:
+				bStop = true;
+				break;
+			default:
+				ILOG("?");
+				break;
+			}
+		};
+		ss.cancel();
 
 		_asrv.stop();
 	}
