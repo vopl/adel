@@ -12,8 +12,8 @@ namespace net { namespace http { namespace impl
 		ContentFilterEncodeChunked(ContentFilter* upstream);
 		virtual ~ContentFilterEncodeChunked();
 
-		virtual size_t filterPush(const Packet &packet, size_t offset=0);
-		virtual size_t filterFlush();
+		virtual bool filterPush(const Packet &packet, size_t offset=0);
+		virtual bool filterFlush();
 
 	protected:
 		static Packet _chunkFooter;

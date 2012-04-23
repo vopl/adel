@@ -16,14 +16,16 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilterDecodeChunked::filterPush(const Packet &packet, size_t offset)
+	bool ContentFilterDecodeChunked::filterPush(const Packet &packet, size_t offset)
 	{
+		assert(!"not impl");
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilterDecodeChunked::filterFlush()
+	bool ContentFilterDecodeChunked::filterFlush()
 	{
+		assert(!"not impl");
 		return _upstream->filterFlush();
 	}
 

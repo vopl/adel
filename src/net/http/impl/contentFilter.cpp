@@ -16,13 +16,13 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilter::filterPush(const Packet &packet, size_t offset)
+	bool ContentFilter::filterPush(const Packet &packet, size_t offset)
 	{
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilter::filterFlush()
+	bool ContentFilter::filterFlush()
 	{
 		return _upstream->filterFlush();
 	}

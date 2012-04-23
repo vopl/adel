@@ -207,7 +207,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	size_t Response::filterPush(const Packet &packet, size_t offset)
+	bool Response::filterPush(const Packet &packet, size_t offset)
 	{
 		assert(packet._size > offset);
 
@@ -218,18 +218,16 @@ namespace net { namespace http { namespace server { namespace impl
 				packet._size - offset);
 			memcpy(p._data.get(), packet._data.get()+offset, p._size);
 
-			_channel.send(p);
-			return p._size;
+			return _channel.send(p).data()?false:true;
 		}
 
-		_channel.send(packet);
-		return packet._size;
+		return _channel.send(packet).data()?false:true;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	size_t Response::filterFlush()
+	bool Response::filterFlush()
 	{
-		return 0;
+		return true;
 	}
 
 

@@ -16,7 +16,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilterEncodeChunked::filterPush(const Packet &packet, size_t offset)
+	bool ContentFilterEncodeChunked::filterPush(const Packet &packet, size_t offset)
 	{
 		assert(offset < packet._size);
 		size_t pushSize = packet._size - offset;
@@ -29,19 +29,19 @@ namespace net { namespace http { namespace impl
 			assert(header._size < 32);
 
 			return
-				_upstream->filterPush(header, 0) +
-				_upstream->filterPush(packet, offset) +
+				_upstream->filterPush(header, 0) &&
+				_upstream->filterPush(packet, offset) &&
 				_upstream->filterPush(_chunkFooter, 0);
 		}
 
-		return 0;
+		return true;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentFilterEncodeChunked::filterFlush()
+	bool ContentFilterEncodeChunked::filterFlush()
 	{
 		return
-			_upstream->filterPush(_lastChunk, 0) +
+			_upstream->filterPush(_lastChunk, 0) &&
 			_upstream->filterFlush();
 	}
 
