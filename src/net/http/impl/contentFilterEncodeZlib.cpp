@@ -4,6 +4,17 @@
 
 namespace net { namespace http { namespace impl
 {
+	namespace
+	{
+		voidpf zalloc (voidpf opaque, uInt items, uInt size)
+		{
+			return malloc(items*size);
+		}
+		void zfree(voidpf opaque, voidpf address)
+		{
+			return free(address);
+		}
+	}
 	//////////////////////////////////////////////////////////////////////////////
 	ContentFilterEncodeZlib::ContentFilterEncodeZlib(ContentFilter* upstream, EContentEncoding ece, int level, size_t granula)
 		: ContentFilter(upstream)
@@ -30,10 +41,38 @@ namespace net { namespace http { namespace impl
 				}
 			}
 			break;
-		case ece_compress:
-			assert(0);
-			break;
 		case ece_gzip:
+			{
+				memset(&_z_stream, 0, sizeof(_z_stream));
+
+				int i = deflateInit2(
+					&_z_stream,
+					_level,
+					Z_DEFLATED,
+					15+16,
+					8,
+					Z_DEFAULT_STRATEGY);
+				if(Z_OK != i)
+				{
+					ELOG("deflateInit2 failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
+					_ece = ece_unknown;
+					break;
+				}
+
+				/*memset(&_gz_header, 0, sizeof(_gz_header));
+				_gz_header.os = 255;
+				_gz_header.hcrc = true;
+				i = deflateSetHeader(&_z_stream, &_gz_header);
+				if(Z_OK != i)
+				{
+					ELOG("deflateSetHeader failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
+					_ece = ece_unknown;
+					break;
+				}*/
+
+			}
+			break;
+		case ece_compress:
 			assert(0);
 			break;
 		default:
@@ -52,12 +91,10 @@ namespace net { namespace http { namespace impl
 		case ece_identity:
 			break;
 		case ece_deflate:
+		case ece_gzip:
 			deflateEnd(&_z_stream);
 			break;
 		case ece_compress:
-			assert(0);
-			break;
-		case ece_gzip:
 			assert(0);
 			break;
 		default:
@@ -76,6 +113,7 @@ namespace net { namespace http { namespace impl
 		case ece_identity:
 			return _upstream->filterPush(packet, offset);
 		case ece_deflate:
+		case ece_gzip:
 			{
 				_z_stream.next_in = (Bytef*)(packet._data.get() + offset);
 				_z_stream.avail_in = packet._size - offset;
@@ -119,9 +157,6 @@ namespace net { namespace http { namespace impl
 		case ece_compress:
 			assert(0);
 			break;
-		case ece_gzip:
-			assert(0);
-			break;
 		default:
 			assert(!"wtf?");
 			break;
@@ -140,6 +175,7 @@ namespace net { namespace http { namespace impl
 		case ece_identity:
 			return _upstream->filterFlush();
 		case ece_deflate:
+		case ece_gzip:
 			{
 				_z_stream.next_in = NULL;
 				_z_stream.avail_in = 0;
@@ -188,9 +224,6 @@ namespace net { namespace http { namespace impl
 			}
 			break;
 		case ece_compress:
-			assert(0);
-			break;
-		case ece_gzip:
 			assert(0);
 			break;
 		default:

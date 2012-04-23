@@ -23,6 +23,7 @@ namespace net { namespace http { namespace impl
 		size_t				_granula;
 
 		z_stream	_z_stream;
+		//gz_header	_gz_header;
 
 		Packet		_output;
 		size_t		_outputOffset;

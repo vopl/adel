@@ -247,12 +247,12 @@ namespace net { namespace http { namespace server { namespace impl
 
 		ch = new net::http::impl::ContentFilterEncodeZlib(
 			_mostContentFilter,
-			net::http::ece_deflate,
+			net::http::ece_gzip,
 			1,
 			_server->responseWriteGranula());
 
 		_mostContentFilter = ch;
-		header("Content-Encoding: deflate", 25);
+		header("Content-Encoding: gzip", 22);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 
 
