@@ -127,12 +127,13 @@ namespace adel
 		_asrv.start(_numWorkers);
 
 		boost::asio::signal_set ss(_asrv.io());
-//Сигнал прерывания (Ctrl-C) с терминала
+
+//РЎРёРіРЅР°Р» РїСЂРµСЂС‹РІР°РЅРёСЏ (Ctrl-C) СЃ С‚РµСЂРјРёРЅР°Р»Р°
 #ifdef SIGINT
 		ss.add(SIGINT);
 #endif
 
-//Сигнал завершения (сигнал по умолчанию для утилиты kill)
+//РЎРёРіРЅР°Р» Р·Р°РІРµСЂС€РµРЅРёСЏ (СЃРёРіРЅР°Р» РїРѕ СѓРјРѕР»С‡Р°РЅРёСЋ РґР»СЏ СѓС‚РёР»РёС‚С‹ kill)
 #ifdef SIGTERM
 		ss.add(SIGTERM);
 #endif
@@ -142,22 +143,22 @@ namespace adel
 		ss.add(SIGBREAK);
 #endif
 
-//Закрытие терминала
+//Р—Р°РєСЂС‹С‚РёРµ С‚РµСЂРјРёРЅР°Р»Р°
 #ifdef SIGHUP
 		ss.add(SIGHUP);
 #endif
 
-//Безусловное завершение
+//Р‘РµР·СѓСЃР»РѕРІРЅРѕРµ Р·Р°РІРµСЂС€РµРЅРёРµ
 #ifdef SIGKILL
-		ss.add(SIGKILL);
+		//ss.add(SIGKILL);
 #endif
 
-//Сигнал «Quit» с терминала (Ctrl-\)
+//РЎРёРіРЅР°Р» В«QuitВ» СЃ С‚РµСЂРјРёРЅР°Р»Р° (Ctrl-\)
 #ifdef SIGQUIT
 		ss.add(SIGQUIT);
 #endif
 
-//Сигнал остановки с терминала (Ctrl-Z)
+//РЎРёРіРЅР°Р» РѕСЃС‚Р°РЅРѕРІРєРё СЃ С‚РµСЂРјРёРЅР°Р»Р° (Ctrl-Z)
 #ifdef SIGTSTP
 		ss.add(SIGTSTP);
 #endif
