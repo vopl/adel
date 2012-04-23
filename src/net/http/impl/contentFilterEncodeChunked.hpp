@@ -16,6 +16,8 @@ namespace net { namespace http { namespace impl
 		virtual size_t filterFlush();
 
 	protected:
+		static Packet _chunkFooter;
+		static Packet _lastChunk;
 	};
 }}}
 #endif

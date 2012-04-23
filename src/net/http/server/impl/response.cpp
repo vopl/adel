@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "net/http/server/impl/response.hpp"
 #include "net/http/impl/server.hpp"
+#include "net/http/impl/contentFilterEncodeChunked.hpp"
 
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_string.hpp>
@@ -236,6 +237,11 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::systemHeaders()
 	{
 		header("Server: Apache/2.2.15 (CentOS)", 30);
+		header("Transfer-encoding: chunked", 26);
+
+		ContentFilter * ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter);
+		_mostContentFilter = ch;
+
 		//keep alive
 		//content-encoding
 		//transfer-encoding
