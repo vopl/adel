@@ -240,21 +240,22 @@ namespace net { namespace http { namespace server { namespace impl
 		header("Server: Apache/2.2.15 (CentOS)", 30);
 
 		ContentFilter * ch;
-		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter);
+		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _server->responseWriteGranula());
 		_mostContentFilter = ch;
 		header("Transfer-Encoding: chunked", 26);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 
+///*
 		ch = new net::http::impl::ContentFilterEncodeZlib(
 			_mostContentFilter,
-			net::http::ece_gzip,
+			net::http::ece_deflate,
 			1,
 			_server->responseWriteGranula());
 
 		_mostContentFilter = ch;
-		header("Content-Encoding: gzip", 22);
+		header("Content-Encoding: deflate", 25);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
-
+//*/
 
 		//keep alive
 		//content-encoding
