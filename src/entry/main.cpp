@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include <iostream>
+#include <boost/bind.hpp>
 #include "adel/manager.hpp"
 
 #include "async/log.hpp"
@@ -9,6 +10,7 @@
 
 #include "net/http/server/log.hpp"
 #include "net/http/server.hpp"
+#include "net/http/server/handlerFs.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -44,6 +46,8 @@ int main(int argc, const char **argv)
 		desc.add(omanager->desc());
 		utils::OptionsPtr ohttpServer1 = net::http::Server::prepareOptions("httpServer1");
 		desc.add(ohttpServer1->desc());
+		utils::OptionsPtr ohttpServer1HandlerFs = net::http::server::HandlerFs::prepareOptions("httpServer1.handlerFs");
+		desc.add(ohttpServer1HandlerFs->desc());
 
 		//////////////////////////////////////
 		utils::OptionsPtr oasyncLog = async::prepareOptionsLog();
@@ -99,6 +103,7 @@ int main(int argc, const char **argv)
 
 		omanager->store(&parsedOptions1, &parsedOptions2);
 		ohttpServer1->store(&parsedOptions1, &parsedOptions2);
+		ohttpServer1HandlerFs->store(&parsedOptions1, &parsedOptions2);
 
 		if(varsGeneral.count("run"))
 		{
@@ -112,6 +117,9 @@ int main(int argc, const char **argv)
 			adel::Manager manager(omanager);
 			{
 				net::http::Server httpServer1(manager.asrv(), ohttpServer1);
+				net::http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
+
+				httpServer1.connectOnRequest(boost::bind(&net::http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
 
 				//adel::HttpClient httpClient(manager, "global");
 				//adel::Postgres postgres(manager, "global");

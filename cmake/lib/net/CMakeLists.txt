@@ -78,6 +78,7 @@ set(INCLUDE_HTTP_SERVER
 	${PINC}/http/server/log.hpp
 	${PINC}/http/server/request.hpp
 	${PINC}/http/server/response.hpp
+	${PINC}/http/server/handlerFs.hpp
 )
 source_group(include/http/server FILES ${INCLUDE_HTTP_SERVER})
 
@@ -91,6 +92,7 @@ source_group(src/http FILES ${SRC_HTTP})
 set(SRC_HTTP_SERVER
 	${PSRC}/http/server/request.cpp
 	${PSRC}/http/server/response.cpp
+	${PSRC}/http/server/handlerFs.cpp
 )
 source_group(src/http/server FILES ${SRC_HTTP_SERVER})
 
@@ -125,12 +127,14 @@ source_group(src/http/impl FILES ${SRC_HTTP_IMPL_HDR})
 set(SRC_HTTP_SERVER_IMPL
 	${PSRC}/http/server/impl/request.cpp
 	${PSRC}/http/server/impl/response.cpp
+	${PSRC}/http/server/impl/handlerFs.cpp
 )
 source_group(src/http/server/impl FILES ${SRC_HTTP_SERVER_IMPL})
 
 set(SRC_HTTP_SERVER_IMPL_HDR
 	${PSRC}/http/server/impl/request.hpp
 	${PSRC}/http/server/impl/response.hpp
+	${PSRC}/http/server/impl/handlerFs.hpp
 )
 source_group(src/http/server/impl FILES ${SRC_HTTP_SERVER_IMPL_HDR})
 

@@ -91,12 +91,6 @@ namespace net { namespace http { namespace impl
 			"password for sertificate file");
 */
 
-
-		options->addOption(
-			"statics",
-			po::value<std::string>()->default_value("../statics"),
-			"directory with static files");
-
 		return options;
 	}
 
