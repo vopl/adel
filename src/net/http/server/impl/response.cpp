@@ -213,18 +213,6 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::filterPush(const Packet &packet, size_t offset)
 	{
-		return outputAccumulate(packet, offset);
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::filterFlush()
-	{
-		return outputFlush();
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::outputAccumulate(const Packet &packet, size_t offset)
-	{
 		/*
 		if(offset)
 		{
@@ -253,7 +241,7 @@ namespace net { namespace http { namespace server { namespace impl
 				_output._size += spaceSize;
 				offset += spaceSize;
 				dataSize -= spaceSize;
-				if(!outputFlush())
+				if(!filterFlush())
 				{
 					return false;
 				}
@@ -272,7 +260,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::outputFlush()
+	bool Response::filterFlush()
 	{
 		//return true;
 
@@ -290,19 +278,20 @@ namespace net { namespace http { namespace server { namespace impl
 		return true;
 	}
 
-
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
 		header("Server: Apache/2.2.15 (CentOS)", 30);
 
 		ContentFilter * ch;
+/*
 		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
 		_mostContentFilter = ch;
 		header("Transfer-Encoding: chunked", 26);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+*/
 
-///*
+/*
 		ch = new net::http::impl::ContentFilterEncodeZlib(
 			_mostContentFilter,
 			net::http::ece_deflate,

@@ -53,8 +53,6 @@ namespace net { namespace http { namespace server { namespace impl
 		virtual bool filterFlush();
 
 	private:
-		bool outputAccumulate(const Packet &packet, size_t offset);
-		bool outputFlush();
 		size_t _outputGranula;
 		Packet _output;
 
