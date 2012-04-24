@@ -43,7 +43,7 @@ namespace net { namespace http { namespace server { namespace impl
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
 
-		void pushLastChunk();
+		void pushLastChunk2Filter();
 
 		virtual bool obtainMoreChunks();
 
@@ -51,6 +51,12 @@ namespace net { namespace http { namespace server { namespace impl
 		std::vector<net::http::impl::ContentFilterPtr> _filterKeeper;
 		virtual bool filterPush(const Packet &packet, size_t offset);
 		virtual bool filterFlush();
+
+	private:
+		bool outputAccumulate(const Packet &packet, size_t offset);
+		bool outputFlush();
+		size_t _outputGranula;
+		Packet _output;
 
 
 	private:

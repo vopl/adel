@@ -17,11 +17,15 @@ namespace net { namespace http { namespace impl
 
 	protected:
 		size_t _granula;
-		Packet _output;
-		size_t _outputOffset;
+		struct SChunk
+		{
+			Packet	_packet;
+			size_t	_offset;
+		};
+		std::vector<SChunk> _chunks;
+		size_t _size;
 	protected:
-		bool push(const char *data, size_t size);
-		bool flush(bool finish = false);
+		bool push2Upstream(bool finish = false);
 	};
 }}}
 #endif

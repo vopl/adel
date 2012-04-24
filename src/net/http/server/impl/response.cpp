@@ -24,6 +24,7 @@ namespace net { namespace http { namespace server { namespace impl
 		, _channel(channel)
 		, _ewp(ewp_statusLine)
 		, _mostContentFilter(this)
+		, _outputGranula(_server->responseWriteGranula())
 	{
 		if(obtainMoreChunks())
 		{
@@ -150,7 +151,7 @@ namespace net { namespace http { namespace server { namespace impl
 			lastChunk._packet._size = _writePosition.absolutePosition() - lastChunk._offset;
 			if(lastChunk._packet._size)
 			{
-				pushLastChunk();
+				pushLastChunk2Filter();
 			}
 		}
 		_mostContentFilter->filterFlush();
@@ -161,7 +162,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::pushLastChunk()
+	void Response::pushLastChunk2Filter()
 	{
 		if(_chunks.empty())
 		{
@@ -201,9 +202,9 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::obtainMoreChunks()
 	{
-		pushLastChunk();
+		pushLastChunk2Filter();
 
-		size_t size = _server->responseWriteGranula();
+		size_t size = _outputGranula;
 		Packet packet(boost::shared_array<char>(new char[size]), size);
 		pushChunk(packet);
 		return true;
@@ -212,24 +213,67 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::filterPush(const Packet &packet, size_t offset)
 	{
-		assert(packet._size > offset);
-
-		if(offset)
-		{
-			Packet p(
-				boost::shared_array<char>(new char[packet._size - offset]),
-				packet._size - offset);
-			memcpy(p._data.get(), packet._data.get()+offset, p._size);
-
-			return _channel.send(p).data()?false:true;
-		}
-
-		return _channel.send(packet).data()?false:true;
+		return outputAccumulate(packet, offset);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::filterFlush()
 	{
+		return outputFlush();
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	bool Response::outputAccumulate(const Packet &packet, size_t offset)
+	{
+		assert(packet._size > offset);
+		size_t dataSize = packet._size - offset;
+		while(dataSize)
+		{
+			if(!_output._data)
+			{
+				_output._data.reset(new char[_outputGranula]);
+				_output._size = 0;
+			}
+
+			size_t spaceSize = _outputGranula - _output._size;
+			if(dataSize >= spaceSize)
+			{
+				memcpy(_output._data.get()+_output._size, packet._data.get()+offset, spaceSize);
+				_output._size += spaceSize;
+				offset += spaceSize;
+				dataSize -= spaceSize;
+				if(!outputFlush())
+				{
+					return false;
+				}
+			}
+			else
+			{
+				memcpy(_output._data.get()+_output._size, packet._data.get()+offset, dataSize);
+				_output._size += dataSize;
+				//offset += dataSize;
+				//dataSize -= dataSize;
+				return true;
+			}
+
+		}
+		return true;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	bool Response::outputFlush()
+	{
+		if(_output._data)
+		{
+			assert(_output._size);
+			if(_channel.send(_output).data())
+			{
+				return false;
+			}
+			_output._data.reset();
+			_output._size = 0;
+		}
+
 		return true;
 	}
 
@@ -240,7 +284,7 @@ namespace net { namespace http { namespace server { namespace impl
 		header("Server: Apache/2.2.15 (CentOS)", 30);
 
 		ContentFilter * ch;
-		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _server->responseWriteGranula());
+		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
 		_mostContentFilter = ch;
 		header("Transfer-Encoding: chunked", 26);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
@@ -250,7 +294,7 @@ namespace net { namespace http { namespace server { namespace impl
 			_mostContentFilter,
 			net::http::ece_deflate,
 			1,
-			_server->responseWriteGranula());
+			_outputGranula);
 
 		_mostContentFilter = ch;
 		header("Content-Encoding: deflate", 25);

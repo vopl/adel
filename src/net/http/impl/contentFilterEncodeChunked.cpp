@@ -5,6 +5,7 @@
 #include <boost/spirit/include/karma_string.hpp>
 #include <boost/spirit/include/karma_uint.hpp>
 
+#include <boost/foreach.hpp>
 
 
 namespace net { namespace http { namespace impl
@@ -13,6 +14,7 @@ namespace net { namespace http { namespace impl
 	ContentFilterEncodeChunked::ContentFilterEncodeChunked(ContentFilter* upstream, size_t granula)
 		: ContentFilter(upstream)
 		, _granula(granula)
+		, _size(0)
 	{
 	}
 
@@ -25,116 +27,86 @@ namespace net { namespace http { namespace impl
 	bool ContentFilterEncodeChunked::filterPush(const Packet &packet, size_t offset)
 	{
 		assert(offset < packet._size);
-		return push(packet._data.get() + offset, packet._size - offset);
+
+		size_t packetSize = packet._size - offset;
+
+		SChunk chunk = {packet, offset};
+		_chunks.push_back(chunk);
+		_size += packet._size - offset;
+
+		if(_size >= _granula)
+		{
+			if(!push2Upstream(false))
+			{
+				return false;
+			}
+		}
+		return true;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
 	bool ContentFilterEncodeChunked::filterFlush()
 	{
-		if(!flush(true))
+		if(!push2Upstream(true))
 		{
 			return false;
 		}
 		return _upstream->filterFlush();
 	}
 
-	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeChunked::push(const char *data, size_t size)
-	{
-		while(size)
-		{
-			if(!_output._data)
-			{
-				_output._data.reset(new char[32+2 + _granula + 5]);
-				_output._size = 32+2 + _granula;
-				_outputOffset = 32+2;
-			}
 
-			size_t spaceAmount = _output._size - _outputOffset;
-			if(spaceAmount > size)
-			{
-				memcpy(_output._data.get() + _outputOffset, data, size);
-				_outputOffset += size;
-				//size = 0;
-				return true;
-			}
-			else
-			{
-				memcpy(_output._data.get() + _outputOffset, data, spaceAmount);
-				_outputOffset += spaceAmount;
-				size -= spaceAmount;
-				if(!flush())
-				{
-					return false;
-				}
-			}
+	namespace
+	{
+		Packet initPacket(const char * data)
+		{
+			Packet res;
+
+			res._size = strlen(data);
+			res._data.reset(new char[res._size]);
+			memcpy(res._data.get(), data, res._size);
+
+			return res;
 		}
-		return true;
+		static Packet lastChunkPacket = initPacket("0\r\n");
 	}
-
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeChunked::flush(bool finish)
+	bool ContentFilterEncodeChunked::push2Upstream(bool finish)
 	{
-		if(finish && !_output._data)
+		if(_size)
 		{
-			_output._data.reset(new char[3]);
-			_output._size = 3;
-			char *iter = _output._data.get();
-			*iter++ = '0';
-			*iter++ = '\r';
-			*iter++ = '\n';
-			if(!_upstream->filterPush(_output))
+			Packet header(boost::shared_array<char>(new char[34]), 34);
+			char *iter = header._data.get();
+
+			bool genResult = boost::spirit::karma::generate(iter, boost::spirit::karma::uint_generator<size_t, 16>()[boost::spirit::karma::_1 = _size]<<"\r\n");
+			assert(genResult);
+			(void)genResult;
+
+			header._size = iter - header._data.get();
+
+			if(!_upstream->filterPush(header, 0))
 			{
 				return false;
 			}
 
-			_output._data.reset();
-			_output._size = 0;
-			return true;
+			BOOST_FOREACH(SChunk &chunk, _chunks)
+			{
+				if(!_upstream->filterPush(chunk._packet, chunk._offset))
+				{
+					return false;
+				}
+			}
+			_chunks.clear();
+			_size = 0;
 		}
-		char *iter = _output._data.get() + _outputOffset;
-		*iter++ = '\r';
-		*iter++ = '\n';
+
 		if(finish)
 		{
-			*iter++ = '0';
-			*iter++ = '\r';
-			*iter++ = '\n';
-		}
-		_output._size = iter - _output._data.get();
-
-		size_t chunkSize = _outputOffset - (32+2);
-
-		size_t headerSize = 2;
-		if(chunkSize)
-		{
-			for(; chunkSize; chunkSize >>= 4)
+			if(!_upstream->filterPush(lastChunkPacket, 0))
 			{
-				headerSize++;
+				return false;
 			}
 		}
-		else
-		{
-			headerSize++;
-		}
-		chunkSize = _outputOffset - (32+2);
 
-		iter = _output._data.get() + 32+2 - headerSize;
-
-		bool genResult = boost::spirit::karma::generate(iter, boost::spirit::karma::uint_generator<size_t, 16>()[boost::spirit::karma::_1 = chunkSize]<<"\r\n");
-		assert(genResult);
-		(void)genResult;
-
-		assert(32+2 == iter - _output._data.get());
-
-		if(!_upstream->filterPush(_output, 32+2 - headerSize))
-		{
-			return false;
-		}
-
-		_output._data.reset();
-		_output._size = 0;
-		_outputOffset = 0;
 		return true;
 	}
 }}}
