@@ -225,6 +225,17 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::outputAccumulate(const Packet &packet, size_t offset)
 	{
+		/*
+		if(offset)
+		{
+			Packet p(boost::shared_array<char>(new char[packet._size - offset]), packet._size - offset);
+			memcpy(p._data.get(), packet._data.get()+offset, p._size);
+			return _channel.send(p).data()?false:true;
+
+		}
+		return _channel.send(packet).data()?false:true;
+		*/
+
 		assert(packet._size > offset);
 		size_t dataSize = packet._size - offset;
 		while(dataSize)
@@ -263,6 +274,8 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::outputFlush()
 	{
+		//return true;
+
 		if(_output._data)
 		{
 			assert(_output._size);
