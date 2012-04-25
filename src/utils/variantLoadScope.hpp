@@ -9,7 +9,12 @@ namespace utils
 {
 	class VariantLoadScope
 	{
-		std::deque<Variant>			_stack;
+		struct StackFrame
+		{
+			Variant			_variant;
+			std::string		_mapKey;
+		};
+		std::deque<StackFrame>		_stack;
 
 		boost::filesystem::path _fileName;
 		const char		*_first;
@@ -17,8 +22,6 @@ namespace utils
 		std::string		*_errors;
 		bool			_errorWas;
 
-
-		std::string		_mapKey;
 
 	public:
 		//////////////////////////////////////////////////////////////////////////

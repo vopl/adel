@@ -25,6 +25,9 @@ namespace net { namespace http { namespace server { namespace impl
 		, _ewp(ewp_statusLine)
 		, _mostContentFilter(this)
 		, _outputGranula(_server->responseWriteGranula())
+		, _bodySize((size_t)-1)
+		, _bodyCompressLevel(1)
+		, _bodyCompressBuffer(_server->responseWriteGranula())
 	{
 		if(obtainMoreChunks())
 		{
@@ -173,6 +176,20 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::setBodySize(size_t size)
+	{
+		_bodySize = size;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::setBodyCompress(int level, size_t buffer)
+	{
+		_bodyCompressLevel = level;
+		_bodyCompressBuffer = buffer;
+	}
+
+
+	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::pushLastChunk2Filter()
 	{
 		if(_chunks.empty())
@@ -294,6 +311,8 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		header("Server: Apache/2.2.15 (CentOS)", 30);
 
+		//TODO: Date
+
 		ContentFilter * ch;
 /*
 		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
@@ -306,8 +325,8 @@ namespace net { namespace http { namespace server { namespace impl
 		ch = new net::http::impl::ContentFilterEncodeZlib(
 			_mostContentFilter,
 			net::http::ece_deflate,
-			1,
-			_outputGranula);
+			_bodyCompressLevel,
+			_bodyCompressBuffer);
 
 		_mostContentFilter = ch;
 		header("Content-Encoding: deflate", 25);

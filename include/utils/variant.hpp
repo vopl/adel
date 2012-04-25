@@ -710,7 +710,7 @@ namespace utils
 			\retval копия элемента, если ключ найден
 			\retval NULL, если ключ не найден
 		*/
-		Variant operator[](const std::string &key);
+		Variant operator[](const std::string &key) const;
 
 		/*!	\brief Разыменование элемента ассоциативного массива
 
@@ -725,7 +725,7 @@ namespace utils
 			\retval копия элемента, если ключ найден
 			\retval NULL, если ключ не найден
 		*/
-		Variant operator[](const char *key);
+		Variant operator[](const char *key) const;
 
 		/*!	\brief Разыменование элемента ассоциативного массива или массива
 
@@ -742,7 +742,7 @@ namespace utils
 			\retval копия элемента, если ключ найден
 			\retval NULL, если ключ не найден
 		*/
-		Variant operator[](const Variant &key);
+		Variant operator[](const Variant &key) const;
 
 		/*!	\brief Разыменование элемента массива
 
@@ -755,7 +755,7 @@ namespace utils
 			\retval копия элемента, если индекс нормальный
 			\retval NULL, если индекс вне допустимого диапазона
 		*/
-		Variant operator[](size_t idx);
+		Variant operator[](size_t idx) const;
 
 		/*!	\brief Разыменование элемента массива
 
@@ -768,7 +768,7 @@ namespace utils
 			\retval копия элемента, если индекс нормальный
 			\retval NULL, если индекс вне допустимого диапазона
 		*/
-		Variant operator[](int idx);
+		Variant operator[](int idx) const;
 
 	public:
 		/*!	\brief Отношение порядка

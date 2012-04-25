@@ -39,6 +39,11 @@ namespace net { namespace http { namespace server { namespace impl
 
 		bool flush();
 
+	public:
+		void setBodySize(size_t size);
+		void setBodyCompress(int level, size_t buffer=0);
+
+
 	private:
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
@@ -56,6 +61,9 @@ namespace net { namespace http { namespace server { namespace impl
 		size_t _outputGranula;
 		Packet _output;
 
+		size_t	_bodySize;
+		int		_bodyCompressLevel;
+		size_t	_bodyCompressBuffer;
 
 	private:
 		void systemHeaders();

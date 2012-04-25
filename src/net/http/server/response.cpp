@@ -79,4 +79,16 @@ namespace net { namespace http { namespace server
 		return _impl->flush();
 	}
 
+	/////////////////////////////////////////////////////////////////////
+	void Response::setBodySize(size_t size)
+	{
+		return _impl->setBodySize(size);
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	void Response::setBodyCompress(int level, size_t buffer)
+	{
+		return _impl->setBodyCompress(level, buffer);
+	}
+
 }}}

@@ -37,6 +37,10 @@ namespace net { namespace http { namespace server
 		Response &body(const std::string &line);
 
 		bool flush();
+
+	public:
+		void setBodySize(size_t size);
+		void setBodyCompress(int level, size_t buffer=0);
 	};
 }}}
 

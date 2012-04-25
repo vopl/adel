@@ -21,7 +21,7 @@ namespace utils
 		, _errors(errors)
 		, _errorWas(false)
 	{
-		_stack.push_back(Variant());
+		_stack.push_back(StackFrame());
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -34,7 +34,7 @@ namespace utils
 	{
 		assert(!_errorWas);
 		assert(_stack.size() == 1);
-		return _stack.back();
+		return _stack.back()._variant;
 	}
 
 
@@ -140,7 +140,7 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back().setNull<void>(true);
+		_stack.back()._variant.setNull<void>(true);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -149,7 +149,7 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back() = content;
+		_stack.back()._variant = content;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -158,7 +158,7 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back() = content;
+		_stack.back()._variant = content;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -167,7 +167,7 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back() = content;
+		_stack.back()._variant = content;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -239,14 +239,14 @@ namespace utils
 				boost::uint8_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_atoun(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			else
 			{
 				boost::int8_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_aton(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			break;
 		case 16:
@@ -255,14 +255,14 @@ namespace utils
 				boost::uint16_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_atoun(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			else
 			{
 				boost::int16_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_aton(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			break;
 		case 32:
@@ -271,14 +271,14 @@ namespace utils
 				boost::uint32_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_atoun(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			else
 			{
 				boost::int32_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_aton(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			break;
 		case 64:
@@ -287,14 +287,14 @@ namespace utils
 				boost::uint64_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_atoun(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			else
 			{
 				boost::int64_t n;
 				if(radix16)	_xtoun(begin, n);
 				else		_aton(begin, n);
-				_stack.back() = n;
+				_stack.back()._variant = n;
 			}
 			break;
 		}
@@ -307,7 +307,7 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back() = b;
+		_stack.back()._variant = b;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -329,7 +329,7 @@ namespace utils
 		*(boost::uint16_t *)(u.begin()+4) = fixEndian(*(boost::uint16_t *)(u.begin()+4));
 		*(boost::uint16_t *)(u.begin()+6) = fixEndian(*(boost::uint16_t *)(u.begin()+6));
 
-		_stack.back() = u;
+		_stack.back()._variant = u;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -340,7 +340,7 @@ namespace utils
 
 		boost::gregorian::date gd(d._year, d._month, d._day);
 
-		_stack.back() = gd;
+		_stack.back()._variant = gd;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -355,7 +355,7 @@ namespace utils
 			t._second);
 		ptd += boost::posix_time::microseconds(t._microsec);
 
-		_stack.back() = ptd;
+		_stack.back()._variant = ptd;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -372,7 +372,7 @@ namespace utils
 			dt._second);
 		ptd += boost::posix_time::microseconds(dt._microsec);
 
-		_stack.back() = boost::posix_time::ptime(gd, ptd);
+		_stack.back()._variant = boost::posix_time::ptime(gd, ptd);
 	}
 
 
@@ -383,8 +383,8 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back().as<Variant::DequeVariant>(true);
-		_stack.push_back(Variant());
+		_stack.back()._variant.as<Variant::DequeVariant>(true);
+		_stack.push_back(StackFrame());
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -394,8 +394,8 @@ namespace utils
 		assert(!_stack.empty());
 
 		Variant v;
-		v.swap(_stack.back());
-		_stack[_stack.size()-2].as<Variant::DequeVariant>().push_back(v);
+		v.swap(_stack.back()._variant);
+		_stack[_stack.size()-2]._variant.as<Variant::DequeVariant>().push_back(v);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -413,8 +413,8 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 
-		_stack.back().as<Variant::MapStringVariant>(true);
-		_stack.push_back(Variant());
+		_stack.back()._variant.as<Variant::MapStringVariant>(true);
+		_stack.push_back(StackFrame());
 
 	}
 
@@ -424,17 +424,19 @@ namespace utils
 		if(_errorWas) return;
 		assert(!_stack.empty());
 		
-		_mapKey = content;
+		StackFrame &sf = _stack[_stack.size()-2];
+		sf._mapKey = content;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	void VariantLoadScope::map_push()
 	{
 		if(_errorWas) return;
-		assert(!_stack.empty());
+		assert(_stack.size()>1);
 
-		_stack[_stack.size()-2].as<Variant::MapStringVariant>()[_mapKey].swap(_stack.back());
-		_stack.back().setNull<void>(true);
+		StackFrame &sf = _stack[_stack.size()-2];
+		sf._variant.as<Variant::MapStringVariant>()[sf._mapKey].swap(_stack.back()._variant);
+		_stack.back()._variant.setNull<void>(true);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -463,7 +465,7 @@ namespace utils
 		}
 
 		std::string erorros;
-		if(!_stack.back().load(bpath.string().c_str(), &erorros))
+		if(!_stack.back()._variant.load(bpath.string().c_str(), &erorros))
 		{
 			_errorWas = true;
 			if(_errors)

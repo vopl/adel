@@ -381,7 +381,7 @@ ENUM_VARIANT_TYPES
 
 
 	//////////////////////////////////////////////////////////////////////////
-	Variant Variant::operator[](const std::string &key)
+	Variant Variant::operator[](const std::string &key) const
 	{
 		Variant v;
 		CIMPL->containerDereference(v, key);
@@ -389,7 +389,7 @@ ENUM_VARIANT_TYPES
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	Variant Variant::operator[](const char *key)
+	Variant Variant::operator[](const char *key) const
 	{
 		Variant v;
 		CIMPL->containerDereference(v, std::string(key));
@@ -397,7 +397,7 @@ ENUM_VARIANT_TYPES
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	Variant Variant::operator[](const Variant &key)
+	Variant Variant::operator[](const Variant &key) const
 	{
 		Variant v;
 		CIMPL->containerDereference(v, key);
@@ -405,7 +405,7 @@ ENUM_VARIANT_TYPES
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	Variant Variant::operator[](size_t idx)
+	Variant Variant::operator[](size_t idx) const
 	{
 		Variant v;
 		CIMPL->containerDereference(v, idx);
@@ -413,7 +413,7 @@ ENUM_VARIANT_TYPES
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	Variant Variant::operator[](int idx)
+	Variant Variant::operator[](int idx) const
 	{
 		Variant v;
 		CIMPL->containerDereference(v, (size_t)idx);
