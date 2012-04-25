@@ -116,7 +116,7 @@ namespace net { namespace http { namespace impl
 		case ece_gzip:
 			{
 				_z_stream.next_in = (Bytef*)(packet._data.get() + offset);
-				_z_stream.avail_in = packet._size - offset;
+				_z_stream.avail_in = (uInt)(packet._size - offset);
 
 				while(_z_stream.avail_in)
 				{
@@ -127,7 +127,7 @@ namespace net { namespace http { namespace impl
 						_output._size = _granula;
 					}
 					_z_stream.next_out = (Bytef*)(_output._data.get() + _outputOffset);
-					_z_stream.avail_out = _output._size - _outputOffset;
+					_z_stream.avail_out = (uInt)(_output._size - _outputOffset);
 
 					int i = deflate(&_z_stream, Z_NO_FLUSH);
 
@@ -189,7 +189,7 @@ namespace net { namespace http { namespace impl
 						_output._size = _granula;
 					}
 					_z_stream.next_out = (Bytef*)(_output._data.get() + _outputOffset);
-					_z_stream.avail_out = _output._size - _outputOffset;
+					_z_stream.avail_out = (uInt)(_output._size - _outputOffset);
 
 					int i = deflate(&_z_stream, Z_FINISH);
 
