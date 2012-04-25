@@ -33,15 +33,15 @@ namespace net { namespace http { namespace server { namespace impl
 		bool ignoreBody();
 
 		//method uri version
-		Segment requestLine_() const;
+		const Segment &requestLine_() const;
 
-		EMethod method() const;
-		Segment method_() const;
+		const EMethod &method() const;
+		const Segment &method_() const;
 
-		Version version() const;
-		Segment version_() const;
+		const Version &version() const;
+		const Segment &version_() const;
 
-		Segment uri_() const;
+		const Segment &uri_() const;
 
 	public:
 		ResponsePtr response();

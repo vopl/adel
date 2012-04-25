@@ -170,37 +170,37 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	net::Message::Segment Request::requestLine_() const
+	const net::Message::Segment &Request::requestLine_() const
 	{
 		return _requestLine_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	EMethod Request::method() const
+	const EMethod &Request::method() const
 	{
 		return _method;
 	}
 
 	//////////////////////////////////////////////////////////////
-	net::Message::Segment Request::method_() const
+	const net::Message::Segment &Request::method_() const
 	{
 		return _method_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	Version Request::version() const
+	const Version &Request::version() const
 	{
 		return _version;
 	}
 
 	//////////////////////////////////////////////////////////////
-	net::Message::Segment Request::version_() const
+	const net::Message::Segment &Request::version_() const
 	{
 		return _version_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	net::Message::Segment Request::uri_() const
+	const net::Message::Segment &Request::uri_() const
 	{
 		return _uri_;
 	}

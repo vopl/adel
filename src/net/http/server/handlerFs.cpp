@@ -23,7 +23,7 @@ namespace net { namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	void HandlerFs::onRequest(const Request &r)
+	void HandlerFs::onRequest(Request r)
 	{
 		return _impl->onRequest(r);
 	}

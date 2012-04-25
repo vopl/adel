@@ -115,17 +115,26 @@ namespace net { namespace http { namespace server { namespace impl
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
 			_ewp = ewp_body;
 			_bodyPosition = _writePosition;
-			_writePosition = std::copy(data, data+size, _writePosition);
+			if(size)
+			{
+				_writePosition = std::copy(data, data+size, _writePosition);
+			}
 			break;
 		case ewp_headers:
 			systemHeaders();
 			_writePosition = std::copy(crlf, crlf+2, _writePosition);
 			_ewp = ewp_body;
 			_bodyPosition = _writePosition;
-			_writePosition = std::copy(data, data+size, _writePosition);
+			if(size)
+			{
+				_writePosition = std::copy(data, data+size, _writePosition);
+			}
 			break;
 		case ewp_body:
-			_writePosition = std::copy(data, data+size, _writePosition);
+			if(size)
+			{
+				_writePosition = std::copy(data, data+size, _writePosition);
+			}
 			break;
 		default:
 			assert(0);
@@ -136,6 +145,8 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::flush()
 	{
+		body(NULL, 0);
+
 		if(_chunks.empty())
 		{
 			return true;

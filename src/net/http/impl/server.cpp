@@ -201,7 +201,7 @@ namespace net { namespace http { namespace impl
 				Response response = request.response();
 				response
 					.statusCode(esc_200)
-					.header("Allow: GET, POST");
+					.header("Allow: GET");
 				if(!response.flush())
 				{
 					//connection lost? ok
@@ -209,7 +209,8 @@ namespace net { namespace http { namespace impl
 			}
 			return;
 		case em_GET:
-			{
+			_onRequest(request);
+			/*{
 				Response response = request.response();
 				response
 					.statusCode(esc_200)
@@ -220,12 +221,12 @@ namespace net { namespace http { namespace impl
 				{
 					//connection lost? ok
 				}
-			}
+			}*/
 
 			break;
-		case em_POST:
+		/*case em_POST:
 			if(!request.readBody()) return;
-			break;
+			break;*/
 		}
 
 

@@ -34,14 +34,16 @@ namespace net { namespace http { namespace server
 		bool readBody();
 		bool ignoreBody();
 
+		const Segment &requestLine_() const;
+
 		//method uri version
-		EMethod method() const;
-		Segment method_() const;
+		const EMethod &method() const;
+		const Segment &method_() const;
 
-		Version version() const;
-		Segment version_() const;
+		const Version &version() const;
+		const Segment &version_() const;
 
-		Segment uri_() const;
+		const Segment &uri_() const;
 
 		//headers
 

@@ -23,7 +23,7 @@ namespace net { namespace http { namespace server
 		HandlerFs(utils::OptionsPtr options);
 		~HandlerFs();
 		
-		void onRequest(const Request &r);
+		void onRequest(Request r);
 	};
 }}}
 #endif

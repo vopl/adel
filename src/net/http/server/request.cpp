@@ -44,31 +44,37 @@ namespace net { namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
-	EMethod Request::method() const
+	const Message::Segment &Request::requestLine_() const
+	{
+		return _impl->requestLine_();
+	}
+
+	//////////////////////////////////////////////////////////////
+	const EMethod &Request::method() const
 	{
 		return _impl->method();
 	}
 
 	//////////////////////////////////////////////////////////////
-	Message::Segment Request::method_() const
+	const Message::Segment &Request::method_() const
 	{
 		return _impl->method_();
 	}
 
 	//////////////////////////////////////////////////////////////
-	Version Request::version() const
+	const Version &Request::version() const
 	{
 		return _impl->version();
 	}
 
 	//////////////////////////////////////////////////////////////
-	Message::Segment Request::version_() const
+	const Message::Segment &Request::version_() const
 	{
 		return _impl->version_();
 	}
 
 	//////////////////////////////////////////////////////////////
-	Message::Segment Request::uri_() const
+	const Message::Segment &Request::uri_() const
 	{
 		return _impl->uri_();
 	}

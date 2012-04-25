@@ -6,4 +6,4 @@ syntax: regexp
 ^RelWithDebInfo/
 ^MinSizeRel/
 ^log/
-
+^statics/

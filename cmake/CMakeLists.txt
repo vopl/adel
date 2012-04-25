@@ -6,6 +6,12 @@ if(EXISTS "${CMAKE_CURRENT_BINARY_DIR}/local.cmake")
 endif()
 
 
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Release)
+endif()
+
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 cmake_minimum_required(VERSION 2.6)
 
 project(adel)
