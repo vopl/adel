@@ -3,6 +3,7 @@
 #include "net/http/impl/server.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
 #include "net/http/impl/contentFilterEncodeZlib.hpp"
+#include "net/http/headerName.hpp"
 
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_string.hpp>
@@ -13,17 +14,6 @@
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_container.hpp>
 
-#include "net/http/headerName.hpp"
-
-namespace
-{
-size_t h1 = net::http::hn::date::hash;
-const char *csz = net::http::hn::date::csz();
-const char *cszlc = net::http::hn::date::cszlc();
-
-const std::string &str = net::http::hn::date::str();
-const std::string &strlc = net::http::hn::date::strlc();
-}
 
 namespace net { namespace http { namespace server { namespace impl
 {
@@ -374,8 +364,8 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
-		//header("Server: Apache/2.2.15 (CentOS)", 30);
-		header("Date", HeaderValue<Date>(time(NULL)));
+		header(hn::server::str()+": Apache/2.2.15 (CentOS)");
+		header(hn::date::str(), HeaderValue<Date>(time(NULL)));
 
 		//TODO: Date
 
@@ -383,7 +373,7 @@ namespace net { namespace http { namespace server { namespace impl
 /*
 		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
 		_mostContentFilter = ch;
-		header("Transfer-Encoding: chunked", 26);
+		header(hn::transferEncoding.str()+": chunked", 26);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 */
 
@@ -395,7 +385,7 @@ namespace net { namespace http { namespace server { namespace impl
 			_bodyCompressBuffer);
 
 		_mostContentFilter = ch;
-		header("Content-Encoding: deflate", 25);
+		header(hn::contentEncoding.str()+": deflate", 25);
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 //*/
 

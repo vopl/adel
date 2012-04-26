@@ -42,6 +42,9 @@ namespace net { namespace http { namespace server { namespace impl
 		template <class HeaderValueTag>
 		void header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 
+		template <class HeaderValueTag>
+		void header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
+
 		void body(const char *data, size_t size);
 
 		bool flush();
@@ -106,6 +109,14 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
+		value.generate(outIter);
+		endWriteHeader(outIter);
+	}
+
+	template <class HeaderValueTag>
+	void Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		Message::Iterator outIter = beginWriteHeader(name.data(), name.length());
 		value.generate(outIter);
 		endWriteHeader(outIter);
 	}

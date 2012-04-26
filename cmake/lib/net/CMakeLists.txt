@@ -204,10 +204,6 @@ target_link_libraries(${PROJECT} ${OPENSSL_LIBRARIES})
 target_link_libraries(${PROJECT} ${ZLIB_LIBRARIES})
 
 
-if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
-    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wno-multichar)
-endif()
-
 if((CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG) AND WINDOWS)
 	target_link_libraries(${PROJECT} Mswsock.lib)
 endif()

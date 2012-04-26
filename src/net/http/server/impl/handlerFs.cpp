@@ -157,7 +157,7 @@ namespace net { namespace http { namespace server { namespace impl
 		net::http::server::Response response = r.response();
 		response
 			.statusCode(esc_200)
-			.header("Content-Type: "+extInfo._mimeType);
+			.header(hn::contentType::str()+": "+extInfo._mimeType);
 
 		if(_allowETag)
 		{
@@ -165,7 +165,7 @@ namespace net { namespace http { namespace server { namespace impl
 		}
 		if(_allowLastModified)
 		{
-			response.header("Last-Modified", HeaderValue<Date>(st.st_mtime));
+			response.header(hn::lastModified::str(), HeaderValue<Date>(st.st_mtime));
 		}
 
 		response.setBodySize(st.st_size);

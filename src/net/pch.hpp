@@ -31,4 +31,21 @@
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 
+#include <boost/mpl/string.hpp>
+#include <boost/mpl/fold.hpp>
+#include <boost/mpl/size_t.hpp>
+#include <boost/mpl/vector_c.hpp>
+#include <boost/mpl/char.hpp>
+#include <boost/mpl/plus.hpp>
+#include <boost/mpl/and.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/mpl/greater_equal.hpp>
+#include <boost/mpl/less_equal.hpp>
+
+#include <boost/functional/hash.hpp>
+#include <string>
+
+#include "net/http/headerName.hpp"
+
+
 #endif

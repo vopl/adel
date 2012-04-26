@@ -6,12 +6,24 @@
 
 
 
+NET_HTTP_HN_INSTANCE(date, 'D','a','t','e')
+NET_HTTP_HN_INSTANCE(server, 'S','e','r','v','e','r')
 
-NET_HTTP_HN_INSTANCE(date, "Date",
-	'date')
+NET_HTTP_HN_INSTANCE(connection, 'C','o','n','n','e','c','t','i','o','n')
 
-NET_HTTP_HN_INSTANCE(ifModifiedSince, "If-Modified-Since",
-	'if-m','odif','ied-','sins','e')
+NET_HTTP_HN_INSTANCE(transferEncoding, 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g')
+NET_HTTP_HN_INSTANCE(contentEncoding, 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g')
+NET_HTTP_HN_INSTANCE(contentLength, 'C','o','n','t','e','n','t','-','L','e','n','g','t','h')
+NET_HTTP_HN_INSTANCE(contentType, 'C','o','n','t','e','n','t','-','T','y','p','e')
+
+NET_HTTP_HN_INSTANCE(eTag, 'E','T','a','g')
+NET_HTTP_HN_INSTANCE(ifMatch, 'I','f','-','M','a','t','c','h')
+NET_HTTP_HN_INSTANCE(ifNoneMatch, 'I','f','-','N','o','n','e','-','M','a','t','c','h')
+
+
+NET_HTTP_HN_INSTANCE(lastModified, 'L','a','s','t','-','M','o','d','i','f','i','e','d')
+NET_HTTP_HN_INSTANCE(ifModifiedSince, 'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e')
+NET_HTTP_HN_INSTANCE(ifUnmodifiedSince, 'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e')
 
 namespace net { namespace http { namespace hn
 {

@@ -2,18 +2,6 @@
 #include "net/http/server/response.hpp"
 #include "net/http/server/impl/response.hpp"
 
-#include "net/http/headerName.hpp"
-
-namespace
-{
-size_t h1 = net::http::hn::date::hash;
-const char *csz = net::http::hn::date::csz();
-const char *cszlc = net::http::hn::date::cszlc();
-
-const std::string &str = net::http::hn::date::str();
-const std::string &strlc = net::http::hn::date::strlc();
-}
-
 namespace net { namespace http { namespace server
 {
 

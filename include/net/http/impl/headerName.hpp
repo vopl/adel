@@ -4,6 +4,14 @@
 #include <boost/mpl/string.hpp>
 #include <boost/mpl/fold.hpp>
 #include <boost/mpl/size_t.hpp>
+#include <boost/mpl/vector_c.hpp>
+#include <boost/mpl/char.hpp>
+#include <boost/mpl/plus.hpp>
+#include <boost/mpl/and.hpp>
+#include <boost/mpl/if.hpp>
+#include <boost/mpl/greater_equal.hpp>
+#include <boost/mpl/less_equal.hpp>
+
 #include <boost/functional/hash.hpp>
 #include <string>
 
@@ -64,21 +72,41 @@ namespace net { namespace http { namespace impl { namespace hn
 	template <class id> const std::string stringHolder<id>::str = id::csz();
 	template <class id> const std::string stringHolder<id>::strlc = id::cszlc();
 
+
+	/////////////////////////////////////////////////////////////////////////////
+	template <class Chars>
+	struct lc
+	{
+		typedef typename
+			mpl::fold<
+				Chars,
+				mpl::vector_c<char>,
+				mpl::if_<
+					mpl::and_<
+						mpl::greater_equal<mpl::_2, mpl::char_<'A'> >,
+						mpl::less_equal<mpl::_2, mpl::char_<'Z'> >
+					>,
+					mpl::push_back<mpl::_1, mpl::plus<mpl::_2, mpl::char_<'a'-'A'> > >,
+					mpl::push_back<mpl::_1, mpl::_2>
+				>
+			>::type type;
+	};
 }}}}
 
-#define NET_HTTP_HN_INSTANCE(id_, value_, ...)												\
+#define NET_HTTP_HN_INSTANCE(id_, ...)														\
 namespace net { namespace http { namespace hn {												\
 	struct id_																				\
 	{																						\
-		typedef boost::mpl::string< __VA_ARGS__ > cts;										\
-		static const std::size_t hash = net::http::impl::hn::hash_cstring< cts >::value;	\
+		typedef boost::mpl::vector_c<char, __VA_ARGS__>::type cts;							\
+		typedef net::http::impl::hn::lc< cts >::type ctslc;									\
+		static const std::size_t hash = net::http::impl::hn::hash_cstring< ctslc >::value;	\
 		static const char *csz()															\
 		{																					\
-			return value_;																	\
+			return boost::mpl::c_str< cts >::value;											\
 		}																					\
 		static const char *cszlc()															\
 		{																					\
-			return boost::mpl::c_str< cts >::value;											\
+			return boost::mpl::c_str< ctslc >::value;										\
 		}																					\
 		static const std::string &str()														\
 		{																					\
