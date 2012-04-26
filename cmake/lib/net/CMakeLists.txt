@@ -71,6 +71,7 @@ set(INCLUDE_HTTP
 	${PINC}/http/version.hpp
 	${PINC}/http/contentEncoding.hpp
 	${PINC}/http/transferEncoding.hpp
+	${PINC}/http/headerValue.hpp
 )
 source_group(include/http FILES ${INCLUDE_HTTP})
 
@@ -86,6 +87,8 @@ set(SRC_HTTP
 	${PSRC}/http/server.cpp
 	${PSRC}/http/client.cpp
 	${PSRC}/http/statusCode.cpp
+	${PSRC}/http/headerValue_parsers.cpp
+	${PSRC}/http/headerValue_generators.cpp
 )
 source_group(src/http FILES ${SRC_HTTP})
 

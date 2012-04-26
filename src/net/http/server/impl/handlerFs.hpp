@@ -21,6 +21,8 @@ namespace net { namespace http { namespace server { namespace impl
 
 	private:
 		boost::filesystem::path	_root;
+		bool	_allowETag;
+		bool	_allowLastModified;
 
 	private:
 		struct ExtInfo
@@ -43,7 +45,8 @@ namespace net { namespace http { namespace server { namespace impl
 		Ext2Info _ext2Info;
 
 	private:
-		void notFound(net::http::server::Request r, const boost::filesystem::path &uri);
+		void notFound(net::http::server::Request &r, const boost::filesystem::path &uri);
+		void notModified(net::http::server::Request &r, const boost::filesystem::path &uri);
 		void loadConf(const std::string &fname);
 		ExtInfo parseCompress(const utils::Variant &v, const ExtInfo &dflt);
 

@@ -2,7 +2,18 @@
 #include "net/http/server/impl/handlerFs.hpp"
 #include "net/http/server/log.hpp"
 #include "net/http/server/request.hpp"
+#include "net/http/headerValue.hpp"
 
+#include <boost/spirit/include/karma.hpp>
+#include <boost/spirit/include/karma_string.hpp>
+#include <boost/spirit/include/karma_char.hpp>
+
+#include <boost/spirit/include/phoenix_statement.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_container.hpp>
+
+#include <sys/stat.h>
 #include <algorithm>
 
 namespace net { namespace http { namespace server { namespace impl
@@ -25,6 +36,16 @@ namespace net { namespace http { namespace server { namespace impl
 			po::value<std::string>()->default_value("../etc/default.hfs"),
 			"json conf file, contain info about mime types and compression settings");
 
+		options->addOption(
+			"allowETag",
+			po::value<bool>()->default_value(false),
+			"use ETag, If-Match and If-None-Match header fields for entities");
+
+		options->addOption(
+			"allowLastModified",
+			po::value<bool>()->default_value(true),
+			"use Last-Modified, If-Modified-Since and If-Unmodified-Since header fields for entities");
+
 		return options;
 	}
 
@@ -34,6 +55,8 @@ namespace net { namespace http { namespace server { namespace impl
 		utils::Options &o = *options;
 
 		_root = o["root"].as<std::string>();
+		_allowETag = o["allowETag"].as<bool>();
+		_allowLastModified = o["allowLastModified"].as<bool>();
 
 		_root = absolute(_root);
 		while(is_symlink(_root))
@@ -63,57 +86,71 @@ namespace net { namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void HandlerFs::onRequest(net::http::server::Request r)
 	{
+		//TODO: r.uri_ -> r.path
 		path uri = std::string(r.uri_().begin(), r.uri_().end());
 
-		path p = _root / uri;
-
-		boost::system::error_code ec;
-		p = canonical(p, ec);
-		if(ec)
 		{
-			return notFound(r, uri);
-		}
+			path::iterator iter = uri.begin();
+			path::iterator end = uri.end();
 
-		{
-			path::iterator piter = p.begin();
-			path::iterator pend = p.end();
-
-			path::iterator riter = _root.begin();
-			path::iterator rend = _root.end();
-
-			while(riter!=rend)
+			for(; iter!=end; ++iter)
 			{
-				if(piter==pend || *piter!=*riter)
+				if(".." == *iter)
 				{
 					return notFound(r, uri);
 				}
-				++piter;
-				++riter;
 			}
 		}
 
-		if(!is_regular_file(p, ec) || ec)
+
+		path p = _root / uri;
+
+		struct stat st;
+		if(stat(p.c_str(), &st))
 		{
 			return notFound(r, uri);
 		}
 
-		//TODO: etag, expires
-		/*
-		 * ETag
-		 * 		If-Match, If-None-Match,
-		 *
-		 * Last-Modified
-		 * 		If-Modified-Since, If-Unmodified-Since
-		 */
-
-		std::ifstream ifstr(p.native().c_str(), std::ios::in|std::ios::binary);
-		if(!ifstr)
+		std::string etag;
+		if(_allowETag)
 		{
-			return notFound(r, uri);
+			using namespace boost::spirit::karma;
+			namespace karma = boost::spirit::karma;
+			namespace px = boost::phoenix;
+
+			std::back_insert_iterator<std::string> out(etag);
+			bool gres = generate(out,
+				karma::lit('"') <<
+				int_generator<time_t, 16>()[karma::_1 = st.st_mtime] <<
+				'-' <<
+				int_generator<off_t, 16>()[karma::_1 = st.st_size] <<
+				'-' <<
+				uint_generator<ino_t, 16>()[karma::_1 = st.st_ino] <<
+				'"');
+			assert(gres);
+			(void)gres;
+
+			//TODO: If-Match, If-None-Match
+			//return notModified(r, uri);
+
 		}
-		ifstr.seekg(0, std::ios::end);
-		size_t size = ifstr.tellg();
-		ifstr.seekg(0, std::ios::beg);
+
+		if(_allowLastModified)
+		{
+			//TODO: If-Modified-Since, If-Unmodified-Since
+			//return notModified(r, uri);
+		}
+
+		int fd = 0;
+
+		if(st.st_size)
+		{
+			fd = open(p.c_str(), O_RDONLY);
+			if(!fd)
+			{
+				return notFound(r, uri);
+			}
+		}
 
 		const ExtInfo &extInfo = getExtInfo(uri.extension());
 
@@ -122,9 +159,18 @@ namespace net { namespace http { namespace server { namespace impl
 			.statusCode(esc_200)
 			.header("Content-Type: "+extInfo._mimeType);
 
-		response.setBodySize(size);
+		if(_allowETag)
+		{
+			response.header("ETag: " + etag);
+		}
+		if(_allowLastModified)
+		{
+			response.header("Last-Modified", HeaderValue<Date>(st.st_mtime));
+		}
 
-		if(extInfo._level>0 && size >= extInfo._minSize)
+		response.setBodySize(st.st_size);
+
+		if(extInfo._level>0 && st.st_size && st.st_size >= extInfo._minSize)
 		{
 			response.setBodyCompress(extInfo._level, extInfo._buffer);
 		}
@@ -133,27 +179,39 @@ namespace net { namespace http { namespace server { namespace impl
 			response.setBodyCompress(0);
 		}
 
-		if(size)
+		if(st.st_size)
 		{
+			size_t size = st.st_size;
 			std::vector<char> buffer(std::min(size, (size_t)1024));
 			while(size)
 			{
 				size_t rsize = std::min(size, (size_t)1024);
-				ifstr.read(&buffer[0], rsize);
+				int rres = read(fd, &buffer[0], rsize);
+				(void)rres;
+
 				response.body(&buffer[0], rsize);
 				size -= rsize;
 			}
+
+			close(fd);
 		}
-		ifstr.close();
 
 		response.flush();
 	}
 
 	/////////////////////////////////////////////////////////////////////////
-	void HandlerFs::notFound(net::http::server::Request r, const path &uri)
+	void HandlerFs::notFound(net::http::server::Request &r, const path &uri)
 	{
 		net::http::server::Response response = r.response();
 		response.statusCode(esc_404);
+		response.flush();
+	}
+
+	/////////////////////////////////////////////////////////////////////////
+	void HandlerFs::notModified(net::http::server::Request &r, const path &uri)
+	{
+		net::http::server::Response response = r.response();
+		response.statusCode(esc_304);
 		response.flush();
 	}
 

@@ -107,6 +107,18 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::header(const char *dataz)
+	{
+		return header(dataz, strlen(dataz));
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::header(const std::string &data)
+	{
+		return header(data.data(), data.size());
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::body(const char *data, size_t size)
 	{
 		static const char crlf[] = "\r\n";
@@ -188,6 +200,48 @@ namespace net { namespace http { namespace server { namespace impl
 		_bodyCompressBuffer = buffer;
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////
+	Message::Iterator Response::beginWriteHeader(const char *name, size_t size)
+	{
+		static const char nvdelim[] = ": ";
+		switch(_ewp)
+		{
+		case ewp_statusLine:
+			statusLine();
+			_writePosition = std::copy(name, name+size, _writePosition);
+			_writePosition = std::copy(nvdelim, nvdelim+2, _writePosition);
+			break;
+		case ewp_headers:
+			_writePosition = std::copy(name, name+size, _writePosition);
+			_writePosition = std::copy(nvdelim, nvdelim+2, _writePosition);
+			break;
+		default:
+			assert(0);
+			return _writePosition;
+		}
+		return _writePosition;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::endWriteHeader(Message::Iterator iter)
+	{
+		static const char crlf[] = "\r\n";
+		switch(_ewp)
+		{
+		case ewp_statusLine:
+			assert(!"beginWriteHeader was called?");
+			statusLine();
+			_writePosition = std::copy(crlf, crlf+2, iter);
+			break;
+		case ewp_headers:
+			_writePosition = std::copy(crlf, crlf+2, iter);
+			break;
+		default:
+			assert(0);
+			_writePosition = iter;
+			return;
+		}
+	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::pushLastChunk2Filter()
@@ -309,7 +363,8 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
-		header("Server: Apache/2.2.15 (CentOS)", 30);
+		//header("Server: Apache/2.2.15 (CentOS)", 30);
+		header("Date", HeaderValue<Date>(time(NULL)));
 
 		//TODO: Date
 

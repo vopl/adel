@@ -7,6 +7,7 @@
 #include "net/http/version.hpp"
 #include "net/http/contentEncoding.hpp"
 #include "net/http/transferEncoding.hpp"
+#include "net/http/headerValue.hpp"
 #include "net/impl/message.hpp"
 #include "net/http/impl/contentFilter.hpp"
 
@@ -35,6 +36,12 @@ namespace net { namespace http { namespace server { namespace impl
 
 		void statusLine();
 		void header(const char *data, size_t size);
+		void header(const char *dataz);
+		void header(const std::string &data);
+
+		template <class HeaderValueTag>
+		void header(const char *namez, const HeaderValue<HeaderValueTag> &value);
+
 		void body(const char *data, size_t size);
 
 		bool flush();
@@ -43,6 +50,8 @@ namespace net { namespace http { namespace server { namespace impl
 		void setBodySize(size_t size);
 		void setBodyCompress(int level, size_t buffer=0);
 
+		Message::Iterator beginWriteHeader(const char *name, size_t size);
+		void endWriteHeader(Message::Iterator iter);
 
 	private:
 		net::http::impl::ServerPtr	_server;
@@ -88,6 +97,18 @@ namespace net { namespace http { namespace server { namespace impl
 
 	};
 	typedef boost::shared_ptr<Response> ResponsePtr;
+
+
+
+
+
+	template <class HeaderValueTag>
+	void Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	{
+		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
+		value.generate(outIter);
+		endWriteHeader(outIter);
+	}
 
 }}}}
 
