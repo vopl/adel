@@ -72,8 +72,14 @@ set(INCLUDE_HTTP
 	${PINC}/http/contentEncoding.hpp
 	${PINC}/http/transferEncoding.hpp
 	${PINC}/http/headerValue.hpp
+	${PINC}/http/headerName.hpp
 )
 source_group(include/http FILES ${INCLUDE_HTTP})
+
+set(INCLUDE_HTTP_IMPL
+	${PINC}/http/impl/headerName.hpp
+)
+source_group(include/http/impl FILES ${INCLUDE_HTTP_IMPL})
 
 set(INCLUDE_HTTP_SERVER
 	${PINC}/http/server/log.hpp
@@ -176,6 +182,7 @@ add_library(${PROJECT} STATIC
     ${SRC_IMPL} 
     ${SRC_IMPL_HDR}
     ${INCLUDE_HTTP} 
+    ${INCLUDE_HTTP_IMPL} 
     ${SRC_HTTP}
     ${INCLUDE_HTTP_SERVER} 
     ${SRC_HTTP_SERVER}
@@ -196,6 +203,10 @@ target_link_libraries(${PROJECT} utils async)
 target_link_libraries(${PROJECT} ${OPENSSL_LIBRARIES})
 target_link_libraries(${PROJECT} ${ZLIB_LIBRARIES})
 
+
+if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
+    set(CMAKE_CXX_FLAGS ${CMAKE_CXX_FLAGS} -Wno-multichar)
+endif()
 
 if((CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG) AND WINDOWS)
 	target_link_libraries(${PROJECT} Mswsock.lib)

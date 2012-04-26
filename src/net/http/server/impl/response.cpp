@@ -13,6 +13,17 @@
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_container.hpp>
 
+#include "net/http/headerName.hpp"
+
+namespace
+{
+size_t h1 = net::http::hn::date::hash;
+const char *csz = net::http::hn::date::csz();
+const char *cszlc = net::http::hn::date::cszlc();
+
+const std::string &str = net::http::hn::date::str();
+const std::string &strlc = net::http::hn::date::strlc();
+}
 
 namespace net { namespace http { namespace server { namespace impl
 {
