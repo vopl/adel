@@ -197,7 +197,15 @@ add_library(${PROJECT} STATIC
     )
 
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC_PCH})
-use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${SRC_IMPL} ${SRC_HTTP} ${SRC_HTTP_IMPL})
+use_pch(${PROJECT} ${PSRC}/pch.hpp 
+	${SRC}
+	${SRC_IMPL}
+	${SRC_HTTP}
+	${SRC_HTTP_IMPL}
+	${SRC_HTTP_SERVER}
+	${SRC_HTTP_IMPL} 
+	${SRC_HTTP_SERVER_IMPL} 
+)
 
 target_link_libraries(${PROJECT} utils async)
 target_link_libraries(${PROJECT} ${OPENSSL_LIBRARIES})

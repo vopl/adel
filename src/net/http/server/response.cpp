@@ -53,6 +53,27 @@ namespace net { namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
+	Response &Response::header(const HeaderName &name, const char *value, size_t valueSize)
+	{
+		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
+		outIter = std::copy(value, value+valueSize, outIter);
+		endWriteHeader(outIter);
+		return *this;
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	Response &Response::header(const HeaderName &name, const char *valuez)
+	{
+		return header(name, valuez, strlen(valuez));
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	Response &Response::header(const HeaderName &name, const std::string &value)
+	{
+		return header(name, value.data(), value.size());
+	}
+
+	/////////////////////////////////////////////////////////////////////
 	Response &Response::body(const char *data, size_t size)
 	{
 		_impl->body(data, size);

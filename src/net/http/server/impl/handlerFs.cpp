@@ -13,7 +13,13 @@
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_container.hpp>
 
+#include <sys/types.h>
 #include <sys/stat.h>
+#include <fcntl.h>
+#ifdef _MSC_VER
+#	include <io.h>
+#endif
+#include <stddef.h>
 #include <algorithm>
 
 namespace net { namespace http { namespace server { namespace impl
@@ -106,7 +112,7 @@ namespace net { namespace http { namespace server { namespace impl
 		path p = _root / uri;
 
 		struct stat st;
-		if(stat(p.c_str(), &st))
+		if(stat(p.string().c_str(), &st))
 		{
 			return notFound(r, uri);
 		}
@@ -145,7 +151,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		if(st.st_size)
 		{
-			fd = open(p.c_str(), O_RDONLY);
+			fd = _open(p.string().c_str(), O_RDONLY);
 			if(!fd)
 			{
 				return notFound(r, uri);
@@ -157,15 +163,15 @@ namespace net { namespace http { namespace server { namespace impl
 		net::http::server::Response response = r.response();
 		response
 			.statusCode(esc_200)
-			.header(hn::contentType::str()+": "+extInfo._mimeType);
+			.header(hn::contentType, extInfo._mimeType);
 
 		if(_allowETag)
 		{
-			response.header("ETag: " + etag);
+			response.header(hn::eTag, etag);
 		}
 		if(_allowLastModified)
 		{
-			response.header(hn::lastModified::str(), HeaderValue<Date>(st.st_mtime));
+			response.header(hn::lastModified, HeaderValue<Date>(st.st_mtime));
 		}
 
 		response.setBodySize(st.st_size);
@@ -186,14 +192,14 @@ namespace net { namespace http { namespace server { namespace impl
 			while(size)
 			{
 				size_t rsize = std::min(size, (size_t)1024);
-				int rres = read(fd, &buffer[0], rsize);
+				int rres = _read(fd, &buffer[0], (off_t)rsize);
 				(void)rres;
 
 				response.body(&buffer[0], rsize);
 				size -= rsize;
 			}
 
-			close(fd);
+			_close(fd);
 		}
 
 		response.flush();
@@ -233,7 +239,7 @@ namespace net { namespace http { namespace server { namespace impl
 		utils::Variant v;
 
 		std::string err;
-		if(!v.load(p.c_str(), &err))
+		if(!v.load(p.string().c_str(), &err))
 		{
 			ELOG("HandlerFs: unable to load conf file ("<<p<<"): "<<err);
 			return;
@@ -331,7 +337,7 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			if(v["level"].isScalar())
 			{
-				res._level = v["level"].to<size_t>();
+				res._level = v["level"].to<int>();
 			}
 			if(v["buffer"].isScalar())
 			{
@@ -344,7 +350,7 @@ namespace net { namespace http { namespace server { namespace impl
 		}
 		else
 		{
-			res._level = v.to<size_t>();
+			res._level = v.to<int>();
 		}
 
 		return res;

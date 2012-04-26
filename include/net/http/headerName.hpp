@@ -3,8 +3,27 @@
 
 #include "net/http/impl/headerName.hpp"
 
+namespace net { namespace http
+{
+	struct HeaderName
+	{
+		template <class Initier>
+		HeaderName(Initier *stub)
+			: csz(Initier::csz())
+			, cszlc(Initier::cszlc())
+			, str(Initier::str())
+			, strlc(Initier::strlc())
+			, hash(Initier::hash)
+		{
+		}
 
-
+		const char * const	csz;
+		const char * const	cszlc;
+		const std::string	&str;
+		const std::string	&strlc;
+		const size_t		hash;
+	};
+}}
 
 NET_HTTP_HN_INSTANCE(date, 'D','a','t','e')
 NET_HTTP_HN_INSTANCE(server, 'S','e','r','v','e','r')

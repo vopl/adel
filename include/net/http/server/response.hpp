@@ -4,6 +4,7 @@
 #include "net/http/version.hpp"
 #include "net/http/statusCode.hpp"
 #include "net/http/headerValue.hpp"
+#include "net/http/headerName.hpp"
 
 namespace net { namespace http { namespace server
 {
@@ -33,11 +34,18 @@ namespace net { namespace http { namespace server
 		Response &header(const char *dataz);
 		Response &header(const std::string &data);
 
+		Response &header(const HeaderName &name, const char *value, size_t valueSize);
+		Response &header(const HeaderName &name, const char *valuez);
+		Response &header(const HeaderName &name, const std::string &value);
+
 		template <class HeaderValueTag>
 		Response &header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
 
 		template <class HeaderValueTag>
 		Response &header(const char *namez, const HeaderValue<HeaderValueTag> &value);
+
+		template <class HeaderValueTag>
+		Response &header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
 		Response &body(const char *data, size_t size);
 		Response &body(const char *dataz);
@@ -75,6 +83,17 @@ namespace net { namespace http { namespace server
 		endWriteHeader(outIter);
 		return *this;
 	}
+
+	//////////////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	Response &Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
+		value.generate(outIter);
+		endWriteHeader(outIter);
+		return *this;
+	}
+
 
 }}}
 

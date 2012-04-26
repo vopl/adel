@@ -24,12 +24,14 @@ namespace net { namespace http { namespace server { namespace impl
 		, _server(server)
 		, _channel(channel)
 		, _ewp(ewp_statusLine)
-		, _mostContentFilter(this)
+		//, _mostContentFilter(this)
 		, _outputGranula(_server->responseWriteGranula())
 		, _bodySize((size_t)-1)
 		, _bodyCompressLevel(1)
 		, _bodyCompressBuffer(_server->responseWriteGranula())
 	{
+		_mostContentFilter = this;
+
 		if(obtainMoreChunks())
 		{
 			_writePosition = begin();
@@ -119,6 +121,26 @@ namespace net { namespace http { namespace server { namespace impl
 		return header(data.data(), data.size());
 	}
 
+	/////////////////////////////////////////////////////////////////////
+	void Response::header(const HeaderName &name, const char *value, size_t valueSize)
+	{
+		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
+		outIter = std::copy(value, value+valueSize, outIter);
+		endWriteHeader(outIter);
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	void Response::header(const HeaderName &name, const char *valuez)
+	{
+		return header(name, valuez, strlen(valuez));
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	void Response::header(const HeaderName &name, const std::string &value)
+	{
+		return header(name, value.data(), value.size());
+	}
+
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::body(const char *data, size_t size)
 	{
@@ -173,7 +195,7 @@ namespace net { namespace http { namespace server { namespace impl
 		if(lastChunk._packet._data)
 		{
 			assert(_writePosition.absolutePosition() >= lastChunk._offset);
-			assert(_writePosition.absolutePosition() < lastChunk._offset+lastChunk._packet._size);
+			assert(_writePosition.absolutePosition() < (Iterator::difference_type)(lastChunk._offset+lastChunk._packet._size));
 
 			lastChunk._packet._size = _writePosition.absolutePosition() - lastChunk._offset;
 			if(lastChunk._packet._size)
@@ -364,16 +386,16 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
-		header(hn::server::str()+": Apache/2.2.15 (CentOS)");
-		header(hn::date::str(), HeaderValue<Date>(time(NULL)));
+		header(hn::server, "Apache/2.2.15 (CentOS)");
+		header(hn::date, HeaderValue<Date>(time(NULL)));
 
 		//TODO: Date
 
-		ContentFilter * ch;
+		//ContentFilter * ch;
 /*
 		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
 		_mostContentFilter = ch;
-		header(hn::transferEncoding.str()+": chunked", 26);
+		header(hn::transferEncoding.str(), "chunked");
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 */
 
@@ -385,7 +407,7 @@ namespace net { namespace http { namespace server { namespace impl
 			_bodyCompressBuffer);
 
 		_mostContentFilter = ch;
-		header(hn::contentEncoding.str()+": deflate", 25);
+		header(hn::contentEncoding.str(), "deflate");
 		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
 //*/
 

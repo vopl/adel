@@ -39,11 +39,18 @@ namespace net { namespace http { namespace server { namespace impl
 		void header(const char *dataz);
 		void header(const std::string &data);
 
+		void header(const HeaderName &name, const char *value, size_t valueSize);
+		void header(const HeaderName &name, const char *valuez);
+		void header(const HeaderName &name, const std::string &value);
+
 		template <class HeaderValueTag>
 		void header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 
 		template <class HeaderValueTag>
 		void header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
+
+		template <class HeaderValueTag>
+		void header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
 		void body(const char *data, size_t size);
 
@@ -105,6 +112,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 
 
+	//////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
 	void Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
@@ -113,10 +121,20 @@ namespace net { namespace http { namespace server { namespace impl
 		endWriteHeader(outIter);
 	}
 
+	//////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
 	void Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(name.data(), name.length());
+		value.generate(outIter);
+		endWriteHeader(outIter);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	void Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.length());
 		value.generate(outIter);
 		endWriteHeader(outIter);
 	}

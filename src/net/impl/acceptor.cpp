@@ -144,7 +144,9 @@ namespace net { namespace impl
 
 
 		spawn(bind(res, error_code()));
-		accept_f(useSsl);
+		
+		spawn(bind(&Acceptor::accept_f, shared_from_this(),useSsl));
+		//spawn(bind(&Acceptor::accept_f, shared_from_this(),useSsl));
 	}
 
 	//////////////////////////////////////////////////////////////////////////

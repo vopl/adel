@@ -9,7 +9,7 @@
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
 #include <boost/spirit/include/phoenix_container.hpp>
-
+#include <time.h>
 
 namespace net { namespace http
 {
@@ -80,7 +80,11 @@ namespace net { namespace http
 	bool HeaderValue<Date>::generate(Iterator &outIter) const
 	{
 		struct tm stm;
+#ifdef _MSC_VER
+		gmtime_s(&stm, &_value);
+#else
 		gmtime_r(&_value, &stm);
+#endif
 
 		return karma::generate(outIter,
 

@@ -75,12 +75,19 @@ namespace net { namespace http { namespace impl { namespace hn
 
 	/////////////////////////////////////////////////////////////////////////////
 	template <class Chars>
-	struct lc
+	struct vector2str
 	{
 		typedef typename
 			mpl::fold<
 				Chars,
-				mpl::vector_c<char>,
+				mpl::string<>,
+				mpl::push_back<mpl::_1, mpl::_2>
+			>::type cts;
+
+		typedef typename
+			mpl::fold<
+				Chars,
+				mpl::string<>,
 				mpl::if_<
 					mpl::and_<
 						mpl::greater_equal<mpl::_2, mpl::char_<'A'> >,
@@ -89,34 +96,39 @@ namespace net { namespace http { namespace impl { namespace hn
 					mpl::push_back<mpl::_1, mpl::plus<mpl::_2, mpl::char_<'a'-'A'> > >,
 					mpl::push_back<mpl::_1, mpl::_2>
 				>
-			>::type type;
+			>::type ctslc;
+
 	};
 }}}}
 
-#define NET_HTTP_HN_INSTANCE(id_, ...)														\
-namespace net { namespace http { namespace hn {												\
-	struct id_																				\
-	{																						\
-		typedef boost::mpl::vector_c<char, __VA_ARGS__>::type cts;							\
-		typedef net::http::impl::hn::lc< cts >::type ctslc;									\
-		static const std::size_t hash = net::http::impl::hn::hash_cstring< ctslc >::value;	\
-		static const char *csz()															\
-		{																					\
-			return boost::mpl::c_str< cts >::value;											\
-		}																					\
-		static const char *cszlc()															\
-		{																					\
-			return boost::mpl::c_str< ctslc >::value;										\
-		}																					\
-		static const std::string &str()														\
-		{																					\
-			return net::http::impl::hn::stringHolder<id_>::str;								\
-		}																					\
-		static const std::string &strlc()													\
-		{																					\
-			return net::http::impl::hn::stringHolder<id_>::strlc;							\
-		}																					\
-	};																						\
+#define NET_HTTP_HN_INSTANCE(id_, ...)																		\
+namespace net { namespace http { namespace hn {																\
+	struct id_##_type																						\
+	{																										\
+		typedef net::http::impl::hn::vector2str< boost::mpl::vector_c<char, __VA_ARGS__> >::cts cts;		\
+		typedef net::http::impl::hn::vector2str< boost::mpl::vector_c<char, __VA_ARGS__> >::ctslc ctslc;	\
+		static const std::size_t hash = net::http::impl::hn::hash_cstring< ctslc >::value;					\
+		static const char *csz()																			\
+		{																									\
+			return boost::mpl::c_str< cts >::value;															\
+		}																									\
+		static const char *cszlc()																			\
+		{																									\
+			return boost::mpl::c_str< ctslc >::value;														\
+		}																									\
+		static const std::string &str()																		\
+		{																									\
+			return net::http::impl::hn::stringHolder<id_##_type>::str;										\
+		}																									\
+		static const std::string &strlc()																	\
+		{																									\
+			return net::http::impl::hn::stringHolder<id_##_type>::strlc;									\
+		}																									\
+	};																										\
+	namespace																								\
+	{																										\
+		HeaderName id_((id_##_type *)NULL);							\
+	}																										\
 }}}
 
 
