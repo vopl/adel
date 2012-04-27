@@ -386,7 +386,7 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
-		header(hn::server, "Apache/2.2.15 (CentOS)");
+		header(hn::server, "haws", 4);
 		header(hn::date, HeaderValue<Date>(time(NULL)));
 
 		//TODO: Date

@@ -1,5 +1,5 @@
-#ifndef _NET_HTTP_HN_HPP_
-#define _NET_HTTP_HN_HPP_
+#ifndef _NET_HTTP_HEADERNAME_HPP_
+#define _NET_HTTP_HEADERNAME_HPP_
 
 #include "net/http/impl/headerName.hpp"
 

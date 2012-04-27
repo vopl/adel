@@ -112,7 +112,7 @@ namespace net { namespace http { namespace server { namespace impl
 		path p = _root / uri;
 
 		struct stat st;
-		if(stat(p.string().c_str(), &st))
+		if(stat(p.string().c_str(), &st) || !S_ISREG(st.st_mode))
 		{
 			return notFound(r, uri);
 		}
@@ -151,7 +151,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		if(st.st_size)
 		{
-			fd = _open(p.string().c_str(), O_RDONLY);
+			fd = open(p.string().c_str(), O_RDONLY);
 			if(!fd)
 			{
 				return notFound(r, uri);
@@ -192,14 +192,14 @@ namespace net { namespace http { namespace server { namespace impl
 			while(size)
 			{
 				size_t rsize = std::min(size, (size_t)1024);
-				int rres = _read(fd, &buffer[0], (off_t)rsize);
+				int rres = read(fd, &buffer[0], (off_t)rsize);
 				(void)rres;
 
 				response.body(&buffer[0], rsize);
 				size -= rsize;
 			}
 
-			_close(fd);
+			close(fd);
 		}
 
 		response.flush();

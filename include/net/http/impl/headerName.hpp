@@ -1,5 +1,5 @@
-#ifndef _NET_HTTP_HN_IMPL_HPP_
-#define _NET_HTTP_HN_IMPL_HPP_
+#ifndef _NET_HTTP_IMPL_HEADERNAME_HPP_
+#define _NET_HTTP_IMPL_HEADERNAME_HPP_
 
 #include <boost/mpl/string.hpp>
 #include <boost/mpl/fold.hpp>

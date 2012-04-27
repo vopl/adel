@@ -34,13 +34,13 @@ namespace async { namespace impl
 		, _maxFibers(1000)
 		, _workersAmount(0)
 	{
-		TLOG("constructed");
+		//TLOG("constructed");
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	Service::~Service()
 	{
-		TLOG("destructed");
+		//TLOG("destructed");
 		//stop();
 	}
 
