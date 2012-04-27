@@ -80,6 +80,48 @@ namespace net { namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
+	const Message::Segment &Request::path_() const
+	{
+		return _impl->path_();
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment &Request::queryString_() const
+	{
+		return _impl->queryString_();
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment *Request::header(const HeaderName &name) const
+	{
+		return _impl->header(name.hash);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment *Request::header(size_t hash) const
+	{
+		return _impl->header(hash);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment *Request::header(const std::string &name) const
+	{
+		return _impl->header(hn::hash(name));
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment *Request::header(const char *namez) const
+	{
+		return _impl->header(hn::hash(namez));
+	}
+
+	//////////////////////////////////////////////////////////////
+	const Message::Segment *Request::header(const char *name, size_t nameSize) const
+	{
+		return _impl->header(hn::hash(name, nameSize));
+	}
+
+	//////////////////////////////////////////////////////////////
 	Response Request::response()
 	{
 		return utils::ImplAccess<Response>(_impl->response());

@@ -30,7 +30,7 @@ namespace net { namespace http { namespace server
 		Response &version(const Version &version);
 		Response &statusCode(const EStatusCode &statusCode);
 
-		Response &header(const char *data, size_t size);
+		Response &header(const char *data, size_t dataSize);
 		Response &header(const char *dataz);
 		Response &header(const std::string &data);
 
@@ -45,9 +45,12 @@ namespace net { namespace http { namespace server
 		Response &header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 
 		template <class HeaderValueTag>
+		Response &header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value);
+
+		template <class HeaderValueTag>
 		Response &header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
-		Response &body(const char *data, size_t size);
+		Response &body(const char *data, size_t dataSize);
 		Response &body(const char *dataz);
 		Response &body(const std::string &data);
 
@@ -69,7 +72,13 @@ namespace net { namespace http { namespace server
 	template <class HeaderValueTag>
 	Response &Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(name.data(), name.size());
+		return header(name.data(), name.size(), value);
+	}
+
+	template <class HeaderValueTag>
+	Response &Response::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
+	{
+		Message::Iterator outIter = beginWriteHeader(name, nameSize);
 		bool b = value.generate(outIter);
 		assert(b);
 		(void)b;
@@ -80,24 +89,14 @@ namespace net { namespace http { namespace server
 	template <class HeaderValueTag>
 	Response &Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
-		bool b = value.generate(outIter);
-		assert(b);
-		(void)b;
-		endWriteHeader(outIter);
-		return *this;
+		return header(namez, strlen(namez), value);
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
 	Response &Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
-		bool b = value.generate(outIter);
-		assert(b);
-		(void)b;
-		endWriteHeader(outIter);
-		return *this;
+		return header(name.csz, name.size, value);
 	}
 
 

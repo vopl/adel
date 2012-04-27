@@ -43,6 +43,16 @@ namespace net { namespace http { namespace server { namespace impl
 
 		const Segment &uri_() const;
 
+		const Segment &path_() const;
+		const Segment &queryString_() const;
+
+		//headers
+		const Segment *header(const HeaderName &name) const;
+		const Segment *header(size_t hash) const;
+		const Segment *header(const std::string &name) const;
+		const Segment *header(const char *namez) const;
+		const Segment *header(const char *name, size_t nameSize) const;
+
 	public:
 		ResponsePtr response();
 
@@ -60,6 +70,8 @@ namespace net { namespace http { namespace server { namespace impl
 		EMethod _method;
 		Segment _method_;
 		Segment _uri_;
+		Segment _path_;
+		Segment _queryString_;
 		Version _version;
 		Segment _version_;
 

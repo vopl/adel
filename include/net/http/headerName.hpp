@@ -14,6 +14,7 @@ namespace net { namespace http
 			, str(Initier::str())
 			, strlc(Initier::strlc())
 			, hash(Initier::hash)
+			, size(Initier::size)
 		{
 		}
 
@@ -22,6 +23,7 @@ namespace net { namespace http
 		const std::string	&str;
 		const std::string	&strlc;
 		const size_t		hash;
+		const size_t		size;
 	};
 }}
 
@@ -73,6 +75,12 @@ namespace net { namespace http { namespace hn
 	{
 		return hash(csz, csz + strlen(csz));
 	}
+
+	inline size_t hash(const char *data, size_t dataSize)
+	{
+		return hash(data, data + dataSize);
+	}
+
 }}}
 
 #endif

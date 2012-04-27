@@ -107,6 +107,7 @@ namespace net { namespace http { namespace hn {																\
 	{																										\
 		typedef net::http::impl::hn::vector2str< boost::mpl::vector_c<char, __VA_ARGS__> >::cts cts;		\
 		typedef net::http::impl::hn::vector2str< boost::mpl::vector_c<char, __VA_ARGS__> >::ctslc ctslc;	\
+		static const std::size_t size = boost::mpl::size< ctslc >::value;									\
 		static const std::size_t hash = net::http::impl::hn::hash_cstring< ctslc >::value;					\
 		static const char *csz()																			\
 		{																									\

@@ -87,7 +87,14 @@ namespace net { namespace http { namespace server { namespace impl
 				' ' >>
 
 				raw[
-					*(char_-' ')
+				    raw[*(char_-char_(" ?"))][px::ref(_path_) = qi::_1] >>
+				    (
+				    	(
+				    		char_('?') >>
+				    		raw[*(char_-' ')][px::ref(_queryString_) = qi::_1]
+				    	) |
+				    	raw[eps][px::ref(_queryString_) = qi::_1]
+				    )
 				][px::ref(_uri_) = qi::_1] >>
 
 				" HTTP/" >>
@@ -204,6 +211,49 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		return _uri_;
 	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment &Request::path_() const
+	{
+		return _path_;
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment &Request::queryString_() const
+	{
+		return _queryString_;
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment *Request::header(const HeaderName &name) const
+	{
+		return header(name.hash);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment *Request::header(size_t hash) const
+	{
+		assert(0);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment *Request::header(const std::string &name) const
+	{
+		return header(hn::hash(name));
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment *Request::header(const char *namez) const
+	{
+		return header(hn::hash(namez));
+	}
+
+	//////////////////////////////////////////////////////////////
+	const net::Message::Segment *Request::header(const char *name, size_t nameSize) const
+	{
+		return header(hn::hash(name, nameSize));
+	}
+
 
 	//////////////////////////////////////////////////////////////
 	bool Request::obtainMoreChunks()

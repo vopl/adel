@@ -92,29 +92,28 @@ namespace net { namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void HandlerFs::onRequest(net::http::server::Request r)
 	{
-		//TODO: r.uri_ -> r.path
-		path uri = std::string(r.uri_().begin(), r.uri_().end());
+		path originalPath = std::string(r.path_().begin(), r.path_().end());
 
 		{
-			path::iterator iter = uri.begin();
-			path::iterator end = uri.end();
+			path::iterator iter = originalPath.begin();
+			path::iterator end = originalPath.end();
 
 			for(; iter!=end; ++iter)
 			{
 				if(".." == *iter)
 				{
-					return notFound(r, uri);
+					return notFound(r, originalPath);
 				}
 			}
 		}
 
 
-		path p = _root / uri;
+		path p = _root / originalPath;
 
 		struct stat st;
 		if(stat(p.string().c_str(), &st) || !S_ISREG(st.st_mode))
 		{
-			return notFound(r, uri);
+			return notFound(r, originalPath);
 		}
 
 		std::string etag;
@@ -137,14 +136,14 @@ namespace net { namespace http { namespace server { namespace impl
 			(void)gres;
 
 			//TODO: If-Match, If-None-Match
-			//return notModified(r, uri);
+			//return notModified(r, originalPath);
 
 		}
 
 		if(_allowLastModified)
 		{
 			//TODO: If-Modified-Since, If-Unmodified-Since
-			//return notModified(r, uri);
+			//return notModified(r, originalPath);
 		}
 
 		int fd = 0;
@@ -154,11 +153,11 @@ namespace net { namespace http { namespace server { namespace impl
 			fd = open(p.string().c_str(), O_RDONLY);
 			if(!fd)
 			{
-				return notFound(r, uri);
+				return notFound(r, originalPath);
 			}
 		}
 
-		const ExtInfo &extInfo = getExtInfo(uri.extension());
+		const ExtInfo &extInfo = getExtInfo(originalPath.extension());
 
 		net::http::server::Response response = r.response();
 		response

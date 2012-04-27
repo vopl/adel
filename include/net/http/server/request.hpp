@@ -44,13 +44,15 @@ namespace net { namespace http { namespace server
 		const Segment &version_() const;
 
 		const Segment &uri_() const;
+		const Segment &path_() const;
+		const Segment &queryString_() const;
 
 		//headers
-
-		//	general header
-		//	request header
-		//	entity header
-		//	message header
+		const Segment *header(const HeaderName &name) const;
+		const Segment *header(size_t hash) const;
+		const Segment *header(const std::string &name) const;
+		const Segment *header(const char *namez) const;
+		const Segment *header(const char *name, size_t nameSize) const;
 
 		//body
 
