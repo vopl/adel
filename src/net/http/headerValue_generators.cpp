@@ -70,7 +70,7 @@ namespace net { namespace http
 			month.add(11, "Dec");
 			return month;
 		}
-		static const symbols<int, char const*> month = wkdayInit();
+		static const symbols<int, char const*> month = monthInit();
 
 	}
 
@@ -86,7 +86,7 @@ namespace net { namespace http
 		gmtime_r(&_value, &stm);
 #endif
 
-		return karma::generate(outIter,
+		bool res = karma::generate(outIter,
 
 			wkday[karma::_1 = stm.tm_wday] <<
 
@@ -108,6 +108,9 @@ namespace net { namespace http
 			right_align(2, '0')[uint_[karma::_1 = (unsigned)stm.tm_sec]] <<
 
 			" GMT");
+
+		assert(res);
+		return res;
 	}
 	template bool HeaderValue<Date>::generate<Message::Iterator>(Message::Iterator &outIter) const;
 	template bool HeaderValue<Date>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;

@@ -117,7 +117,9 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 	}
 
@@ -126,7 +128,9 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(name.data(), name.length());
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 	}
 
@@ -135,7 +139,9 @@ namespace net { namespace http { namespace server { namespace impl
 	void Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.length());
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 	}
 

@@ -70,7 +70,9 @@ namespace net { namespace http { namespace server
 	Response &Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(name.data(), name.size());
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 		return *this;
 	}
@@ -79,7 +81,9 @@ namespace net { namespace http { namespace server
 	Response &Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 		return *this;
 	}
@@ -89,7 +93,9 @@ namespace net { namespace http { namespace server
 	Response &Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
-		value.generate(outIter);
+		bool b = value.generate(outIter);
+		assert(b);
+		(void)b;
 		endWriteHeader(outIter);
 		return *this;
 	}
