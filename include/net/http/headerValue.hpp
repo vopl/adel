@@ -25,6 +25,11 @@ namespace net { namespace http
 		{
 		}
 
+		HeaderValue(const Message::Segment *src)
+			: _isCorrect(src?parse(*src):false)
+		{
+		}
+
 		HeaderValue(const Value &value)
 			: _value(value)
 			, _isCorrect(true)

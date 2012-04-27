@@ -8,6 +8,7 @@
 #include "net/http/contentEncoding.hpp"
 #include "net/http/transferEncoding.hpp"
 #include "net/http/headerValue.hpp"
+#include "net/http/headerName.hpp"
 #include "net/impl/message.hpp"
 #include "net/http/impl/contentFilter.hpp"
 

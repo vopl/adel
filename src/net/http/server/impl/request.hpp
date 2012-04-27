@@ -8,6 +8,8 @@
 #include "net/impl/message.hpp"
 #include "net/http/server/impl/response.hpp"
 
+#include <boost/unordered_map.hpp>
+
 namespace net { namespace http { namespace impl
 {
 	class Server;
@@ -83,8 +85,26 @@ namespace net { namespace http { namespace server { namespace impl
 			Segment _name_;
 			Segment _value_;
 		};
-		std::vector<SHeader> _headersVector;
+		//std::vector<SHeader> _headersVector;
 
+		struct HVHash
+			: public std::unary_function<size_t, size_t>
+		{
+			const std::size_t &operator()(size_t const& v) const
+			{
+				return v;
+			}
+		};
+		struct HVEqual
+			: public std::binary_function<size_t, size_t, bool>
+		{
+			bool operator()(const size_t &k1, const size_t &k2) const
+			{
+				return k1 == k2;
+			}
+		};
+		typedef boost::unordered_map<size_t, SHeader, HVHash, HVEqual > TMHeaders;
+		TMHeaders _headersMap;
 
 		Segment _body_;
 

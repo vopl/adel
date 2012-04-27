@@ -30,6 +30,8 @@
 #include <boost/spirit/include/phoenix_statement.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_object.hpp>
+#include <boost/spirit/include/phoenix_bind.hpp>
 
 #include <boost/mpl/string.hpp>
 #include <boost/mpl/fold.hpp>
@@ -45,7 +47,6 @@
 #include <boost/functional/hash.hpp>
 #include <string>
 
-#include "net/http/headerName.hpp"
 
 
 #endif

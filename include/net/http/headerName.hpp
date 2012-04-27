@@ -2,6 +2,7 @@
 #define _NET_HTTP_HEADERNAME_HPP_
 
 #include "net/http/impl/headerName.hpp"
+# include <boost/range.hpp>
 
 namespace net { namespace http
 {
@@ -48,6 +49,7 @@ NET_HTTP_HN_INSTANCE(ifUnmodifiedSince, 'I','f','-','U','n','m','o','d','i','f',
 
 namespace net { namespace http { namespace hn
 {
+	//////////////////////////////////////////////////////////////////////////////
 	template <class Iterator>
 	inline size_t hash(Iterator begin, Iterator end)
 	{
@@ -66,16 +68,26 @@ namespace net { namespace http { namespace hn
 		return seed;
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
+	template <class Iterator>
+	inline size_t hash(const boost::iterator_range<Iterator> &range)
+	{
+		return hn::hash(range.begin(), range.end());
+	}
+
+	//////////////////////////////////////////////////////////////////////////////
 	inline size_t hash(const std::string &str)
 	{
 		return hash(str.begin(), str.end());
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
 	inline size_t hash(const char *csz)
 	{
 		return hash(csz, csz + strlen(csz));
 	}
 
+	//////////////////////////////////////////////////////////////////////////////
 	inline size_t hash(const char *data, size_t dataSize)
 	{
 		return hash(data, data + dataSize);

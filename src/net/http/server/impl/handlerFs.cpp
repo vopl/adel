@@ -44,7 +44,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		options->addOption(
 			"allowETag",
-			po::value<bool>()->default_value(false),
+			po::value<bool>()->default_value(true),
 			"use ETag, If-Match and If-None-Match header fields for entities");
 
 		options->addOption(
@@ -135,15 +135,21 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(gres);
 			(void)gres;
 
-			//TODO: If-Match, If-None-Match
-			//return notModified(r, originalPath);
-
+			const Message::Segment *seg = r.header(hn::ifNoneMatch);
+			if(	seg &&
+				std::string(seg->begin(), seg->end()) == etag)
+			{
+				return notModified(r, originalPath);
+			}
 		}
 
 		if(_allowLastModified)
 		{
-			//TODO: If-Modified-Since, If-Unmodified-Since
-			//return notModified(r, originalPath);
+			HeaderValue<Date> ims(r.header(hn::ifModifiedSince));
+			if(ims.isCorrect() && ims.value() >= st.st_mtime)
+			{
+				return notModified(r, originalPath);
+			}
 		}
 
 		int fd = 0;
