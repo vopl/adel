@@ -117,73 +117,73 @@ namespace net
 		}
 	}
 
-	///////////////////////////////////////////////////////////////
-	void Message::Iterator::advance(difference_type n)
-	{
-		assert(_badOffset != _chunkIndex);
-		
-		if(0 < n)
-		{
-			//вперед
-			while(n)
-			{
-				assert(0 <= _chunkIndex);
-				assert(_message->chunks().size() > _chunkIndex);
-				impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
-
-				assert(0 < chunk._packet._size);
-				difference_type delta = chunk._packet._size - _offsetInChunk;
-				if(delta > n)
-				{
-					_offsetInChunk += n;
-					n = 0;
-				}
-				else
-				{
-					n -= delta;
-					_chunkIndex++;
-					_offsetInChunk = 0;
-					
-					assert(_message->chunks().size() >= _chunkIndex);
-/*
-					if(_message->chunks().size() == _chunkIndex)
-					{
-						if(!_message->obtainMoreChunks())
-						{
-							assert(!n);
-						}
-					}
-*/
-				}
-			}
-		}
-		else
-		{
-			//назад
-			n = -n;
-			while(n)
-			{
-				assert(0 <= _chunkIndex);
-				impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
-
-				assert(0 < chunk._packet._size);
-				difference_type delta = _offsetInChunk+1;
-				if(delta > n)
-				{
-					_offsetInChunk -= n;
-					n = 0;
-				}
-				else
-				{
-					n -= delta;
-					_chunkIndex--;
-					assert(0 <= _chunkIndex);
-					impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
-					_offsetInChunk = chunk._packet._size-1;
-				}
-			}
-		}
-	}
+// 	///////////////////////////////////////////////////////////////
+// 	void Message::Iterator::advance(difference_type n)
+// 	{
+// 		assert(_badOffset != _chunkIndex);
+// 		
+// 		if(0 < n)
+// 		{
+// 			//вперед
+// 			while(n)
+// 			{
+// 				assert(0 <= _chunkIndex);
+// 				assert(_message->chunks().size() > _chunkIndex);
+// 				impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
+// 
+// 				assert(0 < chunk._packet._size);
+// 				difference_type delta = chunk._packet._size - _offsetInChunk;
+// 				if(delta > n)
+// 				{
+// 					_offsetInChunk += n;
+// 					n = 0;
+// 				}
+// 				else
+// 				{
+// 					n -= delta;
+// 					_chunkIndex++;
+// 					_offsetInChunk = 0;
+// 					
+// 					assert(_message->chunks().size() >= _chunkIndex);
+// /*
+// 					if(_message->chunks().size() == _chunkIndex)
+// 					{
+// 						if(!_message->obtainMoreChunks())
+// 						{
+// 							assert(!n);
+// 						}
+// 					}
+// */
+// 				}
+// 			}
+// 		}
+// 		else
+// 		{
+// 			//назад
+// 			n = -n;
+// 			while(n)
+// 			{
+// 				assert(0 <= _chunkIndex);
+// 				impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
+// 
+// 				assert(0 < chunk._packet._size);
+// 				difference_type delta = _offsetInChunk+1;
+// 				if(delta > n)
+// 				{
+// 					_offsetInChunk -= n;
+// 					n = 0;
+// 				}
+// 				else
+// 				{
+// 					n -= delta;
+// 					_chunkIndex--;
+// 					assert(0 <= _chunkIndex);
+// 					impl::Message::SChunk &chunk = _message->chunks()[_chunkIndex];
+// 					_offsetInChunk = chunk._packet._size-1;
+// 				}
+// 			}
+// 		}
+// 	}
 
 	///////////////////////////////////////////////////////////////
 	Message::Iterator::difference_type Message::Iterator::distance_to(const Iterator &i) const

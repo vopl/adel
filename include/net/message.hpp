@@ -21,7 +21,8 @@ namespace net
 
 	public:
 		class Iterator
-			: public boost::iterator_facade<Iterator, char, boost::random_access_traversal_tag>
+			//: public boost::iterator_facade<Iterator, char, boost::random_access_traversal_tag>
+			: public boost::iterator_facade<Iterator, char, boost::bidirectional_traversal_tag>
 		{
 		public:
 			Iterator();
@@ -40,7 +41,7 @@ namespace net
 			bool equal(const Iterator &i) const;
 			void increment();
 			void decrement();
-			void advance(difference_type n);
+			//void advance(difference_type n);
 			difference_type distance_to(const Iterator &i) const;
 			
 		public:

@@ -111,7 +111,15 @@ namespace net { namespace http { namespace server { namespace impl
 		path p = _root / originalPath;
 
 		struct stat st;
-		if(stat(p.string().c_str(), &st) || !S_ISREG(st.st_mode))
+		if(stat(p.string().c_str(), &st))
+		{
+			return notFound(r, originalPath);
+		}
+#ifdef _MSC_VER
+		if(!(st.st_mode & S_IFREG))
+#else
+		if(!S_ISREG(st.st_mode))
+#endif
 		{
 			return notFound(r, originalPath);
 		}
