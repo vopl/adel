@@ -264,11 +264,13 @@ namespace net { namespace http
 		: _buffer(buffer)
 		, _position(position)
 	{
-		assert(_buffer);
-		assert(_buffer->size());
+		if(_buffer)
+		{
+			assert(_buffer);
+			assert(_buffer->size());
 
-		_buffer->incIteratorUseCount();
-
+			_buffer->incIteratorUseCount();
+		}
 		assert(!_position || _position >= _buffer->begin());
 		assert(!_position || _position <= _buffer->end());
 	}
