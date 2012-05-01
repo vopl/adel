@@ -9,7 +9,7 @@
 #include "net/http/transferEncoding.hpp"
 #include "net/http/headerValue.hpp"
 #include "net/http/headerName.hpp"
-#include "net/impl/message.hpp"
+#include "net/http/impl/message.hpp"
 #include "net/http/impl/contentFilter.hpp"
 
 namespace net { namespace http { namespace impl
@@ -21,12 +21,12 @@ namespace net { namespace http { namespace impl
 namespace net { namespace http { namespace server { namespace impl
 {
 	class Response
-		: public net::impl::Message
+		: public net::http::impl::Message
 		, public net::http::impl::ContentFilter
 
 	{
 	public:
-		typedef net::Message::Segment Segment;
+		typedef net::http::Message::Segment Segment;
 
 	public:
 		Response(const net::http::impl::ServerPtr &server, const Channel &channel);
@@ -55,22 +55,25 @@ namespace net { namespace http { namespace server { namespace impl
 
 		void body(const char *data, size_t size);
 
+		MessageIterator getWriteIterator();
+		void setWriteIterator(MessageIterator iter);
+
 		bool flush();
 
 	public:
 		void setBodySize(size_t size);
 		void setBodyCompress(int level, size_t buffer=0);
 
-		Message::Iterator beginWriteHeader(const char *name, size_t size);
-		void endWriteHeader(Message::Iterator iter);
+		MessageIterator beginWriteHeader(const char *name, size_t size);
+		void endWriteHeader(MessageIterator iter);
 
 	private:
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
 
-		void pushLastChunk2Filter();
+		bool pushFullBuffers2Filter(bool ignoreIterators);
 
-		virtual bool obtainMoreChunks();
+		virtual bool obtainMoreBuffers(bool force);
 
 		net::http::impl::ContentFilter *_mostContentFilter;
 		std::vector<net::http::impl::ContentFilterPtr> _filterKeeper;
@@ -97,8 +100,8 @@ namespace net { namespace http { namespace server { namespace impl
 			ewp_body,
 		} _ewp;
 
-		Iterator	_writePosition;
-		Iterator	_bodyPosition;
+		MessageIterator	_writePosition;
+		MessageIterator	_bodyPosition;
 
 
 		Version _version;
@@ -117,7 +120,7 @@ namespace net { namespace http { namespace server { namespace impl
 	template <class HeaderValueTag>
 	void Response::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(namez, strlen(namez));
+		MessageIterator outIter = beginWriteHeader(namez, strlen(namez));
 		bool b = value.generate(outIter);
 		assert(b);
 		(void)b;
@@ -128,7 +131,7 @@ namespace net { namespace http { namespace server { namespace impl
 	template <class HeaderValueTag>
 	void Response::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(name.data(), name.length());
+		MessageIterator outIter = beginWriteHeader(name.data(), name.length());
 		bool b = value.generate(outIter);
 		assert(b);
 		(void)b;
@@ -139,7 +142,7 @@ namespace net { namespace http { namespace server { namespace impl
 	template <class HeaderValueTag>
 	void Response::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
-		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.length());
+		MessageIterator outIter = beginWriteHeader(name.str.data(), name.str.length());
 		bool b = value.generate(outIter);
 		assert(b);
 		(void)b;

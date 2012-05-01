@@ -13,7 +13,6 @@ set(INCLUDE
 	${PINC}/packet.hpp
 	${PINC}/acceptor.hpp
 	${PINC}/connector.hpp
-	${PINC}/message.hpp
 	${PINC}/log.hpp
 )
 source_group(include FILES ${INCLUDE})
@@ -22,7 +21,6 @@ set(SRC
 	${PSRC}/channel.cpp
 	${PSRC}/connector.cpp
 	${PSRC}/acceptor.cpp
-	${PSRC}/message.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -35,7 +33,6 @@ set(SRC_IMPL
 	${PSRC}/impl/connector.cpp
 	${PSRC}/impl/acceptor.cpp
 	${PSRC}/impl/channel.cpp
-	${PSRC}/impl/message.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
 
@@ -43,7 +40,6 @@ set(SRC_IMPL_HDR
 	${PSRC}/impl/connector.hpp
 	${PSRC}/impl/acceptor.hpp
 	${PSRC}/impl/channel.hpp
-	${PSRC}/impl/message.hpp
 )
 source_group(src/impl FILES ${SRC_IMPL_HDR})
 
@@ -66,6 +62,8 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 set(INCLUDE_HTTP
 	${PINC}/http/server.hpp
 	${PINC}/http/client.hpp
+	${PINC}/http/message.hpp
+	${PINC}/http/messageIterator.hpp
 	${PINC}/http/statusCode.hpp
 	${PINC}/http/method.hpp
 	${PINC}/http/version.hpp
@@ -81,29 +79,16 @@ set(INCLUDE_HTTP_IMPL
 )
 source_group(include/http/impl FILES ${INCLUDE_HTTP_IMPL})
 
-set(INCLUDE_HTTP_SERVER
-	${PINC}/http/server/log.hpp
-	${PINC}/http/server/request.hpp
-	${PINC}/http/server/response.hpp
-	${PINC}/http/server/handlerFs.hpp
-)
-source_group(include/http/server FILES ${INCLUDE_HTTP_SERVER})
-
 set(SRC_HTTP
 	${PSRC}/http/server.cpp
 	${PSRC}/http/client.cpp
 	${PSRC}/http/statusCode.cpp
 	${PSRC}/http/headerValue_parsers.cpp
 	${PSRC}/http/headerValue_generators.cpp
+	${PSRC}/http/message.cpp
+	${PSRC}/http/messageIterator.cpp
 )
 source_group(src/http FILES ${SRC_HTTP})
-
-set(SRC_HTTP_SERVER
-	${PSRC}/http/server/request.cpp
-	${PSRC}/http/server/response.cpp
-	${PSRC}/http/server/handlerFs.cpp
-)
-source_group(src/http/server FILES ${SRC_HTTP_SERVER})
 
 set(SRC_HTTP_HDR
 )
@@ -112,6 +97,8 @@ source_group(src/http FILES ${SRC_HTTP_HDR})
 set(SRC_HTTP_IMPL
 	${PSRC}/http/impl/server.cpp
 	${PSRC}/http/impl/client.cpp
+	${PSRC}/http/impl/message.cpp
+	${PSRC}/http/impl/messageBuffer.cpp
 	${PSRC}/http/impl/contentFilter.cpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.cpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.cpp
@@ -123,6 +110,8 @@ source_group(src/http/impl FILES ${SRC_HTTP_IMPL})
 set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/server.hpp
 	${PSRC}/http/impl/client.hpp
+	${PSRC}/http/impl/message.hpp
+	${PSRC}/http/impl/messageBuffer.hpp
 	${PSRC}/http/impl/contentFilter.hpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.hpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.hpp
@@ -130,6 +119,25 @@ set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/contentFilterDecodeChunked.hpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL_HDR})
+
+
+
+
+
+set(INCLUDE_HTTP_SERVER
+	${PINC}/http/server/log.hpp
+	${PINC}/http/server/request.hpp
+	${PINC}/http/server/response.hpp
+	${PINC}/http/server/handlerFs.hpp
+)
+source_group(include/http/server FILES ${INCLUDE_HTTP_SERVER})
+
+set(SRC_HTTP_SERVER
+	${PSRC}/http/server/request.cpp
+	${PSRC}/http/server/response.cpp
+	${PSRC}/http/server/handlerFs.cpp
+)
+source_group(src/http/server FILES ${SRC_HTTP_SERVER})
 
 
 

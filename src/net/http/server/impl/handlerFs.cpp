@@ -195,18 +195,24 @@ namespace net { namespace http { namespace server { namespace impl
 			response.setBodyCompress(0);
 		}
 
+		response.body(NULL, 0);
 		if(st.st_size)
 		{
+			MessageIterator writeIter = response.getWriteIterator();
 			size_t size = st.st_size;
-			std::vector<char> buffer(std::min(size, (size_t)1024));
 			while(size)
 			{
-				size_t rsize = std::min(size, (size_t)1024);
-				int rres = read(fd, &buffer[0], (off_t)rsize);
+				size_t bufSize = size;
+				char *buf = writeIter.rawBufferFwd(bufSize);
+				assert(buf && bufSize);
+
+				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
-				response.body(&buffer[0], rsize);
-				size -= rsize;
+				writeIter += bufSize;
+				size -= bufSize;
+
+				response.setWriteIterator(writeIter);
 			}
 
 			close(fd);

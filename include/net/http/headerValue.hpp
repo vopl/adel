@@ -1,7 +1,7 @@
 #ifndef _NET_HTTP_HEADERVALUE_HPP_
 #define _NET_HTTP_HEADERVALUE_HPP_
 
-#include "net/message.hpp"
+#include "net/http/message.hpp"
 #include <string>
 
 namespace net { namespace http

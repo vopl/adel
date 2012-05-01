@@ -54,6 +54,9 @@ namespace net { namespace http { namespace server
 		Response &body(const char *dataz);
 		Response &body(const std::string &data);
 
+		MessageIterator getWriteIterator();
+		void setWriteIterator(MessageIterator iter);
+
 		bool flush();
 
 	public:

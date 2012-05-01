@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "net/http/server/impl/response.hpp"
 #include "net/http/impl/server.hpp"
+#include "net/http/impl/messageBuffer.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
 #include "net/http/impl/contentFilterEncodeZlib.hpp"
 #include "net/http/headerName.hpp"
@@ -32,7 +33,7 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		_mostContentFilter = this;
 
-		if(obtainMoreChunks())
+		if(obtainMoreBuffers(true))
 		{
 			_writePosition = begin();
 		}
@@ -124,7 +125,7 @@ namespace net { namespace http { namespace server { namespace impl
 	/////////////////////////////////////////////////////////////////////
 	void Response::header(const HeaderName &name, const char *value, size_t valueSize)
 	{
-		Message::Iterator outIter = beginWriteHeader(name.str.data(), name.str.size());
+		MessageIterator outIter = beginWriteHeader(name.str.data(), name.str.size());
 		outIter = std::copy(value, value+valueSize, outIter);
 		endWriteHeader(outIter);
 	}
@@ -181,29 +182,31 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
+	MessageIterator Response::getWriteIterator()
+	{
+		return _writePosition;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void Response::setWriteIterator(MessageIterator iter)
+	{
+		_writePosition = iter;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::flush()
 	{
 		body(NULL, 0);
 
-		if(_chunks.empty())
+		net::http::impl::Message::dropTail(_writePosition.absolutePosition());
+		if(!pushFullBuffers2Filter(true))
 		{
-			return true;
+			return false;
 		}
-
-		SChunk &lastChunk = _chunks.back();
-
-		if(lastChunk._packet._data)
+		if(!_mostContentFilter->filterFlush())
 		{
-			assert(_writePosition.absolutePosition() >= lastChunk._offset);
-			assert(_writePosition.absolutePosition() < (Iterator::difference_type)(lastChunk._offset+lastChunk._packet._size));
-
-			lastChunk._packet._size = _writePosition.absolutePosition() - lastChunk._offset;
-			if(lastChunk._packet._size)
-			{
-				pushLastChunk2Filter();
-			}
+			return false;
 		}
-		_mostContentFilter->filterFlush();
 
 		//_channel.close();
 		//keep alive
@@ -246,7 +249,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::endWriteHeader(Message::Iterator iter)
+	void Response::endWriteHeader(MessageIterator iter)
 	{
 		static const char crlf[] = "\r\n";
 		switch(_ewp)
@@ -267,51 +270,83 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::pushLastChunk2Filter()
+	bool Response::pushFullBuffers2Filter(bool ignoreIterators)
 	{
-		if(_chunks.empty())
+		size_t bodyOffset = _bodyPosition.isEndInfinity()?std::numeric_limits<size_t>::max():_bodyPosition.absolutePosition();
+		size_t writeOffset = _writePosition.isEndInfinity()?0:_writePosition.absolutePosition();
+
+		while(_firstBuffer)
 		{
-			return;
+			if(_firstBuffer->iteratorUseCount() && !ignoreIterators)
+			{
+				return true;
+			}
+
+			if(writeOffset < _firstBuffer->offset() + _firstBuffer->size())
+			{
+				return true;
+			}
+
+			size_t offsetInPacket;
+			Packet packet = _firstBuffer->asPacket(offsetInPacket);
+
+			if(	_mostContentFilter == this)
+			{
+				//нет фильтров, и заголовки и тело - все идет подряд
+
+				if(!/*this->*/filterPush(packet, offsetInPacket))
+				{
+					return false;
+				}
+
+			}
+			else
+			{
+				//есть фильтры тела, заголовки без фильтров, тело с фильтрами
+				if(bodyOffset < _firstBuffer->offset())
+				{
+					//тело целиком
+					if(!_mostContentFilter->filterPush(packet, offsetInPacket))
+					{
+						return false;
+					}
+				}
+				else if(bodyOffset >= _firstBuffer->offset() + _firstBuffer->size())
+				{
+					//заголовок целиком
+					if(!/*this->*/filterPush(packet, offsetInPacket))
+					{
+						return false;
+					}
+				}
+				else
+				{
+					//заголовок и тело
+					Packet headersPacket = packet;
+					headersPacket._size = _firstBuffer->size() - (bodyOffset - _firstBuffer->offset());
+					/*this->*/filterPush(headersPacket, offsetInPacket);
+
+					if(!_mostContentFilter->filterPush(packet, bodyOffset - _firstBuffer->offset()))
+					{
+						return false;
+					}
+				}
+			}
+
+			net::http::impl::Message::dropFront();
 		}
 
-		SChunk &lastChunk = _chunks.back();
-		if(	_mostContentFilter != this &&
-			_bodyPosition.chunkIndex() != Iterator::_badOffset)
-		{
-			Iterator::size_type curChunkIndex = (Iterator::size_type)(_chunks.size()-1);
-
-			if(curChunkIndex < _bodyPosition.chunkIndex())
-			{
-				/*this->*/filterPush(lastChunk._packet, 0);
-			}
-			else if(curChunkIndex == _bodyPosition.chunkIndex())
-			{
-				Packet headersPart = lastChunk._packet;
-				headersPart._size = _bodyPosition.offsetInChunk();
-				/*this->*/filterPush(headersPart, 0);
-				_mostContentFilter->filterPush(lastChunk._packet, _bodyPosition.offsetInChunk());
-			}
-			else// curChunkIndex > _bodyPosition.chunkIndex()
-			{
-				_mostContentFilter->filterPush(lastChunk._packet, 0);
-			}
-		}
-		else
-		{
-			/*this->*/filterPush(lastChunk._packet, 0);
-		}
-
-		lastChunk._packet._data.reset();
+		return true;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::obtainMoreChunks()
+	bool Response::obtainMoreBuffers(bool force)
 	{
-		pushLastChunk2Filter();
+		pushFullBuffers2Filter(false);
 
 		size_t size = _outputGranula;
 		Packet packet(boost::shared_array<char>(new char[size]), size);
-		pushChunk(packet);
+		pushBuffer(packet);
 		return true;
 	}
 

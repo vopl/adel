@@ -5,7 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include "net/http/method.hpp"
 #include "net/http/version.hpp"
-#include "net/impl/message.hpp"
+#include "net/http/impl/message.hpp"
 #include "net/http/server/impl/response.hpp"
 
 #include <boost/unordered_map.hpp>
@@ -20,10 +20,10 @@ namespace net { namespace http { namespace server { namespace impl
 {
 	///////////////////////////////////////////////////////////////////////////
 	class Request
-		: public net::impl::Message
+		: public net::http::impl::Message
 	{
 	public:
-		typedef net::Message::Segment Segment;
+		typedef net::http::Message::Segment Segment;
 
 	public:
 		Request(const net::http::impl::ServerPtr &server, const Channel &channel);
@@ -62,7 +62,7 @@ namespace net { namespace http { namespace server { namespace impl
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
 
-		virtual bool obtainMoreChunks();
+		virtual bool obtainMoreBuffers(bool force);
 
 	private:
 		Segment	_request_;

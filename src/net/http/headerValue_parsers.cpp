@@ -22,7 +22,7 @@ namespace net { namespace http
 	template <>
 	bool HeaderValue<Date>::parse(const Message::Segment &src)
 	{
-		assert(0);
+		//assert(0);
 		return false;
 	}
 

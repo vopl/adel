@@ -69,7 +69,7 @@ namespace net { namespace http { namespace server { namespace impl
 		assert(endInfinity() == _request_.begin());
 		assert(endInfinity() == _request_.end());
 
-		if(!obtainMoreChunks())
+		if(!_firstBuffer && !obtainMoreBuffers(true))
 		{
 			return false;
 		}
@@ -78,7 +78,7 @@ namespace net { namespace http { namespace server { namespace impl
 		namespace qi = boost::spirit::qi;
 		namespace px = boost::phoenix;
 
-		Iterator iter = begin();
+		MessageIterator iter = begin();
 		bool parseResult = parse(iter, endInfinity(),
 			raw[
 				raw[
@@ -131,7 +131,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		std::pair<size_t, SHeader> hdr;
 
-		Iterator iter = _request_.end();
+		MessageIterator iter = _request_.end();
 		bool parseResult = parse(iter, endInfinity(),
 			raw[
 			    *(
@@ -140,7 +140,7 @@ namespace net { namespace http { namespace server { namespace impl
 							g_parserToken
 						][
 						  px::ref(hdr.second._name_) = qi::_1,
-						  px::ref(hdr.first) = px::bind((size_t(*)(const Segment&))&hn::hash<Iterator>, qi::_1)] >>
+						  px::ref(hdr.first) = px::bind((size_t(*)(const Segment&))&hn::hash<MessageIterator>, qi::_1)] >>
 
 						':' >> *space >>
 
@@ -185,7 +185,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::requestLine_() const
+	const net::http::Message::Segment &Request::requestLine_() const
 	{
 		return _requestLine_;
 	}
@@ -197,7 +197,7 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::method_() const
+	const Request::Segment &Request::method_() const
 	{
 		return _method_;
 	}
@@ -209,37 +209,37 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::version_() const
+	const Request::Segment &Request::version_() const
 	{
 		return _version_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::uri_() const
+	const Request::Segment &Request::uri_() const
 	{
 		return _uri_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::path_() const
+	const Request::Segment &Request::path_() const
 	{
 		return _path_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment &Request::queryString_() const
+	const Request::Segment &Request::queryString_() const
 	{
 		return _queryString_;
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment *Request::header(const HeaderName &name) const
+	const Request::Segment *Request::header(const HeaderName &name) const
 	{
 		return header(name.hash);
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment *Request::header(size_t hash) const
+	const Request::Segment *Request::header(size_t hash) const
 	{
 		TMHeaders::const_iterator iter = _headersMap.find(hash);
 		if(_headersMap.end() == iter)
@@ -251,27 +251,31 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment *Request::header(const std::string &name) const
+	const Request::Segment *Request::header(const std::string &name) const
 	{
 		return header(hn::hash(name));
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment *Request::header(const char *namez) const
+	const Request::Segment *Request::header(const char *namez) const
 	{
 		return header(hn::hash(namez));
 	}
 
 	//////////////////////////////////////////////////////////////
-	const net::Message::Segment *Request::header(const char *name, size_t nameSize) const
+	const Request::Segment *Request::header(const char *name, size_t nameSize) const
 	{
 		return header(hn::hash(name, nameSize));
 	}
 
 
 	//////////////////////////////////////////////////////////////
-	bool Request::obtainMoreChunks()
+	bool Request::obtainMoreBuffers(bool force)
 	{
+		if(!force)
+		{
+			return false;
+		}
 		for(;;)
 		{
 			async::Future2<boost::system::error_code, Packet> ret =
@@ -285,7 +289,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 			if(ret.data2NoWait()._size)
 			{
-				pushChunk(ret.data2NoWait());
+				pushBuffer(ret.data2NoWait());
 				return true;
 			}
 

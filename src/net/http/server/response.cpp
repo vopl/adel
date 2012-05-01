@@ -95,6 +95,18 @@ namespace net { namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
+	MessageIterator Response::getWriteIterator()
+	{
+		return _impl->getWriteIterator();
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	void Response::setWriteIterator(MessageIterator iter)
+	{
+		return _impl->setWriteIterator(iter);
+	}
+
+	/////////////////////////////////////////////////////////////////////
 	bool Response::flush()
 	{
 		return _impl->flush();

@@ -3,7 +3,7 @@
 
 #include "net/http/server/response.hpp"
 #include "net/channel.hpp"
-#include "net/message.hpp"
+#include "net/http/message.hpp"
 #include "net/http/method.hpp"
 #include "net/http/version.hpp"
 
@@ -17,7 +17,7 @@ namespace net { namespace http { namespace server
 	}
 	///////////////////////////////////////////////////////
 	class Request
-		: public net::Message
+		: public net::http::Message
 	{
 	protected:
 		typedef impl::RequestPtr ImplPtr;
