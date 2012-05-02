@@ -44,7 +44,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		options->addOption(
 			"allowETag",
-			po::value<bool>()->default_value(true),
+			po::value<bool>()->default_value(false),
 			"use ETag, If-Match and If-None-Match header fields for entities");
 
 		options->addOption(
@@ -157,7 +157,7 @@ namespace net { namespace http { namespace server { namespace impl
 			}
 		}
 
-		int fd = 0;
+		int fd = -1;
 
 		if(st.st_size)
 		{
@@ -196,7 +196,7 @@ namespace net { namespace http { namespace server { namespace impl
 		}
 
 		response.body(NULL, 0);
-		if(st.st_size)
+		if(fd>=0)
 		{
 #if 1
 			MessageIterator writeIter = response.getWriteIterator();
