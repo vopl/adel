@@ -69,6 +69,7 @@ set(INCLUDE_HTTP
 	${PINC}/http/version.hpp
 	${PINC}/http/contentEncoding.hpp
 	${PINC}/http/transferEncoding.hpp
+	${PINC}/http/connection.hpp
 	${PINC}/http/headerValue.hpp
 	${PINC}/http/headerName.hpp
 )

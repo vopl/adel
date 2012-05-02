@@ -34,7 +34,9 @@ NET_HTTP_HN_INSTANCE(server, 'S','e','r','v','e','r')
 NET_HTTP_HN_INSTANCE(connection, 'C','o','n','n','e','c','t','i','o','n')
 
 NET_HTTP_HN_INSTANCE(transferEncoding, 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g')
+NET_HTTP_HN_INSTANCE(te, 'T','E')
 NET_HTTP_HN_INSTANCE(contentEncoding, 'C','o','n','t','e','n','t','-','E','n','c','o','d','i','n','g')
+NET_HTTP_HN_INSTANCE(acceptEncoding, 'A','c','c','e','p','t','-','E','n','c','o','d','i','n','g')
 NET_HTTP_HN_INSTANCE(contentLength, 'C','o','n','t','e','n','t','-','L','e','n','g','t','h')
 NET_HTTP_HN_INSTANCE(contentType, 'C','o','n','t','e','n','t','-','T','y','p','e')
 

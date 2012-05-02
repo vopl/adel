@@ -116,4 +116,132 @@ namespace net { namespace http
 	template bool HeaderValue<Date>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	template <class Iterator>
+	bool HeaderValue<Unsigned>::generate(Iterator &outIter) const
+	{
+		return karma::generate(outIter, uint_generator<Value, 10>()[karma::_1 = _value]);
+	}
+	template bool HeaderValue<Unsigned>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<Unsigned>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
+
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	template <class Iterator>
+	bool HeaderValue<Connection>::generate(Iterator &outIter) const
+	{
+		switch(_value)
+		{
+		case ec_close:
+			{
+				static const char term[] = "Close";
+				outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			}
+			return true;
+		case ec_keepAlive:
+			{
+				static const char term[] = "Keep-Alive";
+				outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			}
+			return true;
+		default:
+			assert(0);
+			break;
+		}
+
+		return false;
+	}
+	template bool HeaderValue<Connection>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<Connection>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
+
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	template <class Iterator>
+	bool HeaderValue<TransferEncoding>::generate(Iterator &outIter) const
+	{
+		static const char delim[] = ", ";
+		bool first = true;
+		if(_value & ete_chunked)
+		{
+			//if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "chunked";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(_value & ete_gzip)
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "gzip";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(_value & ete_deflate)
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "deflate";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(_value & ete_compress)
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "compress";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(first || (_value & ete_identity))
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "identity";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+
+		return true;
+	}
+	template bool HeaderValue<TransferEncoding>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<TransferEncoding>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
+
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	template <class Iterator>
+	bool HeaderValue<ContentEncoding>::generate(Iterator &outIter) const
+	{
+		static const char delim[] = ", ";
+		bool first = true;
+		if(_value & ece_gzip)
+		{
+			//if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "gzip";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(_value & ece_deflate)
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "deflate";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(_value & ece_compress)
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "compress";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+		if(first || (_value & ece_identity))
+		{
+			if(!first) outIter = std::copy(delim, delim+sizeof(delim)-1, outIter);
+			static const char term[] = "identity";
+			outIter = std::copy(term, term+sizeof(term)-1, outIter);
+			first = false;
+		}
+
+		return true;
+	}
+	template bool HeaderValue<ContentEncoding>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<ContentEncoding>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
+
 }}

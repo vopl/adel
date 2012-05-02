@@ -305,7 +305,7 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		if(!_response)
 		{
-			_response.reset(new Response(_server, _channel));
+			_response.reset(new Response(_server, _channel, this));
 			_response->statusCode(esc_200);
 			_response->version(_version);
 		}

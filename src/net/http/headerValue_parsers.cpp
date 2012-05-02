@@ -116,5 +116,63 @@ namespace net { namespace http
 		return true;
 	}
 
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	bool HeaderValue<Unsigned>::parse(const Message::Segment &src)
+	{
+		return qi::parse(src.begin(), src.end(), uint_parser<Value, 10>()[px::ref(_value) = qi::_1]);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		symbols<char, EConnection> connectionInit()
+		{
+			symbols<char, EConnection> res;
+			res.add("close", ec_close);
+			res.add("keep-alive", ec_keepAlive);
+			return res;
+		}
+		static const symbols<char, EConnection> connection = connectionInit();
+	}
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	bool HeaderValue<Connection>::parse(const Message::Segment &src)
+	{
+		return qi::parse(src.begin(), src.end(), boost::spirit::ascii::no_case[connection[px::ref(_value) = qi::_1]]);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	bool HeaderValue<TransferEncoding>::parse(const Message::Segment &src)
+	{
+		return qi::parse(src.begin(), src.end(),
+			(
+				lit("deflate")	[px::ref(_value) |= ete_deflate]|
+				lit("gzip")		[px::ref(_value) |= ete_gzip]|
+				lit("compress")	[px::ref(_value) |= ete_compress]|
+				lit("chunked")	[px::ref(_value) |= ete_chunked]|
+				lit("identity")	[px::ref(_value) |= ete_identity]|
+				lit("*")		[px::ref(_value)  = ete_any]
+			) >>
+			(
+				(
+					*char_(' ') >> lit(';') >>
+					*char_(' ') >> char_('q') >>
+					*char_(' ') >> char_('=') >>
+					*char_(' ') >> +char_("0-9\\.") >>
+					*char_(" ,")
+				) | eps
+			)
+		);
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	template <>
+	bool HeaderValue<ContentEncoding>::parse(const Message::Segment &src)
+	{
+		assert(0);
+		return false;
+	}
 
 }}

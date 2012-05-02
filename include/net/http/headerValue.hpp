@@ -2,6 +2,9 @@
 #define _NET_HTTP_HEADERVALUE_HPP_
 
 #include "net/http/message.hpp"
+#include "net/http/transferEncoding.hpp"
+#include "net/http/contentEncoding.hpp"
+#include "net/http/connection.hpp"
 #include <string>
 
 namespace net { namespace http
@@ -41,6 +44,11 @@ namespace net { namespace http
 			return _value;
 		}
 
+		Value &value()
+		{
+			return _value;
+		}
+
 		bool isCorrect() const
 		{
 			return _isCorrect;
@@ -57,6 +65,13 @@ namespace net { namespace http
 		{
 			_value = value;
 			_isCorrect = true;
+			return *this;
+		}
+
+		HeaderValue &setIsCorrect(bool isCorrect)
+		{
+			_isCorrect = isCorrect;
+			return *this;
 		}
 
 		operator std::string() const
@@ -102,6 +117,25 @@ namespace net { namespace http
 		typedef time_t Value;
 	};
 
+	struct Unsigned
+	{
+		typedef size_t Value;
+	};
+
+	struct Connection
+	{
+		typedef EConnection Value;
+	};
+
+	struct TransferEncoding
+	{
+		typedef int Value;//ETransferEncoding bits
+	};
+
+	struct ContentEncoding
+	{
+		typedef int Value;//EContentEncoding bits
+	};
 
 }}
 #endif

@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "net/http/server/impl/response.hpp"
+#include "net/http/server/impl/request.hpp"
 #include "net/http/impl/server.hpp"
 #include "net/http/impl/messageBuffer.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
@@ -20,16 +21,17 @@ namespace net { namespace http { namespace server { namespace impl
 {
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel)
+	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request)
 		: net::http::impl::ContentFilter(NULL)
 		, _server(server)
 		, _channel(channel)
+		, _request(request)
 		, _ewp(ewp_statusLine)
 		//, _mostContentFilter(this)
 		, _outputGranula(_server->responseWriteGranula())
-		, _bodySize((size_t)-1)
+		, _bodySize(_badBodySize)
 		, _bodyCompressLevel(1)
-		, _bodyCompressBuffer(_server->responseWriteGranula())
+		, _bodyCompressGranula(_server->responseWriteGranula())
 	{
 		_mostContentFilter = this;
 
@@ -220,10 +222,10 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setBodyCompress(int level, size_t buffer)
+	void Response::setBodyCompress(int level, size_t granula)
 	{
 		_bodyCompressLevel = level;
-		_bodyCompressBuffer = buffer;
+		_bodyCompressGranula = granula;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -423,31 +425,158 @@ namespace net { namespace http { namespace server { namespace impl
 		header(hn::server, "haws", 4);
 		header(hn::date, HeaderValue<Date>(time(NULL)));
 
-		//TODO: Date
-
-		//ContentFilter * ch;
-/*
-		ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
-		_mostContentFilter = ch;
-		header(hn::transferEncoding.str(), "chunked");
-		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
-*/
-
-/*
-		ch = new net::http::impl::ContentFilterEncodeZlib(
-			_mostContentFilter,
-			net::http::ece_deflate,
-			_bodyCompressLevel,
-			_bodyCompressBuffer);
-
-		_mostContentFilter = ch;
-		header(hn::contentEncoding.str(), "deflate");
-		_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
-//*/
-
 		//keep alive
-		//content-encoding
-		//transfer-encoding
+		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
+		if(!hvConnection.isCorrect() && _version >= Version(1,1))
+		{
+			hvConnection = ec_keepAlive;
+		}
+
+		//chunked
+		HeaderValue<TransferEncoding> hvTransferEncoding(_request->header(hn::te));
+		if(!hvTransferEncoding.isCorrect())
+		{
+			if(_version >= Version(1,1))
+			{
+				hvTransferEncoding = ete_chunked;
+			}
+		}
+		else
+		{
+			if(hvTransferEncoding.value() & ete_chunked)
+			{
+				hvTransferEncoding = ete_chunked;
+			}
+			else
+			{
+				hvTransferEncoding.setIsCorrect(false);
+			}
+		}
+
+		//content encoding
+		HeaderValue<ContentEncoding> hvContentEncoding(_request->header(hn::acceptEncoding));
+		if(hvContentEncoding.isCorrect())
+		{
+			if(hvContentEncoding.value() & ece_deflate)
+			{
+				hvContentEncoding = ece_deflate;
+			}
+			else if(hvContentEncoding.value() & ece_gzip)
+			{
+				hvContentEncoding = ece_gzip;
+			}
+			else
+			{
+				hvContentEncoding.setIsCorrect(false);
+			}
+		}
+		else
+		{
+			if(_version >= Version(1,0))
+			{
+				hvContentEncoding = ece_deflate;
+			}
+		}
+
+		//content length
+		HeaderValue<Unsigned> hvContentLength;
+		if(_badBodySize != _bodySize)
+		{
+			hvContentLength = _bodySize;
+		}
+
+		bool compress = hvContentEncoding.isCorrect() && (hvContentEncoding.value()&(ece_deflate|ece_gzip));
+		bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
+		bool contentLength = hvContentLength.isCorrect();
+		bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
+
+		//логика по сжатию
+		if(_bodyCompressLevel)
+		{
+			//нужен compress && (chunked || !keepAlive)
+			if(compress)
+			{
+				//у пресованного потока пока длина не известна
+				contentLength = false;
+				hvContentLength.setIsCorrect(false);
+
+				if(!chunked && keepAlive)
+				{
+					//невозможно определить длину, бросить keepAlive
+					keepAlive = false;
+					hvConnection.setIsCorrect(false);
+				}
+			}
+			else
+			{
+				//без компрессии
+				if(contentLength && chunked)
+				{
+					//chunked или contentLength лишний
+					chunked = false;
+					hvTransferEncoding.setIsCorrect(false);
+				}
+			}
+		}
+
+		//писать заголовки
+		if(hvContentLength.isCorrect())
+		{
+			header(hn::contentLength, hvContentLength);
+		}
+		if(hvTransferEncoding.isCorrect())
+		{
+			header(hn::transferEncoding, hvTransferEncoding);
+
+			ContentFilter *ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
+			_mostContentFilter = ch;
+			_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+		}
+
+		if(hvContentEncoding.isCorrect())
+		{
+			if(hvContentEncoding.value() & ece_deflate)
+			{
+				hvContentEncoding.value() = ece_deflate;
+
+				ContentFilter *ch = new net::http::impl::ContentFilterEncodeZlib(
+					_mostContentFilter,
+					net::http::ece_deflate,
+					_bodyCompressLevel,
+					_bodyCompressGranula);
+
+				_mostContentFilter = ch;
+				_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+
+			}
+			else if(hvContentEncoding.value() & ece_gzip)
+			{
+				hvContentEncoding.value() = ece_gzip;
+
+				ContentFilter *ch = new net::http::impl::ContentFilterEncodeZlib(
+					_mostContentFilter,
+					net::http::ece_gzip,
+					_bodyCompressLevel,
+					_bodyCompressGranula);
+
+				_mostContentFilter = ch;
+				_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+
+			}
+			else
+			{
+				hvContentEncoding.value() = ece_identity;
+			}
+
+			header(hn::contentEncoding, hvContentEncoding);
+		}
+		if(hvConnection.isCorrect())
+		{
+			header(hn::connection, hvConnection);
+
+			//keep alive
+		}
+
 	}
 
 }}}}

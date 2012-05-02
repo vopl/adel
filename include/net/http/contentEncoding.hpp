@@ -6,11 +6,11 @@ namespace net { namespace http
 
 	enum EContentEncoding
 	{
-		ece_unknown,
-		ece_identity,
-		ece_gzip,
-		ece_compress,
-		ece_deflate,
+		ece_unknown		= 0,
+		ece_identity	= 1<<1,
+		ece_gzip		= 1<<2,
+		ece_compress	= 1<<3,
+		ece_deflate		= 1<<4,
 	};
 }}
 

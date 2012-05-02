@@ -80,7 +80,7 @@
 		default:
 		{
 			level:1,
-			buffer:4096,
+			buffer:8192,
 			minSize:128,
 		},
 

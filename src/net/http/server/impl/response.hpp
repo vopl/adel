@@ -20,6 +20,9 @@ namespace net { namespace http { namespace impl
 
 namespace net { namespace http { namespace server { namespace impl
 {
+	class Request;
+
+	////////////////////////////////////////////////////////
 	class Response
 		: public net::http::impl::Message
 		, public net::http::impl::ContentFilter
@@ -29,7 +32,7 @@ namespace net { namespace http { namespace server { namespace impl
 		typedef net::http::Message::Segment Segment;
 
 	public:
-		Response(const net::http::impl::ServerPtr &server, const Channel &channel);
+		Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request);
 		~Response();
 
 		void version(const Version &version);
@@ -62,7 +65,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 	public:
 		void setBodySize(size_t size);
-		void setBodyCompress(int level, size_t buffer=0);
+		void setBodyCompress(int level, size_t granula=0);
 
 		MessageIterator beginWriteHeader(const char *name, size_t size);
 		void endWriteHeader(MessageIterator iter);
@@ -70,6 +73,7 @@ namespace net { namespace http { namespace server { namespace impl
 	private:
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
+		Request						*_request;
 
 		bool pushFullBuffers2Filter();
 
@@ -85,8 +89,9 @@ namespace net { namespace http { namespace server { namespace impl
 		Packet _output;
 
 		size_t	_bodySize;
+		static const size_t _badBodySize = (size_t)-1;
 		int		_bodyCompressLevel;
-		size_t	_bodyCompressBuffer;
+		size_t	_bodyCompressGranula;
 
 	private:
 		void systemHeaders();

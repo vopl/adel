@@ -20,6 +20,36 @@ namespace net { namespace http
 			, _lo(lo)
 		{
 		}
-	};
+
+		bool operator>(const Version &v) const
+		{
+			if(_hi > v._hi) return true;
+			return _lo > v._lo;
+		}
+		bool operator>=(const Version &v) const
+		{
+			if(_hi >= v._hi) return true;
+			return _lo >= v._lo;
+		}
+		bool operator<(const Version &v) const
+		{
+			if(_hi < v._hi) return true;
+			return _lo < v._lo;
+		}
+		bool operator<=(const Version &v) const
+		{
+			if(_hi <= v._hi) return true;
+			return _lo <= v._lo;
+		}
+
+		bool operator==(const Version &v) const
+		{
+			return _hi == v._hi && _lo == v._lo;
+		}
+		bool operator!=(const Version &v) const
+		{
+			return !operator==(v);
+		}
+};
 }}
 #endif

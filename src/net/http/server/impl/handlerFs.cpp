@@ -239,6 +239,7 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		net::http::server::Response response = r.response();
 		response.statusCode(esc_404);
+		response.setBodySize(0);
 		response.flush();
 	}
 
@@ -247,6 +248,7 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 		net::http::server::Response response = r.response();
 		response.statusCode(esc_304);
+		response.setBodySize(0);
 		response.flush();
 	}
 
