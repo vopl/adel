@@ -71,7 +71,7 @@ namespace net { namespace http { namespace server { namespace impl
 		net::http::impl::ServerPtr	_server;
 		Channel						_channel;
 
-		bool pushFullBuffers2Filter(bool ignoreIterators);
+		bool pushFullBuffers2Filter();
 
 		virtual bool obtainMoreBuffers(bool force);
 

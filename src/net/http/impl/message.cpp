@@ -85,10 +85,16 @@ namespace net { namespace http { namespace impl
 	///////////////////////////////////////////////////////
 	void Message::dropFront()
 	{
+		assert(!_firstBuffer->_prev);
+
 		if(_firstBuffer->_next)
 		{
-			_firstBuffer->_next->_prev = NULL;
+			MessageBufferPtr oldFirstBuffer = _firstBuffer;
+
 			_firstBuffer = _firstBuffer->_next;
+			_firstBuffer->_prev = NULL;
+
+			oldFirstBuffer->_next.reset();
 		}
 		else
 		{

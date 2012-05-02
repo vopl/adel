@@ -43,7 +43,6 @@ namespace net { namespace http { namespace impl
 		size_t offset() const;
 
 		Packet asPacket(size_t &offsetInPacket);
-		size_t iteratorUseCount();
 
 	private:
 		friend class Message;
@@ -56,14 +55,6 @@ namespace net { namespace http { namespace impl
 		boost::shared_array<char>	_data;
 		char						*_begin;
 		char						*_end;
-
-	private:
-		friend class net::http::MessageIterator;
-		size_t _iteratorUseCount;
-
-		void incIteratorUseCount();
-		void decIteratorUseCount();
-
 	};
 }}}
 

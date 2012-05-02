@@ -19,7 +19,6 @@ namespace net { namespace http { namespace impl
 		, _data(data)
 		, _begin(data.get()+dataBegin)
 		, _end(data.get()+dataEnd)
-		, _iteratorUseCount(0)
 	{
 	}
 
@@ -100,24 +99,5 @@ namespace net { namespace http { namespace impl
 		offsetInPacket = _begin - _data.get();
 		return result;
 	}
-
-	////////////////////////////////////////////////////////////////
-	size_t MessageBuffer::iteratorUseCount()
-	{
-		return _iteratorUseCount;
-	}
-
-	////////////////////////////////////////////////////////////////
-	void MessageBuffer::incIteratorUseCount()
-	{
-		_iteratorUseCount++;
-	}
-
-	////////////////////////////////////////////////////////////////
-	void MessageBuffer::decIteratorUseCount()
-	{
-		_iteratorUseCount--;
-	}
-
 
 }}}

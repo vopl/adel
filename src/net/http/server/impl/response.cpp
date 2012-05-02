@@ -199,7 +199,7 @@ namespace net { namespace http { namespace server { namespace impl
 		body(NULL, 0);
 
 		net::http::impl::Message::dropTail(_writePosition.absolutePosition());
-		if(!pushFullBuffers2Filter(true))
+		if(!pushFullBuffers2Filter())
 		{
 			return false;
 		}
@@ -270,25 +270,23 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::pushFullBuffers2Filter(bool ignoreIterators)
+	bool Response::pushFullBuffers2Filter()
 	{
 		size_t bodyOffset = _bodyPosition.isEndInfinity()?std::numeric_limits<size_t>::max():_bodyPosition.absolutePosition();
 		size_t writeOffset = _writePosition.isEndInfinity()?0:_writePosition.absolutePosition();
 
 		while(_firstBuffer)
 		{
-			if(_firstBuffer->iteratorUseCount() && !ignoreIterators)
-			{
-				return true;
-			}
-
 			if(writeOffset < _firstBuffer->offset() + _firstBuffer->size())
 			{
 				return true;
 			}
 
+			net::http::impl::MessageBufferPtr firstBuffer = _firstBuffer;
+			net::http::impl::Message::dropFront();
+
 			size_t offsetInPacket;
-			Packet packet = _firstBuffer->asPacket(offsetInPacket);
+			Packet packet = firstBuffer->asPacket(offsetInPacket);
 
 			if(	_mostContentFilter == this)
 			{
@@ -303,7 +301,7 @@ namespace net { namespace http { namespace server { namespace impl
 			else
 			{
 				//есть фильтры тела, заголовки без фильтров, тело с фильтрами
-				if(bodyOffset < _firstBuffer->offset())
+				if(bodyOffset < firstBuffer->offset())
 				{
 					//тело целиком
 					if(!_mostContentFilter->filterPush(packet, offsetInPacket))
@@ -311,7 +309,7 @@ namespace net { namespace http { namespace server { namespace impl
 						return false;
 					}
 				}
-				else if(bodyOffset >= _firstBuffer->offset() + _firstBuffer->size())
+				else if(bodyOffset >= firstBuffer->offset() + firstBuffer->size())
 				{
 					//заголовок целиком
 					if(!/*this->*/filterPush(packet, offsetInPacket))
@@ -323,17 +321,15 @@ namespace net { namespace http { namespace server { namespace impl
 				{
 					//заголовок и тело
 					Packet headersPacket = packet;
-					headersPacket._size = _firstBuffer->size() - (bodyOffset - _firstBuffer->offset());
+					headersPacket._size = firstBuffer->size() - (bodyOffset - firstBuffer->offset());
 					/*this->*/filterPush(headersPacket, offsetInPacket);
 
-					if(!_mostContentFilter->filterPush(packet, bodyOffset - _firstBuffer->offset()))
+					if(!_mostContentFilter->filterPush(packet, bodyOffset - firstBuffer->offset()))
 					{
 						return false;
 					}
 				}
 			}
-
-			net::http::impl::Message::dropFront();
 		}
 
 		return true;
@@ -342,7 +338,10 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::obtainMoreBuffers(bool force)
 	{
-		pushFullBuffers2Filter(false);
+		if(!pushFullBuffers2Filter())
+		{
+			return false;
+		}
 
 		size_t size = _outputGranula;
 		Packet packet(boost::shared_array<char>(new char[size]), size);

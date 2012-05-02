@@ -22,17 +22,13 @@ namespace net { namespace http
 		{
 			assert(_buffer->begin() <= _position || !_position);
 			assert(_buffer->end() >= _position || !_position);
-			_buffer->incIteratorUseCount();
+			(void)0;
 		}
 	}
 
 	///////////////////////////////////////////////////////////////
 	MessageIterator::~MessageIterator()
 	{
-		if(_buffer)
-		{
-			_buffer->decIteratorUseCount();
-		}
 	}
 
 	///////////////////////////////////////////////////////////////
@@ -114,9 +110,7 @@ namespace net { namespace http
 				impl::MessageBufferPtr buffer = _buffer->next();
 				if(buffer)
 				{
-					_buffer->decIteratorUseCount();
 					_buffer = buffer;
-					_buffer->incIteratorUseCount();
 
 					assert(_buffer->size());
 					_position = _buffer->begin() + extra;
@@ -143,11 +137,9 @@ namespace net { namespace http
 		assert(_buffer->end() >= _position);
 		if(_buffer->begin() == _position)
 		{
-			_buffer->decIteratorUseCount();
 			_buffer = _buffer->prev();
 			assert(_buffer);
 			assert(_buffer->size());
-			_buffer->incIteratorUseCount();
 
 			_position = _buffer->end() - 1;
 		}
@@ -175,9 +167,7 @@ namespace net { namespace http
 
 			if(_buffer->hasNext() || n)
 			{
-				_buffer->decIteratorUseCount();
 				_buffer = _buffer->next();
-				_buffer->incIteratorUseCount();
 				assert(_buffer);
 				assert(_buffer->size());
 				_position = _buffer->begin();
@@ -194,9 +184,7 @@ namespace net { namespace http
 				return;
 			}
 			n -= distInThisBuffer;
-			_buffer->decIteratorUseCount();
 			_buffer = _buffer->prev();
-			_buffer->incIteratorUseCount();
 			assert(_buffer);
 			assert(_buffer->size());
 			_position = _buffer->end() - 1;
@@ -221,9 +209,10 @@ namespace net { namespace http
 		assert(_buffer);
 		assert(_position);
 
+		assert(_buffer->begin() <= _position);
 		assert(_buffer->end() >= _position);
-		size_t bufSize = _buffer->end() - _position;
 
+		size_t bufSize = _buffer->end() - _position;
 		if(bufSize < size)
 		{
 			size = bufSize;
@@ -235,8 +224,19 @@ namespace net { namespace http
 	///////////////////////////////////////////////////////////////
 	char *MessageIterator::rawBufferBwd(size_type &size)
 	{
-		assert(0);
-		return NULL;
+		assert(_buffer);
+		assert(_position);
+
+		assert(_buffer->begin() <= _position);
+		assert(_buffer->end() >= _position);
+
+		size_t bufSize = _position - _buffer->begin();
+		if(bufSize < size)
+		{
+			size = bufSize;
+		}
+
+		return _buffer->begin();
 	}
 
 
@@ -268,8 +268,7 @@ namespace net { namespace http
 		{
 			assert(_buffer);
 			assert(_buffer->size());
-
-			_buffer->incIteratorUseCount();
+			(void)0;
 		}
 		assert(!_position || _position >= _buffer->begin());
 		assert(!_position || _position <= _buffer->end());
