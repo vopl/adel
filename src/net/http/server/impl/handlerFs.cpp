@@ -198,6 +198,7 @@ namespace net { namespace http { namespace server { namespace impl
 		response.body(NULL, 0);
 		if(st.st_size)
 		{
+#if 1
 			MessageIterator writeIter = response.getWriteIterator();
 			size_t size = st.st_size;
 			while(size)
@@ -214,6 +215,18 @@ namespace net { namespace http { namespace server { namespace impl
 
 				response.setWriteIterator(writeIter);
 			}
+#else
+			size_t size = st.st_size;
+			std::vector<char> buffer(std::min(size, (size_t)8192));
+			while(size)
+			{
+				size_t rsize = std::min(size, (size_t)8192);
+				int rres = read(fd, &buffer[0], (off_t)rsize);
+				(void)rres;
+				response.body(&buffer[0], rsize);
+				size -= rsize;
+			}
+#endif
 
 			close(fd);
 		}

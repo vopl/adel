@@ -88,7 +88,7 @@ namespace net { namespace http { namespace impl
 		if(_firstBuffer->_next)
 		{
 			_firstBuffer->_next->_prev = NULL;
-			_firstBuffer.swap(_firstBuffer->_next);
+			_firstBuffer = _firstBuffer->_next;
 		}
 		else
 		{
