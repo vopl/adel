@@ -467,13 +467,6 @@ namespace net { namespace http { namespace server { namespace impl
 				hvContentEncoding.setIsCorrect(false);
 			}
 		}
-		else
-		{
-			if(_version >= Version(1,0))
-			{
-				hvContentEncoding = ece_deflate;
-			}
-		}
 
 		//content length
 		HeaderValue<Unsigned> hvContentLength;

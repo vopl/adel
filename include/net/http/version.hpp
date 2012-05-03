@@ -20,26 +20,26 @@ namespace net { namespace http
 			, _lo(lo)
 		{
 		}
+		size_t asPod() const
+		{
+			return _hi<<8|_lo;
+		}
 
 		bool operator>(const Version &v) const
 		{
-			if(_hi > v._hi) return true;
-			return _lo > v._lo;
+			return asPod() > v.asPod();
 		}
 		bool operator>=(const Version &v) const
 		{
-			if(_hi >= v._hi) return true;
-			return _lo >= v._lo;
+			return asPod() >= v.asPod();
 		}
 		bool operator<(const Version &v) const
 		{
-			if(_hi < v._hi) return true;
-			return _lo < v._lo;
+			return asPod() < v.asPod();
 		}
 		bool operator<=(const Version &v) const
 		{
-			if(_hi <= v._hi) return true;
-			return _lo <= v._lo;
+			return asPod() <= v.asPod();
 		}
 
 		bool operator==(const Version &v) const

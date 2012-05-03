@@ -68,6 +68,7 @@ namespace net { namespace http { namespace impl
 			return res;
 		}
 		static Packet lastChunkPacket = initPacket("0\r\n");
+		static Packet crlfPacket = initPacket("\r\n");
 	}
 	//////////////////////////////////////////////////////////////////////////////
 	bool ContentFilterEncodeChunked::push2Upstream(bool finish)
@@ -97,6 +98,12 @@ namespace net { namespace http { namespace impl
 			}
 			_chunks.clear();
 			_size = 0;
+
+			if(!_upstream->filterPush(crlfPacket, 0))
+			{
+				return false;
+			}
+
 		}
 
 		if(finish)

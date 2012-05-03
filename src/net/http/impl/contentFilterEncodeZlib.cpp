@@ -134,6 +134,11 @@ namespace net { namespace http { namespace impl
 					_outputOffset = _output._size - _z_stream.avail_out;
 					switch(i)
 					{
+					case Z_OK:
+						if(_z_stream.avail_out)
+						{
+							break;
+						}
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
 						assert(_output._size);
@@ -145,14 +150,13 @@ namespace net { namespace http { namespace impl
 						_output._size = 0;
 						_output._data.reset();
 						break;
-					case Z_OK:
-						_z_stream.next_in = NULL;
-						break;
 					default:
 						ELOG("deflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
 						return false;
 					}
 				}
+				_z_stream.next_in = NULL;
+				_z_stream.avail_in = NULL;
 			}
 			return true;
 		case ece_compress:
@@ -207,6 +211,7 @@ namespace net { namespace http { namespace impl
 						_output._size = 0;
 						_output._data.reset();
 						break;
+					case Z_OK:
 					case Z_STREAM_END:
 						_output._size = _outputOffset;
 						if(!_upstream->filterPush(_output))
