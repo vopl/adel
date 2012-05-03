@@ -136,6 +136,7 @@ namespace net { namespace http { namespace impl
 					{
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
+						assert(_output._size);
 						if(!_upstream->filterPush(_output))
 						{
 							return false;

@@ -7,6 +7,7 @@
 #include <boost/spirit/include/qi_symbols.hpp>
 //#include <boost/spirit/include/qi_int.hpp>
 #include <boost/spirit/include/qi_uint.hpp>
+#include <boost/spirit/include/qi_omit.hpp>
 
 #include <boost/spirit/include/phoenix_statement.hpp>
 #include <boost/spirit/include/phoenix_operator.hpp>
@@ -23,56 +24,74 @@ namespace net { namespace http
 
 
 	//////////////////////////////////////////////////////////////////////
-	//RFC 822, updated by RFC 1123
 	/*
-		rfc1123-date = wkday "," SP date1 SP time SP "GMT"
-
-		date1        = 2DIGIT SP month SP 4DIGIT
-					  ; day month year (e.g., 02 Jun 1982)
-
-		time         = 2DIGIT ":" 2DIGIT ":" 2DIGIT
-					  ; 00:00:00 - 23:59:59
-
-		wkday        = "Mon" | "Tue" | "Wed"
-					| "Thu" | "Fri" | "Sat" | "Sun"
-
-		month        = "Jan" | "Feb" | "Mar" | "Apr"
-					| "May" | "Jun" | "Jul" | "Aug"
-					| "Sep" | "Oct" | "Nov" | "Dec"
+	   HTTP-date    = rfc1123-date | rfc850-date | asctime-date
+       rfc1123-date = wkday "," SP date1 SP time SP "GMT"
+       rfc850-date  = weekday "," SP date2 SP time SP "GMT"
+       asctime-date = wkday SP date3 SP time SP 4DIGIT
+       date1        = 2DIGIT SP month SP 4DIGIT
+                      ; day month year (e.g., 02 Jun 1982)
+       date2        = 2DIGIT "-" month "-" 2DIGIT
+                      ; day-month-year (e.g., 02-Jun-82)
+       date3        = month SP ( 2DIGIT | ( SP 1DIGIT ))
+                      ; month day (e.g., Jun  2)
+       time         = 2DIGIT ":" 2DIGIT ":" 2DIGIT
+                      ; 00:00:00 - 23:59:59
+       wkday        = "Mon" | "Tue" | "Wed"
+                    | "Thu" | "Fri" | "Sat" | "Sun"
+       weekday      = "Monday" | "Tuesday" | "Wednesday"
+                    | "Thursday" | "Friday" | "Saturday" | "Sunday"
+       month        = "Jan" | "Feb" | "Mar" | "Apr"
+                    | "May" | "Jun" | "Jul" | "Aug"
+                    | "Sep" | "Oct" | "Nov" | "Dec"
 	*/
 
 	namespace
 	{
 		symbols<char, int> wkdayInit()
 		{
-			symbols<char, int> wkday;
-			wkday.add("Sun", 0);
-			wkday.add("Mon", 1);
-			wkday.add("Tue", 2);
-			wkday.add("Wed", 3);
-			wkday.add("Thu", 4);
-			wkday.add("Fri", 5);
-			wkday.add("Sat", 6);
-			return wkday;
+			symbols<char, int> res;
+			res.add("Sun", 0);
+			res.add("Mon", 1);
+			res.add("Tue", 2);
+			res.add("Wed", 3);
+			res.add("Thu", 4);
+			res.add("Fri", 5);
+			res.add("Sat", 6);
+			return res;
 		}
 		static const symbols<char, int> wkday = wkdayInit();
 
+		symbols<char, int> weekdayInit()
+		{
+			symbols<char, int> res;
+			res.add("Sunday", 0);
+			res.add("Monday", 1);
+			res.add("Tuesday", 2);
+			res.add("Wednesday", 3);
+			res.add("Thursday", 4);
+			res.add("Friday", 5);
+			res.add("Saturday", 6);
+			return res;
+		}
+		static const symbols<char, int> weekday = weekdayInit();
+
 		symbols<char, int> monthInit()
 		{
-			symbols<char, int> month;
-			month.add("Jan", 0);
-			month.add("Feb", 1);
-			month.add("Mar", 2);
-			month.add("Apr", 3);
-			month.add("May", 4);
-			month.add("Jun", 5);
-			month.add("Jul", 6);
-			month.add("Aug", 7);
-			month.add("Sep", 8);
-			month.add("Oct", 9);
-			month.add("Nov", 10);
-			month.add("Dec", 11);
-			return month;
+			symbols<char, int> res;
+			res.add("Jan", 0);
+			res.add("Feb", 1);
+			res.add("Mar", 2);
+			res.add("Apr", 3);
+			res.add("May", 4);
+			res.add("Jun", 5);
+			res.add("Jul", 6);
+			res.add("Aug", 7);
+			res.add("Sep", 8);
+			res.add("Oct", 9);
+			res.add("Nov", 10);
+			res.add("Dec", 11);
+			return res;
 		}
 		static const symbols<char, int> month = monthInit();
 
@@ -84,35 +103,63 @@ namespace net { namespace http
 	{
 		struct tm stm = {};
 
-		bool res = qi::parse(src.begin(), src.end(),
-			wkday[px::ref(stm.tm_wday) = qi::_1] >>
-
-			',' >> +lit(' ') >>
-
-			uint_[px::ref(stm.tm_mday) = qi::_1] >>
-			+lit(' ') >>
-			month[px::ref(stm.tm_mon) = qi::_1] >>
-			+lit(' ') >>
-			uint_[px::ref(stm.tm_year) = qi::_1 - 1900] >>
-
-
-			+lit(' ') >>
-
+		rule<MessageIterator> time = 
 			uint_[px::ref(stm.tm_hour) = qi::_1] >>
 			':' >>
 			uint_[px::ref(stm.tm_min) = qi::_1] >>
 			':' >>
-			uint_[px::ref(stm.tm_sec) = qi::_1] >>
+			uint_[px::ref(stm.tm_sec) = qi::_1];
 
-			" GMT"
-			);
+		//rfc1123-date = wkday "," SP date1 SP time SP "GMT"
+		rule <MessageIterator> rfc1123 = 
+			wkday[px::ref(stm.tm_wday) = qi::_1] >>
+
+			',' >> 
+			
+			+lit(' ') >> uint_[px::ref(stm.tm_mday) = qi::_1] >>
+			+lit(' ') >> month[px::ref(stm.tm_mon) = qi::_1] >>
+			+lit(' ') >> uint_[px::ref(stm.tm_year) = qi::_1 - 1900] >>
+
+
+			+lit(' ') >> time >>
+			" GMT";
+
+		//rfc850-date  = weekday "," SP date2 SP time SP "GMT"
+		rule<MessageIterator> rfc850 = 
+			weekday[px::ref(stm.tm_wday) = qi::_1] >>
+
+			',' >> 
+			
+			+lit(' ') >> uint_[px::ref(stm.tm_mday) = qi::_1] >>
+			lit('-') >> month[px::ref(stm.tm_mon) = qi::_1] >>
+			lit('-') >> uint_[px::ref(stm.tm_year) = qi::_1 + 100] >>
+
+			+lit(' ') >> time >>
+			" GMT";
+
+		//	asctime-date = wkday SP date3 SP time SP 4DIGIT
+		//	date3        = month SP ( 2DIGIT | ( SP 1DIGIT ))
+		//	; month day (e.g., Jun  2)
+		rule<MessageIterator> asctime = 
+			weekday[px::ref(stm.tm_wday) = qi::_1] >>
+
+			+lit(' ') >> month[px::ref(stm.tm_mon) = qi::_1] >>
+			+lit(' ') >> uint_[px::ref(stm.tm_mday) = qi::_1] >>
+			+lit(' ') >> time >>
+			+lit(' ') >> uint_[px::ref(stm.tm_year) = qi::_1-1900];
+
+
+		bool res = qi::parse(src.begin(), src.end(), rfc1123|rfc850|asctime);
 
 		if(!res)
 		{
 			return false;
 		}
-
+#ifdef _MSC_VER
+		_value = _mkgmtime(&stm);
+#else
 		_value = timegm(&stm);
+#endif
 		return true;
 	}
 
@@ -143,26 +190,50 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////
-	template <>
-	bool HeaderValue<TransferEncoding>::parse(const Message::Segment &src)
+	namespace
 	{
-		return qi::parse(src.begin(), src.end(),
-			(
-				lit("deflate")	[px::ref(_value) |= ete_deflate]|
-				lit("gzip")		[px::ref(_value) |= ete_gzip]|
-				lit("compress")	[px::ref(_value) |= ete_compress]|
-				lit("chunked")	[px::ref(_value) |= ete_chunked]|
-				lit("identity")	[px::ref(_value) |= ete_identity]|
-				lit("*")		[px::ref(_value)  = ete_any]
-			) >>
-			(
-				(
+		rule<MessageIterator, double()> itemWeightInit()
+		{
+			rule<MessageIterator, double()> res = 
+				omit[
 					*char_(' ') >> lit(';') >>
 					*char_(' ') >> char_('q') >>
 					*char_(' ') >> char_('=') >>
-					*char_(' ') >> +char_("0-9\\.") >>
-					*char_(" ,")
-				) | eps
+					*char_(' ')
+				] >> double_;
+
+			return res;
+		}
+		static const rule<MessageIterator, double()> itemWeight = itemWeightInit();
+	}
+	//////////////////////////////////////////////////////////////////////
+	
+	template <>
+	bool HeaderValue<TransferEncoding>::parse(const Message::Segment &src)
+	{
+		double w;
+		ETransferEncoding ete;
+
+		_value = 0;
+		return qi::parse(src.begin(), src.end(),
+			+(
+				eps[px::ref(ete) = ete_unknown][px::ref(w) = 1.0] >>
+				(
+					lit("deflate")	[px::ref(ete) = ete_deflate]|
+					lit("gzip")		[px::ref(ete) = ete_gzip]|
+					lit("compress")	[px::ref(ete) = ete_compress]|
+					lit("chunked")	[px::ref(ete) = ete_chunked]|
+					lit("identity")	[px::ref(ete) = ete_identity]|
+					lit("*")		[px::ref(ete) = ete_any]
+				) >>
+				(
+					(
+						*char_(' ') >> 
+						(itemWeight[px::ref(w) = qi::_1] | eps) >>
+						*char_(" ,")
+					) | eps
+				) >>
+				eps[px::if_(px::ref(w) > 0)[px::ref(_value) |= px::ref(ete)].else_[px::ref(_value) &= ~px::ref(ete)]]
 			)
 		);
 	}
@@ -171,8 +242,30 @@ namespace net { namespace http
 	template <>
 	bool HeaderValue<ContentEncoding>::parse(const Message::Segment &src)
 	{
-		assert(0);
-		return false;
+		double w;
+		EContentEncoding ece;
+
+		_value = 0;
+		return qi::parse(src.begin(), src.end(),
+			+(
+				eps[px::ref(ece) = ece_unknown][px::ref(w) = 1.0] >>
+				(
+					lit("deflate")	[px::ref(ece) = ece_deflate]|
+					lit("gzip")		[px::ref(ece) = ece_gzip]|
+					lit("compress")	[px::ref(ece) = ece_compress]|
+					lit("identity")	[px::ref(ece) = ece_identity]|
+					lit("*")		[px::ref(ece) = ece_any]
+				) >>
+				(
+					(
+						*char_(' ') >> 
+						(itemWeight[px::ref(w) = qi::_1] | eps) >>
+						*char_(" ,")
+					) | eps
+				) >>
+				eps[px::if_(px::ref(w) > 0)[px::ref(_value) |= px::ref(ece)].else_[px::ref(_value) &= ~px::ref(ece)]]
+			)
+		);
 	}
 
 }}

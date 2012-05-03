@@ -6,6 +6,7 @@ namespace net { namespace http
 
 	enum ETransferEncoding
 	{
+		ete_unknown		= 0,
 		ete_identity	= 1<<1,
 		ete_chunked		= 1<<2,
 		ete_gzip		= 1<<3,

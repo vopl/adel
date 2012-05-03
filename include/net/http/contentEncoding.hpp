@@ -11,6 +11,7 @@ namespace net { namespace http
 		ece_gzip		= 1<<2,
 		ece_compress	= 1<<3,
 		ece_deflate		= 1<<4,
+		ece_any			= ece_identity|ece_gzip|ece_compress|ece_deflate,
 	};
 }}
 

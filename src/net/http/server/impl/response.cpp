@@ -29,7 +29,7 @@ namespace net { namespace http { namespace server { namespace impl
 		, _ewp(ewp_statusLine)
 		//, _mostContentFilter(this)
 		, _outputGranula(_server->responseWriteGranula())
-		, _bodySize(_badBodySize)
+		, _bodySize(_unknownBodySize)
 		, _bodyCompressLevel(1)
 		, _bodyCompressGranula(_server->responseWriteGranula())
 	{
@@ -323,10 +323,10 @@ namespace net { namespace http { namespace server { namespace impl
 				{
 					//заголовок и тело
 					Packet headersPacket = packet;
-					headersPacket._size = firstBuffer->size() - (bodyOffset - firstBuffer->offset());
+					headersPacket._size = offsetInPacket + bodyOffset;
 					/*this->*/filterPush(headersPacket, offsetInPacket);
 
-					if(!_mostContentFilter->filterPush(packet, bodyOffset - firstBuffer->offset()))
+					if(!_mostContentFilter->filterPush(packet, bodyOffset + offsetInPacket))
 					{
 						return false;
 					}
@@ -422,9 +422,6 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	void Response::systemHeaders()
 	{
-		header(hn::server, "haws", 4);
-		header(hn::date, HeaderValue<Date>(time(NULL)));
-
 		//keep alive
 		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
 		if(!hvConnection.isCorrect() && _version >= Version(1,1))
@@ -480,44 +477,75 @@ namespace net { namespace http { namespace server { namespace impl
 
 		//content length
 		HeaderValue<Unsigned> hvContentLength;
-		if(_badBodySize != _bodySize)
+		if(_unknownBodySize != _bodySize)
 		{
+			//будет тело
 			hvContentLength = _bodySize;
+
+			if(_bodySize)
+			{
+				bool compress = hvContentEncoding.isCorrect() && (hvContentEncoding.value()&(ece_deflate|ece_gzip));
+				bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
+				bool contentLength = hvContentLength.isCorrect();
+				bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
+
+				//логика по сжатию
+				if(_bodyCompressLevel)
+				{
+					//нужен compress && (chunked || !keepAlive)
+					if(compress)
+					{
+						//у пресованного потока пока длина не известна
+						contentLength = false;
+						hvContentLength.setIsCorrect(false);
+
+						if(!chunked && keepAlive)
+						{
+							//невозможно определить длину, бросить keepAlive
+							keepAlive = false;
+							hvConnection.setIsCorrect(false);
+						}
+					}
+					else
+					{
+						_bodyCompressLevel = 0;
+					}
+				}
+
+				if(!_bodyCompressLevel)
+				{
+					//без компрессии
+					if(contentLength && chunked)
+					{
+						//chunked или contentLength лишний
+						chunked = false;
+						hvTransferEncoding.setIsCorrect(false);
+					}
+					hvContentEncoding.setIsCorrect(false);
+				}
+			}
+			else//if(_bodySize)
+			{
+				hvContentEncoding.setIsCorrect(false);
+				hvTransferEncoding.setIsCorrect(false);
+			}
+
 		}
-
-		bool compress = hvContentEncoding.isCorrect() && (hvContentEncoding.value()&(ece_deflate|ece_gzip));
-		bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
-		bool contentLength = hvContentLength.isCorrect();
-		bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
-
-		//логика по сжатию
-		if(_bodyCompressLevel)
+		else
 		{
-			//нужен compress && (chunked || !keepAlive)
-			if(compress)
-			{
-				//у пресованного потока пока длина не известна
-				contentLength = false;
-				hvContentLength.setIsCorrect(false);
+			//неизвестно, будет тело или нет
+			hvContentLength.setIsCorrect(false);
+			bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
+			bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
 
-				if(!chunked && keepAlive)
-				{
-					//невозможно определить длину, бросить keepAlive
-					keepAlive = false;
-					hvConnection.setIsCorrect(false);
-				}
-			}
-			else
+			if(!chunked && keepAlive)
 			{
-				//без компрессии
-				if(contentLength && chunked)
-				{
-					//chunked или contentLength лишний
-					chunked = false;
-					hvTransferEncoding.setIsCorrect(false);
-				}
+				//невозможно определить длину, бросить keepAlive
+				keepAlive = false;
+				hvConnection.setIsCorrect(false);
 			}
 		}
+
 
 		//писать заголовки
 		if(hvContentLength.isCorrect())
@@ -576,6 +604,8 @@ namespace net { namespace http { namespace server { namespace impl
 
 			//keep alive
 		}
+		header(hn::date, HeaderValue<Date>(time(NULL)));
+		header(hn::server, "haws", 4);
 
 	}
 

@@ -89,7 +89,7 @@ namespace net { namespace http { namespace server { namespace impl
 		Packet _output;
 
 		size_t	_bodySize;
-		static const size_t _badBodySize = (size_t)-1;
+		static const size_t _unknownBodySize = (size_t)-1;
 		int		_bodyCompressLevel;
 		size_t	_bodyCompressGranula;
 
