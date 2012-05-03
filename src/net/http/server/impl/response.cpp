@@ -32,6 +32,7 @@ namespace net { namespace http { namespace server { namespace impl
 		, _bodySize(_unknownBodySize)
 		, _bodyCompressLevel(1)
 		, _bodyCompressGranula(_server->responseWriteGranula())
+		, _keepAlive(false)
 	{
 		_mostContentFilter = this;
 
@@ -210,8 +211,16 @@ namespace net { namespace http { namespace server { namespace impl
 			return false;
 		}
 
-		//_channel.close();
-		//keep alive
+		if(_keepAlive)
+		{
+			_request->reinit();
+			_server->onRequest(_request->shared_from_this());
+			//_channel.close();
+		}
+		else
+		{
+			_channel.close();
+		}
 		return true;
 	}
 
@@ -595,7 +604,11 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			header(hn::connection, hvConnection);
 
-			//keep alive
+			_keepAlive = hvConnection.value() == ec_keepAlive;
+		}
+		else
+		{
+			_keepAlive = false;
 		}
 		header(hn::date, HeaderValue<Date>(time(NULL)));
 		header(hn::server, "haws", 4);

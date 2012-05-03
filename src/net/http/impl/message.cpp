@@ -79,6 +79,7 @@ namespace net { namespace http { namespace impl
 		assert(_lastBuffer->offset() < size);
 		assert(_lastBuffer->offset()+_lastBuffer->size() >= size);
 		_lastBuffer->_end = _lastBuffer->_begin + (size - _lastBuffer->offset());
+		_size = size;
 		return;
 	}
 
@@ -102,6 +103,37 @@ namespace net { namespace http { namespace impl
 			_lastBuffer = NULL;
 			_firstBuffer.reset();
 		}
+	}
+
+	///////////////////////////////////////////////////////
+	void Message::dropFront(MessageIterator::size_type size)
+	{
+		while(size && _firstBuffer && _firstBuffer->offset() + _firstBuffer->size() <= size)
+		{
+			size -= _firstBuffer->size();
+			dropFront();
+		}
+		if(_firstBuffer)
+		{
+			if(size)
+			{
+				_firstBuffer->moveFront(size);
+				size = 0;
+			}
+		}
+		else
+		{
+			assert(!size);
+			_size = 0;
+		}
+	}
+
+	///////////////////////////////////////////////////////
+	void Message::dropAll()
+	{
+		_firstBuffer.reset();
+		_lastBuffer = NULL;
+		_size = 0;
 	}
 
 	///////////////////////////////////////////////////////

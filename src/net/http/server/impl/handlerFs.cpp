@@ -161,7 +161,11 @@ namespace net { namespace http { namespace server { namespace impl
 
 		if(st.st_size)
 		{
-			fd = open(p.string().c_str(), O_RDONLY|O_BINARY);
+			fd = open(p.string().c_str(), O_RDONLY
+#ifdef _MSC_VER
+				|O_BINARY
+#endif
+				);
 			if(!fd)
 			{
 				return notFound(r, originalPath);

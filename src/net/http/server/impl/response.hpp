@@ -93,6 +93,8 @@ namespace net { namespace http { namespace server { namespace impl
 		int		_bodyCompressLevel;
 		size_t	_bodyCompressGranula;
 
+		bool	_keepAlive;
+
 	private:
 		void systemHeaders();
 

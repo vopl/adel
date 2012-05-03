@@ -28,7 +28,13 @@ namespace net { namespace http { namespace impl
 		size_t requestReadGranula() const;
 		size_t responseWriteGranula() const;
 
+	public:
+		void onRequest(net::http::server::impl::RequestPtr requestImpl);
 	private:
+		void onRequest_f(net::http::server::impl::RequestPtr requestImpl);
+
+	private:
+		async::Service _asrv;
 		std::string _host;
 		std::string _port;
 		size_t _requestReadGranula;

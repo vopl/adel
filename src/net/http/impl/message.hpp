@@ -25,6 +25,8 @@ namespace net { namespace http { namespace impl
 
 		void dropTail(MessageIterator::size_type size);
 		void dropFront();
+		void dropFront(MessageIterator::size_type size);
+		void dropAll();
 	protected:
 		MessageBufferPtr _firstBuffer;
 		MessageBuffer 	*_lastBuffer;

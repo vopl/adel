@@ -100,4 +100,12 @@ namespace net { namespace http { namespace impl
 		return result;
 	}
 
+	////////////////////////////////////////////////////////////////
+	void MessageBuffer::moveFront(size_t distance)
+	{
+		assert(_end - _begin > distance);
+		_begin += distance;
+		_offset += distance;
+	}
+
 }}}

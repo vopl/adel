@@ -18,6 +18,9 @@ namespace net { namespace http { namespace impl
 
 namespace net { namespace http { namespace server { namespace impl
 {
+	class Request;
+	typedef boost::shared_ptr<Request> RequestPtr;
+
 	///////////////////////////////////////////////////////////////////////////
 	class Request
 		: public net::http::impl::Message
@@ -26,6 +29,7 @@ namespace net { namespace http { namespace server { namespace impl
 		typedef net::http::Message::Segment Segment;
 
 	public:
+		RequestPtr shared_from_this();
 		Request(const net::http::impl::ServerPtr &server, const Channel &channel);
 		~Request();
 
@@ -57,6 +61,8 @@ namespace net { namespace http { namespace server { namespace impl
 
 	public:
 		ResponsePtr response();
+		void reinit();
+
 
 	private:
 		net::http::impl::ServerPtr	_server;
@@ -111,7 +117,6 @@ namespace net { namespace http { namespace server { namespace impl
 	private:
 		ResponsePtr _response;
 	};
-	typedef boost::shared_ptr<Request> RequestPtr;
 
 }}}}
 

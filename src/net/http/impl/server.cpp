@@ -111,8 +111,9 @@ namespace net { namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void Server::init(async::Service asrv, utils::OptionsPtr options)
 	{
-		asrv.connectOnStart(boost::bind(&Server::start, shared_from_this()));
-		asrv.connectOnStop(boost::bind(&Server::stop, shared_from_this()));
+		_asrv = asrv;
+		_asrv.connectOnStart(boost::bind(&Server::start, shared_from_this()));
+		_asrv.connectOnStop(boost::bind(&Server::stop, shared_from_this()));
 
 		utils::Options &o = *options;
 		_host = o["host"].as<std::string>();
@@ -163,15 +164,14 @@ namespace net { namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	void Server::onAccept(boost::system::error_code ec, Channel channel)
+	void Server::onRequest(net::http::server::impl::RequestPtr requestImpl)
 	{
-		if(ec)
-		{
-			ELOG("accept failed: "<<ec);
-			return;
-		}
+		_asrv.spawn(boost::bind(&Server::onRequest_f, shared_from_this(), requestImpl));
+	}
 
-		net::http::server::impl::RequestPtr requestImpl(new net::http::server::impl::Request(shared_from_this(), channel));
+	////////////////////////////////////////////////////////////////////
+	void Server::onRequest_f(net::http::server::impl::RequestPtr requestImpl)
+	{
 		Request request = utils::ImplAccess<Request>(requestImpl);
 
 		if(	!request.readRequestLine() ||
@@ -231,6 +231,19 @@ namespace net { namespace http { namespace impl
 
 
 		//_onRequest(request);
+	}
+
+	////////////////////////////////////////////////////////////////////
+	void Server::onAccept(boost::system::error_code ec, Channel channel)
+	{
+		if(ec)
+		{
+			ELOG("accept failed: "<<ec);
+			return;
+		}
+
+		net::http::server::impl::RequestPtr requestImpl(new net::http::server::impl::Request(shared_from_this(), channel));
+		onRequest_f(requestImpl);
 	}
 
 

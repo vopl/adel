@@ -22,9 +22,17 @@
 namespace net { namespace http { namespace server { namespace impl
 {
 	//////////////////////////////////////////////////////////////
+	RequestPtr Request::shared_from_this()
+	{
+		return boost::static_pointer_cast<Request>(net::http::impl::Message::shared_from_this());
+	}
+
+	//////////////////////////////////////////////////////////////
 	Request::Request(const net::http::impl::ServerPtr &server, const Channel &channel)
 		: _server(server)
 		, _channel(channel)
+		, _method(em_UNKNOWN)
+		, _version()
 	{
 	}
 
@@ -312,5 +320,38 @@ namespace net { namespace http { namespace server { namespace impl
 
 		return _response;
 	}
+
+	//////////////////////////////////////////////////////////////
+	void Request::reinit()
+	{
+		MessageIterator lastReadedPos = _request_.end();
+		if(lastReadedPos.buffer())
+		{
+			dropFront(lastReadedPos.absolutePosition());
+		}
+		else
+		{
+			dropAll();
+		}
+
+
+		_request_ = Segment();
+
+		_requestLine_ = Segment();
+		_method = em_UNKNOWN;
+		_method_ = Segment();
+		_uri_ = Segment();
+		_path_ = Segment();
+		_queryString_ = Segment();
+		_version = Version();
+		_version_ = Segment();
+		_headers_ = Segment();
+		_headersMap.clear();
+
+		_body_ = Segment();
+		_response.reset();
+
+	}
+
 
 }}}}

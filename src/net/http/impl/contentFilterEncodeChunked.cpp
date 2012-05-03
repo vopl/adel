@@ -67,7 +67,7 @@ namespace net { namespace http { namespace impl
 
 			return res;
 		}
-		static Packet lastChunkPacket = initPacket("0\r\n");
+		static Packet lastChunkPacket = initPacket("0\r\n\r\n");
 		static Packet crlfPacket = initPacket("\r\n");
 	}
 	//////////////////////////////////////////////////////////////////////////////

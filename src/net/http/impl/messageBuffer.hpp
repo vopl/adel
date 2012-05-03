@@ -44,6 +44,8 @@ namespace net { namespace http { namespace impl
 
 		Packet asPacket(size_t &offsetInPacket);
 
+		void moveFront(size_t distance);
+
 	private:
 		friend class Message;
 		Message				*_message;
