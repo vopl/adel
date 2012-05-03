@@ -201,6 +201,7 @@ namespace net { namespace http { namespace impl
 					_outputOffset = _output._size - _z_stream.avail_out;
 					switch(i)
 					{
+					case Z_OK:
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
 						if(!_upstream->filterPush(_output))
@@ -211,7 +212,6 @@ namespace net { namespace http { namespace impl
 						_output._size = 0;
 						_output._data.reset();
 						break;
-					case Z_OK:
 					case Z_STREAM_END:
 						_output._size = _outputOffset;
 						if(!_upstream->filterPush(_output))
