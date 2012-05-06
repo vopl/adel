@@ -40,11 +40,13 @@ namespace net { namespace http { namespace impl
 		bool		header(const HeaderName &name, const char *valuez);
 
 		template <class HeaderValueTag>
-		bool		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
-		template <class HeaderValueTag>
 		bool		header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
+		bool		header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value);
+		template <class HeaderValueTag>
 		bool		header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
+		template <class HeaderValueTag>
+		bool		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
 		bool		headersFlush();
 
@@ -90,6 +92,9 @@ namespace net { namespace http { namespace impl
 	protected:
 		Iterator iterator();
 
+	protected:
+		virtual bool systemHeaders();
+
 	};
 
 	typedef boost::shared_ptr<MessageOut> MessageOutPtr;
@@ -97,62 +102,51 @@ namespace net { namespace http { namespace impl
 
 
 
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool MessageOut::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
+	{
+		Iterator iter = headersIterator();
+		if(!write(name, nameSize))
+		{
+			return false;
+		}
+		if(!write(": ", 2))
+		{
+			return false;
+		}
+		if(!value.generate(iter))
+		{
+			return false;
+		}
+		if(!write("\r\n", 2))
+		{
+			return false;
+		}
+		return true;
+	}
 
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	{
+		return header(namez, strlen(namez), value);
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		return header(name.data(), name.size(), value);
+	}
 
 	////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
 	bool		MessageOut::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
-		return header(name.str, value);
+		return header(name.csz, name.size, value);
 	}
 
-	////////////////////////////////////////////////////////////////////////
-	template <class HeaderValueTag>
-	bool		MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
-	{
-		Iterator iter = headersIterator();
-		if(!write(namez))
-		{
-			return false;
-		}
-		if(!write(": ", 2))
-		{
-			return false;
-		}
-		if(!value.generate(iter))
-		{
-			return false;
-		}
-		if(!write("\r\n", 2))
-		{
-			return false;
-		}
-		return true;
-	}
-
-	////////////////////////////////////////////////////////////////////////
-	template <class HeaderValueTag>
-	bool		MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
-	{
-		Iterator iter = headersIterator();
-		if(!write(name))
-		{
-			return false;
-		}
-		if(!write(": ", 2))
-		{
-			return false;
-		}
-		if(!value.generate(iter))
-		{
-			return false;
-		}
-		if(!write("\r\n", 2))
-		{
-			return false;
-		}
-		return true;
-	}
 
 }}}
 

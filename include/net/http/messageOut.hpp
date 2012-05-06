@@ -21,7 +21,6 @@ namespace net { namespace http
 
 	public:
 		class Iterator
-			//: public boost::iterator_facade<Iterator, char, boost::forward_traversal_tag>
 			: public boost::iterator_facade<Iterator, char, boost::incrementable_traversal_tag>
 		{
 			Iterator();
@@ -76,11 +75,13 @@ namespace net { namespace http
 		bool		header(const HeaderName &name, const char *valuez);
 
 		template <class HeaderValueTag>
-		bool		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
+		bool		header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
 		bool		header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
 		bool		header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
+		template <class HeaderValueTag>
+		bool		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
 		bool		headersFlush();
 
@@ -96,20 +97,13 @@ namespace net { namespace http
 
 
 
-
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool		MessageOut::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
-	{
-		return header(name.str, value);
-	}
-	///////////////////////////////////////////////////////////////
-	template <class HeaderValueTag>
-	bool		MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	bool MessageOut::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
 	{
 		Iterator iter = headersIterator();
 
-		if(!iter.write(namez))
+		if(!iter.write(name, nameSize))
 		{
 			return false;
 		}
@@ -131,28 +125,23 @@ namespace net { namespace http
 
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool		MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	bool MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
-		Iterator iter = headersIterator();
+		return header(namez, strlen(namez), value);
+	}
 
-		if(!iter.write(name))
-		{
-			return false;
-		}
-		if(!iter.write(": ", 2))
-		{
-			return false;
-		}
-		if(!value.generate(iter))
-		{
-			return false;
-		}
-		if(!iter.write("\r\n", 2))
-		{
-			return false;
-		}
+	///////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		return header(name.data(), name.size(), value);
+	}
 
-		return true;
+	///////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool MessageOut::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		return header(name.csz, name.size, value);
 	}
 
 }}

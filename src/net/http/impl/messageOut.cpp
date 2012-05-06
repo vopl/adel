@@ -34,7 +34,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const char *data, size_t size)
+	bool MessageOut::firstLine(const char *data, size_t size)
 	{
 		if(!ensureMode(em_firstLine))
 		{
@@ -44,7 +44,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const char *dataz)
+	bool MessageOut::firstLine(const char *dataz)
 	{
 		if(!ensureMode(em_firstLine))
 		{
@@ -54,7 +54,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const std::string &data)
+	bool MessageOut::firstLine(const std::string &data)
 	{
 		if(!ensureMode(em_firstLine))
 		{
@@ -64,13 +64,13 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLineFlush()
+	bool MessageOut::firstLineFlush()
 	{
 		return ensureMode(em_headers);
 	}
 
 	//////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::headersIterator()
+	MessageOut::Iterator MessageOut::headersIterator()
 	{
 		bool b = ensureMode(em_headers);
 		assert(b);
@@ -79,7 +79,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const char *data, size_t size)
+	bool MessageOut::header(const char *data, size_t size)
 	{
 		if(!ensureMode(em_headers))
 		{
@@ -93,7 +93,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const char *dataz)
+	bool MessageOut::header(const char *dataz)
 	{
 		if(!ensureMode(em_headers))
 		{
@@ -107,7 +107,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const std::string &data)
+	bool MessageOut::header(const std::string &data)
 	{
 		if(!ensureMode(em_headers))
 		{
@@ -121,13 +121,13 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const std::string &value)
+	bool MessageOut::header(const HeaderName &name, const std::string &value)
 	{
 		return header(name, value.data(), value.size());
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const char *value, size_t valueSize)
+	bool MessageOut::header(const HeaderName &name, const char *value, size_t valueSize)
 	{
 		if(!ensureMode(em_headers))
 		{
@@ -153,19 +153,19 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const char *valuez)
+	bool MessageOut::header(const HeaderName &name, const char *valuez)
 	{
 		return header(name, valuez, strlen(valuez));
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::headersFlush()
+	bool MessageOut::headersFlush()
 	{
 		return ensureMode(em_body);
 	}
 
 	//////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::bodyIterator()
+	MessageOut::Iterator MessageOut::bodyIterator()
 	{
 		bool b = ensureMode(em_body);
 		assert(b);
@@ -174,7 +174,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const char *data, size_t size)
+	bool MessageOut::body(const char *data, size_t size)
 	{
 		if(!ensureMode(em_body))
 		{
@@ -184,7 +184,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const char *dataz)
+	bool MessageOut::body(const char *dataz)
 	{
 		if(!ensureMode(em_body))
 		{
@@ -194,7 +194,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const std::string &data)
+	bool MessageOut::body(const std::string &data)
 	{
 		if(!ensureMode(em_body))
 		{
@@ -204,7 +204,7 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool		MessageOut::bodyFlush()
+	bool MessageOut::bodyFlush()
 	{
 		if(!ensureMode(em_body))
 		{
@@ -305,7 +305,7 @@ namespace net { namespace http { namespace impl
 							return false;
 						}
 					}
-					_mode = em;
+					_mode = em_headers;
 					return true;
 				default:
 					assert(0);
@@ -319,20 +319,36 @@ namespace net { namespace http { namespace impl
 				{
 				case em_firstLine:
 					{
-						if(!write("\r\n\r\n", 4))
-						{
-							return false;
-						}
-						_mode = em;
-					}
-					return true;
-				case em_headers:
-					{
 						if(!write("\r\n", 2))
 						{
 							return false;
 						}
-						_mode = em;
+						_mode = em_headers;
+
+						if(!this->systemHeaders())
+						{
+							return true;
+						}
+
+						if(!write("\r\n", 2))
+						{
+							return false;
+						}
+						_mode = em_body;
+					}
+					return true;
+				case em_headers:
+					{
+						if(!this->systemHeaders())
+						{
+							return true;
+						}
+
+						if(!write("\r\n", 2))
+						{
+							return false;
+						}
+						_mode = em_body;
 					}
 					return true;
 				default:
@@ -373,9 +389,15 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::iterator()
+	MessageOut::Iterator MessageOut::iterator()
 	{
 		return Iterator(this);
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::systemHeaders()
+	{
+		return true;
 	}
 
 }}}

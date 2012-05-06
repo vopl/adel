@@ -38,30 +38,35 @@ namespace net { namespace http
 	//////////////////////////////////////////////////////////////////////////
 	bool MessageOut::Iterator::write(const char *data, size_t size)
 	{
+		assert(_message);
 		return _message->write(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	bool MessageOut::Iterator::write(const char *dataz)
 	{
+		assert(_message);
 		return _message->write(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	bool MessageOut::Iterator::write(const std::string &data)
 	{
+		assert(_message);
 		return _message->write(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	MessageOut::Iterator::reference MessageOut::Iterator::dereference() const
 	{
+		assert(_message);
 		return _message->iteratorDereference();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	bool MessageOut::Iterator::increment()
 	{
+		assert(_message);
 		return _message->iteratorIncrement();
 	}
 
@@ -69,6 +74,7 @@ namespace net { namespace http
 	MessageOut::Iterator::Iterator(impl::MessageOut *message)
 		: _message(message)
 	{
+		assert(_message);
 	}
 
 
@@ -79,10 +85,10 @@ namespace net { namespace http
 
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::MessageOut()
+	/*MessageOut::MessageOut()
 	{
-		assert(0);
-	}
+		assert(!"never here");
+	}*/
 
 	//////////////////////////////////////////////////////////////////////////
 	MessageOut::~MessageOut()
@@ -96,109 +102,109 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::firstLineIterator()
+	MessageOut::Iterator MessageOut::firstLineIterator()
 	{
 		return _impl->firstLineIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const char *data, size_t size)
+	bool MessageOut::firstLine(const char *data, size_t size)
 	{
 		return _impl->firstLine(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const char *dataz)
+	bool MessageOut::firstLine(const char *dataz)
 	{
 		return _impl->firstLine(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLine(const std::string &data)
+	bool MessageOut::firstLine(const std::string &data)
 	{
 		return _impl->firstLine(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::firstLineFlush()
+	bool MessageOut::firstLineFlush()
 	{
 		return _impl->firstLineFlush();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::headersIterator()
+	MessageOut::Iterator MessageOut::headersIterator()
 	{
 		return _impl->headersIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const char *data, size_t size)
+	bool MessageOut::header(const char *data, size_t size)
 	{
 		return _impl->header(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const char *dataz)
+	bool MessageOut::header(const char *dataz)
 	{
 		return _impl->header(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const std::string &data)
+	bool MessageOut::header(const std::string &data)
 	{
 		return _impl->header(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const std::string &value)
+	bool MessageOut::header(const HeaderName &name, const std::string &value)
 	{
 		return _impl->header(name, value);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const char *value, size_t valueSize)
+	bool MessageOut::header(const HeaderName &name, const char *value, size_t valueSize)
 	{
 		return _impl->header(name, value, valueSize);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::header(const HeaderName &name, const char *valuez)
+	bool MessageOut::header(const HeaderName &name, const char *valuez)
 	{
 		return _impl->header(name, valuez);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::headersFlush()
+	bool MessageOut::headersFlush()
 	{
 		return _impl->headersFlush();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::bodyIterator()
+	MessageOut::Iterator MessageOut::bodyIterator()
 	{
 		return _impl->bodyIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const char *data, size_t size)
+	bool MessageOut::body(const char *data, size_t size)
 	{
 		return _impl->body(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const char *dataz)
+	bool MessageOut::body(const char *dataz)
 	{
 		return _impl->body(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::body(const std::string &data)
+	bool MessageOut::body(const std::string &data)
 	{
 		return _impl->body(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool		MessageOut::bodyFlush()
+	bool MessageOut::bodyFlush()
 	{
 		return _impl->bodyFlush();
 	}
