@@ -40,6 +40,8 @@ namespace net { namespace impl
 			Sock(TSocketSslPtr socketSsl, TSslContextPtr sslContext);
 			~Sock();
 
+			bool isOpen() const;
+
 			template <class Buffer, class Handler>
 			void read(const Buffer &b, const Handler &h);
 
@@ -83,6 +85,8 @@ namespace net { namespace impl
 		Channel(TSocketPtr socket);
 		Channel(TSocketSslPtr socket, TSslContextPtr sslContext);
 		~Channel();
+
+		bool isOpen() const;
 
 		boost::signals2::connection connectOnReceive(const TOnReceive &f);
 

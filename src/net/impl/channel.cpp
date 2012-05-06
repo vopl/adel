@@ -32,6 +32,17 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	bool Channel::Sock::isOpen() const
+	{
+		if(_socket)
+		{
+			return _socket->is_open();
+		}
+		return _socketSsl->lowest_layer().is_open();
+	}
+
+
+	//////////////////////////////////////////////////////////////////////////
 	template <class Buffer, class Handler>
 	void Channel::Sock::read(const Buffer &b, const Handler &h)
 	{
@@ -255,6 +266,11 @@ namespace net { namespace impl
 		close();
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	bool Channel::isOpen() const
+	{
+		return _sock.isOpen();
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	boost::signals2::connection Channel::connectOnReceive(const TOnReceive &f)

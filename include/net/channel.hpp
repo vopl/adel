@@ -30,6 +30,8 @@ namespace net
 		Channel();
 		~Channel();
 
+		bool isOpen() const;
+
 		typedef boost::function<void(boost::system::error_code ec, Packet p)> TOnReceive;
 		boost::signals2::connection connectOnReceive(const TOnReceive &f);
 		void listen(size_t amount=(size_t)-1);

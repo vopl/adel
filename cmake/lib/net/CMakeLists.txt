@@ -63,6 +63,8 @@ set(INCLUDE_HTTP
 	${PINC}/http/server.hpp
 	${PINC}/http/client.hpp
 	${PINC}/http/message.hpp
+	${PINC}/http/messageIn.hpp
+	${PINC}/http/messageOut.hpp
 	${PINC}/http/messageIterator.hpp
 	${PINC}/http/statusCode.hpp
 	${PINC}/http/method.hpp
@@ -88,6 +90,8 @@ set(SRC_HTTP
 	${PSRC}/http/headerValue_generators.cpp
 	${PSRC}/http/message.cpp
 	${PSRC}/http/messageIterator.cpp
+	${PSRC}/http/messageIn.cpp
+	${PSRC}/http/messageOut.cpp
 )
 source_group(src/http FILES ${SRC_HTTP})
 
@@ -105,6 +109,9 @@ set(SRC_HTTP_IMPL
 	${PSRC}/http/impl/contentFilterEncodeChunked.cpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.cpp
 	${PSRC}/http/impl/contentFilterDecodeChunked.cpp
+	${PSRC}/http/impl/messageIn.cpp
+	${PSRC}/http/impl/messageInBuffer.cpp
+	${PSRC}/http/impl/messageOut.cpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL})
 
@@ -118,6 +125,9 @@ set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/contentFilterEncodeChunked.hpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.hpp
 	${PSRC}/http/impl/contentFilterDecodeChunked.hpp
+	${PSRC}/http/impl/messageIn.hpp
+	${PSRC}/http/impl/messageInBuffer.hpp
+	${PSRC}/http/impl/messageOut.hpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL_HDR})
 
