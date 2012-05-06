@@ -29,7 +29,7 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void MessageOut::Iterator::nextBuffer()
+	bool MessageOut::Iterator::nextBuffer()
 	{
 		assert(_message);
 		return _message->nextBuffer();
@@ -60,16 +60,9 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::equal(const Iterator &i) const
+	bool MessageOut::Iterator::increment()
 	{
-		assert(_message && _message == i._message);
-		return true;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	void MessageOut::Iterator::increment()
-	{
-		_message->iteratorIncrement();
+		return _message->iteratorIncrement();
 	}
 
 	//////////////////////////////////////////////////////////////////////////

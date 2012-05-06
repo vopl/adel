@@ -21,15 +21,16 @@ namespace net { namespace http
 
 	public:
 		class Iterator
-			: public boost::iterator_facade<Iterator, char, boost::forward_traversal_tag>
+			//: public boost::iterator_facade<Iterator, char, boost::forward_traversal_tag>
+			: public boost::iterator_facade<Iterator, char, boost::incrementable_traversal_tag>
 		{
-		public:
 			Iterator();
+		public:
 			Iterator(const Iterator &i);
 			~Iterator();
 
 			char *getBuffer(size_t &size);
-			void nextBuffer();
+			bool nextBuffer();
 			bool write(const char *data, size_t size);
 			bool write(const char *dataz);
 			bool write(const std::string &data);
@@ -38,8 +39,7 @@ namespace net { namespace http
 			friend class boost::iterator_core_access;
 
 			reference dereference() const;
-			bool equal(const Iterator &i) const;
-			void increment();
+			bool increment();
 
 		private:
 			friend class impl::MessageOut;

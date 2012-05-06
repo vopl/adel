@@ -7,6 +7,7 @@
 
 namespace net { namespace http { namespace impl
 {
+	////////////////////////////////////////////////////////////////////////
 	class MessageOut
 		: boost::enable_shared_from_this<MessageOut>
 	{
@@ -57,10 +58,7 @@ namespace net { namespace http { namespace impl
 	public:
 		///////////////////////////////////////////////
 		char *getBuffer(size_t &size);
-		void nextBuffer();
-		void iteratorIncrement();
-		char &iteratorDereference();
-		Iterator iterator();
+		bool nextBuffer();
 		bool write(const char *data, size_t size);
 		bool write(const char *dataz);
 		bool write(const std::string &data);
@@ -84,10 +82,77 @@ namespace net { namespace http { namespace impl
 
 	protected:
 		bool ensureMode(EMode em);
+	protected:
+		friend class net::http::MessageOut::Iterator;
+		bool iteratorIncrement();
+		char &iteratorDereference();
+
+	protected:
+		Iterator iterator();
 
 	};
 
 	typedef boost::shared_ptr<MessageOut> MessageOutPtr;
+
+
+
+
+
+
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool		MessageOut::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		return header(name.str, value);
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool		MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	{
+		Iterator iter = headersIterator();
+		if(!write(namez))
+		{
+			return false;
+		}
+		if(!write(": ", 2))
+		{
+			return false;
+		}
+		if(!value.generate(iter))
+		{
+			return false;
+		}
+		if(!write("\r\n", 2))
+		{
+			return false;
+		}
+		return true;
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	template <class HeaderValueTag>
+	bool		MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	{
+		Iterator iter = headersIterator();
+		if(!write(name))
+		{
+			return false;
+		}
+		if(!write(": ", 2))
+		{
+			return false;
+		}
+		if(!value.generate(iter))
+		{
+			return false;
+		}
+		if(!write("\r\n", 2))
+		{
+			return false;
+		}
+		return true;
+	}
 
 }}}
 

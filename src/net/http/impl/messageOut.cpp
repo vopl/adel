@@ -228,12 +228,12 @@ namespace net { namespace http { namespace impl
 		return _writePosition;
 	}
 	//////////////////////////////////////////////////////////////
-	void MessageOut::nextBuffer()
+	bool MessageOut::nextBuffer()
 	{
 		if(_buffer._size)
 		{
 			assert(0);
-			//flush packet
+			//flush packet, return failure
 			_buffer._data.reset();
 			_buffer._size = 0;
 			_writePosition = NULL;
@@ -245,29 +245,7 @@ namespace net { namespace http { namespace impl
 
 		_writePosition = _buffer._data.get();
 		_writeEnd = _writePosition + _buffer._size;
-	}
-
-	//////////////////////////////////////////////////////////////
-	void MessageOut::iteratorIncrement()
-	{
-		assert(_writePosition < _writeEnd);
-		_writePosition++;
-		if(_writePosition == _writeEnd)
-		{
-			nextBuffer();
-		}
-	}
-
-	//////////////////////////////////////////////////////////////
-	char &MessageOut::iteratorDereference()
-	{
-		return *_writePosition;
-	}
-
-	//////////////////////////////////////////////////////////////
-	MessageOut::Iterator	MessageOut::iterator()
-	{
-		return Iterator(this);
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -277,12 +255,16 @@ namespace net { namespace http { namespace impl
 		{
 			size_t writeSize = size;
 			char *buf = getBuffer(writeSize);
-			assert(writeSize);
+
+			assert(writeSize && writeSize <= size);
 			memcpy(buf, data, writeSize);
 
 			if(writeSize == size)
 			{
-				nextBuffer();
+				if(!nextBuffer())
+				{
+					return false;
+				}
 			}
 			size -= writeSize;
 		}
@@ -366,6 +348,34 @@ namespace net { namespace http { namespace impl
 
 		assert(!"never here");
 		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::iteratorIncrement()
+	{
+		assert(_writePosition < _writeEnd);
+		_writePosition++;
+		if(_writePosition == _writeEnd)
+		{
+			if(!nextBuffer())
+			{
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
+	char &MessageOut::iteratorDereference()
+	{
+		return *_writePosition;
+	}
+
+	//////////////////////////////////////////////////////////////
+	MessageOut::Iterator	MessageOut::iterator()
+	{
+		return Iterator(this);
 	}
 
 }}}
