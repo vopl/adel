@@ -29,10 +29,10 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::nextBuffer()
+	bool MessageOut::Iterator::incBuffer(size_t size)
 	{
 		assert(_message);
-		return _message->nextBuffer();
+		return _message->incBuffer(size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////

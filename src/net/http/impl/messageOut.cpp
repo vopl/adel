@@ -216,6 +216,22 @@ namespace net { namespace http { namespace impl
 		{
 			return false;
 		}
+
+		assert(_buffer._size && _buffer._data);
+		_buffer._size = _writePosition - _buffer._data.get();
+		if(_buffer._size && _buffer._data)
+		{
+			if(!_contentFilter->filterPush(_buffer, 0))
+			{
+				return false;
+			}
+
+			_buffer._data.reset();
+			_buffer._size = 0;
+			_writePosition = NULL;
+			_writeEnd = NULL;
+		}
+
 		if(!_contentFilter->filterFlush())
 		{
 			return false;
@@ -236,6 +252,52 @@ namespace net { namespace http { namespace impl
 		}
 		return _writePosition;
 	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::incBuffer(size_t size)
+	{
+		assert(_writePosition);
+		_writePosition += size;
+		assert(_writePosition <= _writeEnd);
+		if(_writePosition == _writeEnd)
+		{
+			return nextBuffer();
+		}
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::write(const char *data, size_t size)
+	{
+		while(size)
+		{
+			size_t writeSize = size;
+			char *buf = getBuffer(writeSize);
+
+			assert(writeSize && writeSize <= size);
+			memcpy(buf, data, writeSize);
+			if(!incBuffer(writeSize))
+			{
+				return false;
+			}
+
+			size -= writeSize;
+		}
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::write(const char *dataz)
+	{
+		return write(dataz, strlen(dataz));
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::write(const std::string &data)
+	{
+		return write(data.data(), data.size());
+	}
+
 	//////////////////////////////////////////////////////////////
 	bool MessageOut::nextBuffer()
 	{
@@ -259,43 +321,6 @@ namespace net { namespace http { namespace impl
 		_writeEnd = _writePosition + _buffer._size;
 		return true;
 	}
-
-	//////////////////////////////////////////////////////////////
-	bool MessageOut::write(const char *data, size_t size)
-	{
-		while(size)
-		{
-			size_t writeSize = size;
-			char *buf = getBuffer(writeSize);
-
-			assert(writeSize && writeSize <= size);
-			memcpy(buf, data, writeSize);
-
-			assert(_writePosition <= _writeEnd);
-			if(_writePosition == _writeEnd)
-			{
-				if(!nextBuffer())
-				{
-					return false;
-				}
-			}
-			size -= writeSize;
-		}
-		return true;
-	}
-
-	//////////////////////////////////////////////////////////////
-	bool MessageOut::write(const char *dataz)
-	{
-		return write(dataz, strlen(dataz));
-	}
-
-	//////////////////////////////////////////////////////////////
-	bool MessageOut::write(const std::string &data)
-	{
-		return write(data.data(), data.size());
-	}
-
 	//////////////////////////////////////////////////////////////
 	MessageOut::Iterator MessageOut::iterator()
 	{
@@ -379,7 +404,7 @@ namespace net { namespace http { namespace impl
 			break;
 		case em_headers:
 			{
-				switch(_mode)
+				switch(em)
 				{
 				case em_body:
 					//write common headers

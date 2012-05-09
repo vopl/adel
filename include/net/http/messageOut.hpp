@@ -29,7 +29,8 @@ namespace net { namespace http
 			~Iterator();
 
 			char *getBuffer(size_t &size);
-			bool nextBuffer();
+			bool incBuffer(size_t size);
+
 			bool write(const char *data, size_t size);
 			bool write(const char *dataz);
 			bool write(const std::string &data);

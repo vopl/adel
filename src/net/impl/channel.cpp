@@ -193,7 +193,6 @@ namespace net { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::send_f()
 	{
-		assert(!"_sendsIOV here");
 		bool localSendInProcess = false;
 		for(;;)
 		{
@@ -342,7 +341,7 @@ namespace net { namespace impl
 		s._res = res;
 		s._packet = p;
 
-		if(_sends.size() + _sendsIOV.size() < 1)
+		if(_sends.size() + _sendsIOV.size() < 2)
 		{
 			spawn(bind(&Channel::send_f, shared_from_this()));
 		}
@@ -370,7 +369,7 @@ namespace net { namespace impl
 
 		siov._packets4keep = packets4keep;
 
-		if(_sends.size() + _sendsIOV.size() < 1)
+		if(_sends.size() + _sendsIOV.size() < 2)
 		{
 			spawn(bind(&Channel::send_f, shared_from_this()));
 		}

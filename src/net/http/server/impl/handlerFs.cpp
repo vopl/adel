@@ -219,10 +219,10 @@ namespace net { namespace http { namespace server { namespace impl
 				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
-				if(!iter.nextBuffer())
+				if(!iter.incBuffer(bufSize))
 				{
 					//connection lost?
-					return;
+					break;
 				}
 				size -= bufSize;
 			}
