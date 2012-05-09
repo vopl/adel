@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "net/http/impl/messageOut.hpp"
+#include "net/http/impl/contentFilterChannelWriter.hpp"
 
 namespace net { namespace http { namespace impl
 {
@@ -9,7 +10,11 @@ namespace net { namespace http { namespace impl
 		, _bufferGranula(bufferGranula)
 		, _writePosition(NULL)
 		, _writeEnd(NULL)
+		, _contentFilter(new ContentFilterChannelWriter(channel, bufferGranula))
 	{
+		bool b = nextBuffer();
+		assert(b);
+		(void)b;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -210,8 +215,11 @@ namespace net { namespace http { namespace impl
 		{
 			return false;
 		}
-		assert(!"flush");
-		//_mode = em_firstLine;
+		if(!_contentFilter->filterFlush())
+		{
+			return false;
+		}
+		_mode = em_firstLine;
 		return true;
 	}
 
@@ -230,10 +238,13 @@ namespace net { namespace http { namespace impl
 	//////////////////////////////////////////////////////////////
 	bool MessageOut::nextBuffer()
 	{
-		if(_buffer._size)
+		if(_buffer._size && _buffer._data)
 		{
-			assert(0);
-			//flush packet, return failure
+			if(!_contentFilter->filterPush(_buffer, 0))
+			{
+				return false;
+			}
+
 			_buffer._data.reset();
 			_buffer._size = 0;
 			_writePosition = NULL;
@@ -268,7 +279,7 @@ namespace net { namespace http { namespace impl
 			}
 			size -= writeSize;
 		}
-		return true;//isConnected()
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -284,6 +295,24 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
+	MessageOut::Iterator MessageOut::iterator()
+	{
+		return Iterator(this);
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::writeSystemHeaders()
+	{
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::setupBodyFilters()
+	{
+		return true;
+	}
+
+	//////////////////////////////////////////////////////////////
 	bool MessageOut::ensureMode(EMode em)
 	{
 		assert(_mode <= em);
@@ -292,73 +321,95 @@ namespace net { namespace http { namespace impl
 			return true;
 		}
 
-		switch(em)
+		switch(_mode)
 		{
-		case em_headers:
+		case em_firstLine:
 			{
-				switch(_mode)
+				switch(em)
 				{
-				case em_firstLine:
+				case em_headers:
+					//terminate first line
+					if(!write("\r\n", 2))
 					{
-						if(!write("\r\n", 2))
-						{
-							return false;
-						}
+						return false;
 					}
+
+					//now headers
 					_mode = em_headers;
+
+					return true;
+				case em_body:
+					//terminate first line
+					if(!write("\r\n", 2))
+					{
+						return false;
+					}
+
+					//now headers
+					_mode = em_headers;
+
+					//write common headers(server, date, content-encoding, connection, ...)
+					if(!this->writeSystemHeaders())
+					{
+						return false;
+					}
+
+					//terminate headers
+					if(!write("\r\n", 2))
+					{
+						return false;
+					}
+
+					//setup body filters
+					if(!this->setupBodyFilters())
+					{
+						return false;
+					}
+
+					//now body
+					_mode = em_body;
 					return true;
 				default:
-					assert(0);
+					assert(!"unknown mode");
 					break;
 				}
 			}
 			break;
-		case em_body:
+		case em_headers:
 			{
 				switch(_mode)
 				{
-				case em_firstLine:
+				case em_body:
+					//write common headers
+					if(!this->writeSystemHeaders())
 					{
-						if(!write("\r\n", 2))
-						{
-							return false;
-						}
-						_mode = em_headers;
-
-						if(!this->systemHeaders())
-						{
-							return true;
-						}
-
-						if(!write("\r\n", 2))
-						{
-							return false;
-						}
-						_mode = em_body;
+						return false;
 					}
-					return true;
-				case em_headers:
+
+					//terminate headers
+					if(!write("\r\n", 2))
 					{
-						if(!this->systemHeaders())
-						{
-							return true;
-						}
-
-						if(!write("\r\n", 2))
-						{
-							return false;
-						}
-						_mode = em_body;
+						return false;
 					}
+
+					//setup body filters
+					if(!this->setupBodyFilters())
+					{
+						return false;
+					}
+
+					//now body
+					_mode = em_body;
+
 					return true;
 				default:
-					assert(0);
+					assert(!"unknown mode");
 					break;
 				}
 			}
 			break;
 		default:
-			assert(0);
+			assert(!"unknown mode");
 			break;
 		}
 
@@ -386,18 +437,6 @@ namespace net { namespace http { namespace impl
 	char &MessageOut::iteratorDereference()
 	{
 		return *_writePosition;
-	}
-
-	//////////////////////////////////////////////////////////////
-	MessageOut::Iterator MessageOut::iterator()
-	{
-		return Iterator(this);
-	}
-
-	//////////////////////////////////////////////////////////////
-	bool MessageOut::systemHeaders()
-	{
-		return true;
 	}
 
 }}}

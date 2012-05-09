@@ -5,8 +5,8 @@
 namespace net { namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeChunked::ContentFilterDecodeChunked(ContentFilter* upstream)
-		: ContentFilter(upstream)
+	ContentFilterDecodeChunked::ContentFilterDecodeChunked(ContentFilter *upstream)
+		: _upstream(upstream)
 	{
 	}
 

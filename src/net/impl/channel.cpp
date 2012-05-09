@@ -66,15 +66,17 @@ namespace net { namespace impl
 	{
 		if(_socket)
 		{
-			_socket->async_write_some(b, async::bridge(h));
+			boost::asio::async_write(
+				*_socket, b, async::bridge(h));
 		}
 		else
 		{
 			typedef asio::detail::wrapped_handler<
 				asio::io_service::strand,
 				async::AsioBridge<Handler> > WrappedHandler;
+
 			_sslStrand->dispatch(
-				bind(&TSocketSsl::async_write_some<Buffer, WrappedHandler>, _socketSsl.get(), b, _sslStrand->wrap(async::bridge(h))));
+				bind(&boost::asio::async_write<TSocketSsl, Buffer, WrappedHandler>, boost::ref(*_socketSsl), b, _sslStrand->wrap(async::bridge(h))));
 		}
 	}
 
@@ -191,58 +193,90 @@ namespace net { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::send_f()
 	{
+		assert(!"_sendsIOV here");
 		bool localSendInProcess = false;
 		for(;;)
 		{
-			std::pair<Future<error_code>, Packet> op;
+			TSend send;
+			TSendIOV sendIOV;
+
+			enum EMode
+			{
+				em_done,
+				em_send,
+				em_sendIOV,
+			} em = em_done;
+
 			{
 				mutex::scoped_lock sl(_mtxSends);
 				if(!localSendInProcess && _sendInProcess)
 				{
 					return;
 				}
-				if(_sends.empty())
+
+				if(!_sends.empty())
+				{
+					em = em_send;
+					send.swap(_sends.front());
+					_sends.erase(_sends.begin());
+				}
+				else if(!_sendsIOV.empty())
+				{
+					em = em_sendIOV;
+					sendIOV.swap(_sendsIOV.front());
+					_sendsIOV.erase(_sendsIOV.begin());
+				}
+
+				if(em_done == em)
 				{
 					_sendInProcess = false;
 					return;
 				}
-				op = _sends[0];
-				_sends.erase(_sends.begin());
 				_sendInProcess = true;
 				localSendInProcess = true;
 			}
 
-			size_t				transferedSize = 0;
-			error_code			ec;
-
 			//данные
-			Packet				&packet = op.second;
-			if(packet._size)
+			if(em_send == em)
 			{
-				while(transferedSize < packet._size)
+				Packet &packet = send._packet;
+				assert(packet._size);
+
+				Future2<error_code, size_t> writeRes;
+				_sock.write(
+					buffer(packet._data.get(), packet._size),
+					writeRes);
+				error_code ec = writeRes.data1();
+
+				if(ec)
 				{
-					Future2<error_code, size_t> writeRes;
-					_sock.write(
-						buffer(packet._data.get() + transferedSize, packet._size - transferedSize),
-						writeRes);
-					ec = writeRes.data1();
-
-					if(ec)
-					{
-						op.first(ec);
-						mutex::scoped_lock sl(_mtxSends);
-						_sendInProcess = false;
-						return;
-					}
-					transferedSize += writeRes.data2();
+					send._res(ec);
+					mutex::scoped_lock sl(_mtxSends);
+					_sendInProcess = false;
+					return;
 				}
-			}
-			assert(transferedSize == packet._size);
-			transferedSize = 0;
 
-			op.first(error_code());
-			//mutex::scoped_lock sl(_mtxSends);
-			//_sendInProcess = false;
+				send._res(ec);
+			}
+			else
+			{
+				assert(em_sendIOV == em);
+				Future2<error_code, size_t> writeRes;
+				_sock.write(
+					sendIOV._buffers,
+					writeRes);
+				error_code ec = writeRes.data1();
+
+				if(ec)
+				{
+					sendIOV._res(ec);
+					mutex::scoped_lock sl(_mtxSends);
+					_sendInProcess = false;
+					return;
+				}
+
+				sendIOV._res(ec);
+			}
 		}
 	}
 
@@ -303,8 +337,40 @@ namespace net { namespace impl
 		Future<error_code> res;
 
 		mutex::scoped_lock sl(_mtxSends);
-		_sends.push_back(std::make_pair(res, p));
-		if(_sends.size() < 2)
+		_sends.push_back(TSend());
+		TSend &s = _sends.back();
+		s._res = res;
+		s._packet = p;
+
+		if(_sends.size() + _sendsIOV.size() < 1)
+		{
+			spawn(bind(&Channel::send_f, shared_from_this()));
+		}
+
+		return res;
+	}
+
+	Future<error_code> Channel::send(
+		const std::vector<std::pair<const char *, size_t> > &buffers,
+		const std::vector<Packet> &packets4keep)
+	{
+		Future<error_code> res;
+
+		mutex::scoped_lock sl(_mtxSends);
+		_sendsIOV.push_back(TSendIOV());
+		TSendIOV &siov = _sendsIOV.back();
+		siov._res = res;
+
+		siov._buffers.reserve(buffers.size());
+		for(size_t i(0); i<buffers.size(); i++)
+		{
+			const std::pair<const char *, size_t> &pb = buffers[i];
+			siov._buffers.push_back(buffer(pb.first, pb.second));
+		}
+
+		siov._packets4keep = packets4keep;
+
+		if(_sends.size() + _sendsIOV.size() < 1)
 		{
 			spawn(bind(&Channel::send_f, shared_from_this()));
 		}

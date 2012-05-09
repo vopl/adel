@@ -38,6 +38,9 @@ namespace net
 
 		async::Future2<boost::system::error_code, Packet> receive(size_t maxSize=1024);
 		async::Future<boost::system::error_code> send(const Packet &p);
+		async::Future<boost::system::error_code> send(
+			const std::vector<std::pair<const char *, size_t> > &buffers,
+			const std::vector<Packet> &packets4keep);
 
 		void close();
 	};

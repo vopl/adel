@@ -105,6 +105,7 @@ set(SRC_HTTP_IMPL
 	${PSRC}/http/impl/message.cpp
 	${PSRC}/http/impl/messageBuffer.cpp
 	${PSRC}/http/impl/contentFilter.cpp
+	${PSRC}/http/impl/contentFilterChannelWriter.cpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.cpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.cpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.cpp
@@ -121,6 +122,7 @@ set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/message.hpp
 	${PSRC}/http/impl/messageBuffer.hpp
 	${PSRC}/http/impl/contentFilter.hpp
+	${PSRC}/http/impl/contentFilterChannelWriter.hpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.hpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.hpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.hpp

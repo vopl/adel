@@ -27,6 +27,9 @@ namespace async
 		void wait();
 
 	public:
+		void swap(Event &with);
+
+	public:
 
 		static Event *waitAny(Event *begin, Event *end);
 	};

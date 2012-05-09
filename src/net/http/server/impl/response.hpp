@@ -22,6 +22,8 @@ namespace net { namespace http { namespace server { namespace impl
 {
 	class Request;
 
+	class Response;
+	typedef boost::shared_ptr<Response> ResponsePtr;
 	////////////////////////////////////////////////////////
 	class Response
 		: public net::http::impl::Message
@@ -30,6 +32,11 @@ namespace net { namespace http { namespace server { namespace impl
 	{
 	public:
 		typedef net::http::Message::Segment Segment;
+
+		ResponsePtr shared_from_this()
+		{
+			return boost::static_pointer_cast<Response>(net::http::impl::Message::shared_from_this());
+		}
 
 	public:
 		Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request);
@@ -79,7 +86,8 @@ namespace net { namespace http { namespace server { namespace impl
 
 		virtual bool obtainMoreBuffers(bool force);
 
-		net::http::impl::ContentFilter *_mostContentFilter;
+		//leaks now (cyclic shared_ptr)
+		net::http::impl::ContentFilterPtr _mostContentFilter;
 		std::vector<net::http::impl::ContentFilterPtr> _filterKeeper;
 		virtual bool filterPush(const Packet &packet, size_t offset);
 		virtual bool filterFlush();
@@ -117,7 +125,6 @@ namespace net { namespace http { namespace server { namespace impl
 		//std::vector<SHeader> _headersVector;
 
 	};
-	typedef boost::shared_ptr<Response> ResponsePtr;
 
 
 

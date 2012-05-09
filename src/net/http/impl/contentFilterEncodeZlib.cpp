@@ -16,8 +16,8 @@ namespace net { namespace http { namespace impl
 		}
 	}
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeZlib::ContentFilterEncodeZlib(ContentFilter* upstream, EContentEncoding ece, int level, size_t granula)
-		: ContentFilter(upstream)
+	ContentFilterEncodeZlib::ContentFilterEncodeZlib(ContentFilterPtr upstream, EContentEncoding ece, int level, size_t granula)
+		: _upstream(upstream)
 		, _ece(ece)
 		, _level(level)
 		, _outputOffset(0)

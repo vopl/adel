@@ -12,14 +12,13 @@ namespace net { namespace http { namespace impl
 	class ContentFilter
 	{
 	public:
-		ContentFilter(ContentFilter* upstream);
+		ContentFilter();
 		virtual ~ContentFilter();
 		
 		virtual bool filterPush(const Packet &packet, size_t offset=0)=0;
 		virtual bool filterFlush()=0;
 
 	protected:
-		ContentFilter* _upstream;
 	};
 }}}
 #endif

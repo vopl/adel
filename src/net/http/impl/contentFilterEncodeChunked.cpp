@@ -11,8 +11,8 @@
 namespace net { namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeChunked::ContentFilterEncodeChunked(ContentFilter* upstream, size_t granula)
-		: ContentFilter(upstream)
+	ContentFilterEncodeChunked::ContentFilterEncodeChunked(ContentFilterPtr upstream, size_t granula)
+		: _upstream(upstream)
 		, _granula(granula)
 		, _size(0)
 	{

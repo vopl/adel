@@ -2,6 +2,7 @@
 #define _NET_HTTP_IMPL_MESSAGEOUT_HPP_
 
 #include "net/http/messageOut.hpp"
+#include "net/http/impl/contentFilter.hpp"
 #include "net/channel.hpp"
 #include <boost/enable_shared_from_this.hpp>
 
@@ -16,7 +17,7 @@ namespace net { namespace http { namespace impl
 
 	public:
 		MessageOut(const Channel &channel, size_t bufferGranula);
-		~MessageOut();
+		virtual ~MessageOut();
 
 		///////////////////////////////////////////////
 		bool isConnected() const;
@@ -66,15 +67,21 @@ namespace net { namespace http { namespace impl
 		bool write(const std::string &data);
 
 	protected:
-		enum	EMode
+		Iterator iterator();
+
+	protected:
+		virtual bool writeSystemHeaders();
+		virtual bool setupBodyFilters();
+
+	private:
+		enum EMode
 		{
 			em_firstLine,
 			em_headers,
 			em_body,
-
 		};
 
-	protected:
+	private:
 		Channel _channel;
 		Packet	_buffer;
 		size_t	_bufferGranula;
@@ -82,19 +89,16 @@ namespace net { namespace http { namespace impl
 		char 	*_writePosition;
 		char 	*_writeEnd;
 
-	protected:
+	private:
 		bool ensureMode(EMode em);
-	protected:
+
+	private:
 		friend class net::http::MessageOut::Iterator;
 		bool iteratorIncrement();
 		char &iteratorDereference();
 
 	protected:
-		Iterator iterator();
-
-	protected:
-		virtual bool systemHeaders();
-
+		ContentFilterPtr	_contentFilter;
 	};
 
 	typedef boost::shared_ptr<MessageOut> MessageOutPtr;

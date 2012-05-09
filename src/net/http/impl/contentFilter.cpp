@@ -5,8 +5,7 @@
 namespace net { namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilter::ContentFilter(ContentFilter* upstream)
-		: _upstream(upstream)
+	ContentFilter::ContentFilter()
 	{
 	}
 
@@ -18,13 +17,15 @@ namespace net { namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////////
 	bool ContentFilter::filterPush(const Packet &packet, size_t offset)
 	{
-		return _upstream->filterPush(packet, offset);
+		assert(!"must be reimplemented");
+		return false;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
 	bool ContentFilter::filterFlush()
 	{
-		return _upstream->filterFlush();
+		assert(!"must be reimplemented");
+		return false;
 	}
 
 }}}

@@ -11,13 +11,14 @@ namespace net { namespace http { namespace impl
 		: public ContentFilter
 	{
 	public:
-		ContentFilterEncodeZlib(ContentFilter* upstream, EContentEncoding ece, int level, size_t granula);
+		ContentFilterEncodeZlib(ContentFilterPtr upstream, EContentEncoding ece, int level, size_t granula);
 		virtual ~ContentFilterEncodeZlib();
 
 		virtual bool filterPush(const Packet &packet, size_t offset=0);
 		virtual bool filterFlush();
 
 	protected:
+		ContentFilterPtr	_upstream;
 		EContentEncoding	_ece;
 		int 				_level;
 		size_t				_granula;
@@ -28,5 +29,6 @@ namespace net { namespace http { namespace impl
 		Packet		_output;
 		size_t		_outputOffset;
 	};
+	typedef boost::shared_ptr<ContentFilterEncodeZlib> ContentFilterEncodeZlibPtr;
 }}}
 #endif

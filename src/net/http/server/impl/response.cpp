@@ -22,8 +22,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request)
-		: net::http::impl::ContentFilter(NULL)
-		, _server(server)
+		: _server(server)
 		, _channel(channel)
 		, _request(request)
 		, _ewp(ewp_statusLine)
@@ -34,7 +33,7 @@ namespace net { namespace http { namespace server { namespace impl
 		, _bodyCompressGranula(_server->responseWriteGranula())
 		, _keepAlive(false)
 	{
-		_mostContentFilter = this;
+		//_mostContentFilter = this;
 
 		if(obtainMoreBuffers(true))
 		{
@@ -206,6 +205,10 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			return false;
 		}
+		if(!_mostContentFilter)
+		{
+			_mostContentFilter = shared_from_this();
+		}
 		if(!_mostContentFilter->filterFlush())
 		{
 			return false;
@@ -299,7 +302,11 @@ namespace net { namespace http { namespace server { namespace impl
 			size_t offsetInPacket;
 			Packet packet = firstBuffer->asPacket(offsetInPacket);
 
-			if(	_mostContentFilter == this)
+			if(!_mostContentFilter)
+			{
+				_mostContentFilter = shared_from_this();
+			}
+			if(_mostContentFilter == boost::shared_static_cast<net::http::impl::ContentFilter>(shared_from_this()))
 			{
 				//нет фильтров, и заголовки и тело - все идет подряд
 
@@ -315,6 +322,10 @@ namespace net { namespace http { namespace server { namespace impl
 				if(bodyOffset < firstBuffer->offset())
 				{
 					//тело целиком
+					if(!_mostContentFilter)
+					{
+						_mostContentFilter = shared_from_this();
+					}
 					if(!_mostContentFilter->filterPush(packet, offsetInPacket))
 					{
 						return false;
@@ -335,6 +346,10 @@ namespace net { namespace http { namespace server { namespace impl
 					headersPacket._size = offsetInPacket + bodyOffset;
 					/*this->*/filterPush(headersPacket, offsetInPacket);
 
+					if(!_mostContentFilter)
+					{
+						_mostContentFilter = shared_from_this();
+					}
 					if(!_mostContentFilter->filterPush(packet, bodyOffset + offsetInPacket))
 					{
 						return false;
@@ -558,9 +573,13 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			header(hn::transferEncoding, hvTransferEncoding);
 
-			ContentFilter *ch = new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula);
+			if(!_mostContentFilter)
+			{
+				_mostContentFilter = shared_from_this();
+			}
+			net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula));
 			_mostContentFilter = ch;
-			_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+			_filterKeeper.push_back(ch);
 		}
 
 		if(hvContentEncoding.isCorrect())
@@ -569,28 +588,36 @@ namespace net { namespace http { namespace server { namespace impl
 			{
 				hvContentEncoding.value() = ece_deflate;
 
-				ContentFilter *ch = new net::http::impl::ContentFilterEncodeZlib(
+				if(!_mostContentFilter)
+				{
+					_mostContentFilter = shared_from_this();
+				}
+				net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeZlib(
 					_mostContentFilter,
 					net::http::ece_deflate,
 					_bodyCompressLevel,
-					_bodyCompressGranula);
+					_bodyCompressGranula));
 
 				_mostContentFilter = ch;
-				_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+				_filterKeeper.push_back(ch);
 
 			}
 			else if(hvContentEncoding.value() & ece_gzip)
 			{
 				hvContentEncoding.value() = ece_gzip;
 
-				ContentFilter *ch = new net::http::impl::ContentFilterEncodeZlib(
+				if(!_mostContentFilter)
+				{
+					_mostContentFilter = shared_from_this();
+				}
+				net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeZlib(
 					_mostContentFilter,
 					net::http::ece_gzip,
 					_bodyCompressLevel,
-					_bodyCompressGranula);
+					_bodyCompressGranula));
 
 				_mostContentFilter = ch;
-				_filterKeeper.push_back(net::http::impl::ContentFilterPtr(ch));
+				_filterKeeper.push_back(ch);
 
 			}
 			else

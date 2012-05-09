@@ -60,7 +60,34 @@ namespace net { namespace impl
 
 	private:
 
-		typedef std::deque<std::pair<Future<boost::system::error_code>, Packet> > TSends;
+		struct TSend
+		{
+			Future<boost::system::error_code>	_res;
+			Packet								_packet;
+
+			void swap(TSend &with)
+			{
+				_res.swap(with._res);
+				_packet.swap(with._packet);
+			}
+		};
+		typedef std::deque<TSend> TSends;
+
+		struct TSendIOV
+		{
+			Future<boost::system::error_code>		_res;
+			std::vector<boost::asio::const_buffer>	_buffers;
+			std::vector<Packet>						_packets4keep;
+
+			void swap(TSendIOV &with)
+			{
+				_res.swap(with._res);
+				_buffers.swap(with._buffers);
+				_packets4keep.swap(with._packets4keep);
+			}
+		};
+		typedef std::deque<TSendIOV> TSendsIOV;
+
 		typedef boost::function<void(boost::system::error_code ec, Packet p)> TOnReceive;
 		typedef size_t TReceive;
 		typedef std::deque<TReceive> TReceives;
@@ -73,6 +100,7 @@ namespace net { namespace impl
 
 		boost::mutex	_mtxSends;
 		TSends			_sends;
+		TSendsIOV		_sendsIOV;
 		bool			_sendInProcess;
 
 		boost::signals2::signal<void(boost::system::error_code ec, Packet p)> _onReceive;
@@ -94,6 +122,9 @@ namespace net { namespace impl
 
 		virtual async::Future2<boost::system::error_code, Packet> receive(size_t maxSize);
 		virtual Future<boost::system::error_code> send(const Packet &p);
+		virtual async::Future<boost::system::error_code> send(
+			const std::vector<std::pair<const char *, size_t> > &buffers,
+			const std::vector<Packet> &packets4keep);
 
 		void close();
 	};

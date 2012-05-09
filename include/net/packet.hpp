@@ -3,6 +3,7 @@
 
 #include <boost/cstdint.hpp>
 #include <boost/shared_array.hpp>
+#include <algorithm>
 
 namespace net
 {
@@ -22,6 +23,12 @@ namespace net
 			: _data(data)
 			, _size(size)
 		{
+		}
+
+		void swap(Packet &with)
+		{
+			_data.swap(with._data);
+			std::swap(_size, with._size);
 		}
 	};
 

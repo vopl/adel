@@ -72,6 +72,13 @@ namespace async
 			_state->_data = data;
 			set();
 		}
+
+	public:
+		void swap(Future &with)
+		{
+			_state.swap(with._state);
+			Event::swap(with);
+		}
 	};
 
 	template <class Data1, class Data2>
@@ -146,6 +153,12 @@ namespace async
 			set();
 		}
 
+	public:
+		void swap(Future2 &with)
+		{
+			_state.swap(with._state);
+			Event::swap(with);
+		}
 	};
 
 	template <class Data1, class Data2, class Data3>
@@ -232,6 +245,12 @@ namespace async
 			set();
 		}
 
+	public:
+		void swap(Future3 &with)
+		{
+			_state.swap(with._state);
+			Event::swap(with);
+		}
 	};
 }
 

@@ -9,13 +9,14 @@ namespace net { namespace http { namespace impl
 		: public ContentFilter
 	{
 	public:
-		ContentFilterDecodeZlib(ContentFilter* upstream);
+		ContentFilterDecodeZlib(ContentFilter *upstream);
 		virtual ~ContentFilterDecodeZlib();
 
 		virtual bool filterPush(const Packet &packet, size_t offset=0);
 		virtual bool filterFlush();
 
 	protected:
+		ContentFilter *_upstream;
 	};
 }}}
 #endif

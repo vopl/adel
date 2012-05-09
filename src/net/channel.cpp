@@ -45,6 +45,14 @@ namespace net
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	async::Future<boost::system::error_code> Channel::send(
+		const std::vector<std::pair<const char *, size_t> > &buffers,
+		const std::vector<Packet> &packets4keep)
+	{
+		return _impl->send(buffers, packets4keep);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	void Channel::close()
 	{
 		return _impl->close();

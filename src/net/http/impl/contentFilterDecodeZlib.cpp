@@ -5,8 +5,8 @@
 namespace net { namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeZlib::ContentFilterDecodeZlib(ContentFilter* upstream)
-		: ContentFilter(upstream)
+	ContentFilterDecodeZlib::ContentFilterDecodeZlib(ContentFilter *upstream)
+		: _upstream(upstream)
 	{
 	}
 
