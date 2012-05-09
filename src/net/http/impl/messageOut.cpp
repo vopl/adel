@@ -5,12 +5,13 @@
 namespace net { namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////
-	MessageOut::MessageOut(const Channel &channel, size_t bufferGranula)
+	MessageOut::MessageOut(const Channel &channel, size_t granula)
 		: _channel(channel)
-		, _bufferGranula(bufferGranula)
+		, _granula(granula)
+		, _mode(em_firstLine)
 		, _writePosition(NULL)
 		, _writeEnd(NULL)
-		, _contentFilter(new ContentFilterChannelWriter(channel, bufferGranula))
+		, _contentFilter(new ContentFilterChannelWriter(channel, granula))
 	{
 		bool b = nextBuffer();
 		assert(b);
@@ -251,8 +252,8 @@ namespace net { namespace http { namespace impl
 			_writeEnd = NULL;
 		}
 
-		_buffer._data.reset(new char [_bufferGranula]);
-		_buffer._size = _bufferGranula;
+		_buffer._size = _granula;
+		_buffer._data.reset(new char [_buffer._size]);
 
 		_writePosition = _buffer._data.get();
 		_writeEnd = _writePosition + _buffer._size;
@@ -270,7 +271,8 @@ namespace net { namespace http { namespace impl
 			assert(writeSize && writeSize <= size);
 			memcpy(buf, data, writeSize);
 
-			if(writeSize == size)
+			assert(_writePosition <= _writeEnd);
+			if(_writePosition == _writeEnd)
 			{
 				if(!nextBuffer())
 				{

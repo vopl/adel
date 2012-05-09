@@ -124,7 +124,7 @@ namespace net { namespace http { namespace server
 	//////////////////////////////////////////////////////////////
 	Response Request::response()
 	{
-		return utils::ImplAccess<Response>(_impl->response());
+		return Response(_impl->response());
 	}
 
 }}}

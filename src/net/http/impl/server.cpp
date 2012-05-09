@@ -5,6 +5,8 @@
 #include "net/http/server/request.hpp"
 #include "net/http/server/impl/request.hpp"
 #include "net/http/statusCode.hpp"
+#include "net/http/headerName.hpp"
+#include "net/http/headerValue.hpp"
 #include "utils/implAccess.hpp"
 
 namespace net { namespace http { namespace impl
@@ -187,10 +189,10 @@ namespace net { namespace http { namespace impl
 
 			{
 				Response response = request.response();
-				response
-					.statusCode(esc_405)
-					.header("Connection: Close");
-				if(!response.flush())
+				if(
+					!response.responseLine(esc_405) ||
+					!response.header(net::http::hn::connection, HeaderValue<Connection>(ec_close)) ||
+					!response.bodyFlush())
 				{
 					//connection lost? ok
 				}
@@ -199,10 +201,10 @@ namespace net { namespace http { namespace impl
 		case em_OPTIONS:
 			{
 				Response response = request.response();
-				response
-					.statusCode(esc_200)
-					.header("Allow: GET");
-				if(!response.flush())
+				if(
+					!response.responseLine(esc_405) ||
+					!response.header("Allow: GET", 10) ||
+					!response.bodyFlush())
 				{
 					//connection lost? ok
 				}

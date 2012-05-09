@@ -29,13 +29,11 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			std::string _mimeType;
 			int _level;
-			size_t _buffer;
 			size_t _minSize;
 
 			ExtInfo()
 				: _mimeType("application/octet-stream")
 				, _level(1)
-				, _buffer(8192)
 				, _minSize(128)
 			{}
 		};

@@ -10,13 +10,13 @@ namespace net { namespace http { namespace impl
 {
 	////////////////////////////////////////////////////////////////////////
 	class MessageOut
-		: boost::enable_shared_from_this<MessageOut>
+		: public boost::enable_shared_from_this<MessageOut>
 	{
 	public:
 		typedef net::http::MessageOut::Iterator Iterator;
 
 	public:
-		MessageOut(const Channel &channel, size_t bufferGranula);
+		MessageOut(const Channel &channel, size_t granula);
 		virtual ~MessageOut();
 
 		///////////////////////////////////////////////
@@ -73,6 +73,9 @@ namespace net { namespace http { namespace impl
 		virtual bool writeSystemHeaders();
 		virtual bool setupBodyFilters();
 
+	protected:
+		Channel _channel;
+
 	private:
 		enum EMode
 		{
@@ -82,9 +85,8 @@ namespace net { namespace http { namespace impl
 		};
 
 	private:
-		Channel _channel;
 		Packet	_buffer;
-		size_t	_bufferGranula;
+		size_t	_granula;
 		EMode	_mode;
 		char 	*_writePosition;
 		char 	*_writeEnd;

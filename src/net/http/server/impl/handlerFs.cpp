@@ -175,85 +175,80 @@ namespace net { namespace http { namespace server { namespace impl
 		const ExtInfo &extInfo = getExtInfo(originalPath.extension());
 
 		net::http::server::Response response = r.response();
-		response
-			.statusCode(esc_200)
-			.header(hn::contentType, extInfo._mimeType);
+		if(!response.responseLine(esc_200)) return;
+		if(!response.header(hn::contentType, extInfo._mimeType)) return;
 
 		if(_allowETag)
 		{
-			response.header(hn::eTag, etag);
+			if(!response.header(hn::eTag, etag))
+			{
+				//connection lost?
+				return;
+			}
 		}
 		if(_allowLastModified)
 		{
-			response.header(hn::lastModified, HeaderValue<Date>(st.st_mtime));
+			if(!response.header(hn::lastModified, HeaderValue<Date>(st.st_mtime)))
+			{
+				//connection lost?
+				return;
+			}
 		}
 
-		response.setBodySize(st.st_size);
+		response.setContentLength(st.st_size);
 
 		if(extInfo._level>0 && st.st_size && st.st_size >= extInfo._minSize)
 		{
-			response.setBodyCompress(extInfo._level, extInfo._buffer);
+			response.setContentCompress(extInfo._level);
 		}
 		else
 		{
-			response.setBodyCompress(0);
+			response.setContentCompress(0);
 		}
 
-		response.body(NULL, 0);
 		if(fd>=0)
 		{
-#if 1
-			MessageIterator writeIter = response.getWriteIterator();
+			net::http::server::Response::Iterator iter = response.bodyIterator();
 			size_t size = st.st_size;
 			while(size)
 			{
 				size_t bufSize = size;
-				char *buf = writeIter.rawBufferFwd(bufSize);
+				char *buf = iter.getBuffer(bufSize);
 				assert(buf && bufSize);
 
 				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
-				writeIter += bufSize;
+				if(!iter.nextBuffer())
+				{
+					//connection lost?
+					return;
+				}
 				size -= bufSize;
-
-				response.setWriteIterator(writeIter);
 			}
-#else
-			size_t size = st.st_size;
-			std::vector<char> buffer(std::min(size, (size_t)8192));
-			while(size)
-			{
-				size_t rsize = std::min(size, (size_t)8192);
-				int rres = read(fd, &buffer[0], (off_t)rsize);
-				(void)rres;
-				response.body(&buffer[0], rsize);
-				size -= rsize;
-			}
-#endif
 
 			close(fd);
 		}
 
-		response.flush();
+		response.bodyFlush();
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 	void HandlerFs::notFound(net::http::server::Request &r, const path &uri)
 	{
 		net::http::server::Response response = r.response();
-		response.statusCode(esc_404);
-		response.setBodySize(0);
-		response.flush();
+		response.responseLine(esc_404);
+		response.setContentLength(0);
+		response.bodyFlush();
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 	void HandlerFs::notModified(net::http::server::Request &r, const path &uri)
 	{
 		net::http::server::Response response = r.response();
-		response.statusCode(esc_304);
-		response.setBodySize(0);
-		response.flush();
+		response.responseLine(esc_304);
+		response.setContentLength(0);
+		response.bodyFlush();
 	}
 
 	/////////////////////////////////////////////////////////////////////////
@@ -373,10 +368,6 @@ namespace net { namespace http { namespace server { namespace impl
 			if(v["level"].isScalar())
 			{
 				res._level = v["level"].to<int>();
-			}
-			if(v["buffer"].isScalar())
-			{
-				res._buffer = v["buffer"].to<size_t>();
 			}
 			if(v["minSize"].isScalar())
 			{

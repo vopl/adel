@@ -49,7 +49,7 @@ namespace net { namespace http
 		};
 
 	protected:
-		MessageOut();
+		MessageOut(ImplPtr impl);
 
 	public:
 		~MessageOut();

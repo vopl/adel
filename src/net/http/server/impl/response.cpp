@@ -22,29 +22,16 @@ namespace net { namespace http { namespace server { namespace impl
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request)
-		: _server(server)
-		, _channel(channel)
+		: net::http::impl::MessageOut(channel, server->responseWriteGranula())
+		, _server(server)
 		, _request(request)
-		, _ewp(ewp_statusLine)
-		//, _mostContentFilter(this)
-		, _outputGranula(_server->responseWriteGranula())
-		, _bodySize(_unknownBodySize)
-		, _bodyCompressLevel(1)
-		, _bodyCompressGranula(_server->responseWriteGranula())
+		, _version(request->version())
+		, _contentLength(_unknownContentLength)
+		, _chunked(false)
 		, _keepAlive(false)
+		, _contentEncoding(ece_unknown)
+		, _contentEncodingCompressLevel(0)
 	{
-		//_mostContentFilter = this;
-
-		if(obtainMoreBuffers(true))
-		{
-			_writePosition = begin();
-		}
-		else
-		{
-			assert(0);
-			_writePosition = endInfinity();
-		}
-		_bodyPosition = endInfinity();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -53,163 +40,9 @@ namespace net { namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::version(const Version &version)
+	bool Response::bodyFlush()
 	{
-		_version = version;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::statusCode(const EStatusCode &statusCode)
-	{
-		_statusCode = statusCode;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::statusLine()
-	{
-		switch(_ewp)
-		{
-		case ewp_statusLine:
-			{
-				using namespace boost::spirit::karma;
-				namespace karma = boost::spirit::karma;
-				namespace px = boost::phoenix;
-
-				bool genResult = generate(_writePosition,
-					"HTTP/"<<uint_[karma::_1 = _version._hi]<<'.'<<uint_[karma::_1 = _version._lo]<<' '<<
-					uint_[karma::_1 = _statusCode]<<' '<<reasonPhrase(_statusCode)<<"\r\n"
-					);
-
-				assert(genResult);
-				(void)genResult;
-			}
-			_ewp = ewp_headers;
-			break;
-		default:
-			assert(0);
-			return;
-		}
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::header(const char *data, size_t size)
-	{
-		static const char crlf[] = "\r\n";
-		switch(_ewp)
-		{
-		case ewp_statusLine:
-			statusLine();
-			_writePosition = std::copy(data, data+size, _writePosition);
-			_writePosition = std::copy(crlf, crlf+2, _writePosition);
-			break;
-		case ewp_headers:
-			_writePosition = std::copy(data, data+size, _writePosition);
-			_writePosition = std::copy(crlf, crlf+2, _writePosition);
-			break;
-		default:
-			assert(0);
-			return;
-		}
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::header(const char *dataz)
-	{
-		return header(dataz, strlen(dataz));
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::header(const std::string &data)
-	{
-		return header(data.data(), data.size());
-	}
-
-	/////////////////////////////////////////////////////////////////////
-	void Response::header(const HeaderName &name, const char *value, size_t valueSize)
-	{
-		MessageIterator outIter = beginWriteHeader(name.str.data(), name.str.size());
-		outIter = std::copy(value, value+valueSize, outIter);
-		endWriteHeader(outIter);
-	}
-
-	/////////////////////////////////////////////////////////////////////
-	void Response::header(const HeaderName &name, const char *valuez)
-	{
-		return header(name, valuez, strlen(valuez));
-	}
-
-	/////////////////////////////////////////////////////////////////////
-	void Response::header(const HeaderName &name, const std::string &value)
-	{
-		return header(name, value.data(), value.size());
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::body(const char *data, size_t size)
-	{
-		static const char crlf[] = "\r\n";
-		switch(_ewp)
-		{
-		case ewp_statusLine:
-			statusLine();
-			systemHeaders();
-			_writePosition = std::copy(crlf, crlf+2, _writePosition);
-			_ewp = ewp_body;
-			_bodyPosition = _writePosition;
-			if(size)
-			{
-				_writePosition = std::copy(data, data+size, _writePosition);
-			}
-			break;
-		case ewp_headers:
-			systemHeaders();
-			_writePosition = std::copy(crlf, crlf+2, _writePosition);
-			_ewp = ewp_body;
-			_bodyPosition = _writePosition;
-			if(size)
-			{
-				_writePosition = std::copy(data, data+size, _writePosition);
-			}
-			break;
-		case ewp_body:
-			if(size)
-			{
-				_writePosition = std::copy(data, data+size, _writePosition);
-			}
-			break;
-		default:
-			assert(0);
-			return;
-		}
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	MessageIterator Response::getWriteIterator()
-	{
-		return _writePosition;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setWriteIterator(MessageIterator iter)
-	{
-		_writePosition = iter;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::flush()
-	{
-		body(NULL, 0);
-
-		net::http::impl::Message::dropTail(_writePosition.absolutePosition());
-		if(!pushFullBuffers2Filter())
-		{
-			return false;
-		}
-		if(!_mostContentFilter)
-		{
-			_mostContentFilter = shared_from_this();
-		}
-		if(!_mostContentFilter->filterFlush())
+		if(!net::http::impl::MessageOut::bodyFlush())
 		{
 			return false;
 		}
@@ -227,230 +60,51 @@ namespace net { namespace http { namespace server { namespace impl
 		return true;
 	}
 
+
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setBodySize(size_t size)
+	bool Response::responseLine(const Version &version, const EStatusCode &statusCode)
 	{
-		_bodySize = size;
+		_version = version;
+		return responseLine(statusCode);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setBodyCompress(int level, size_t granula)
+	bool Response::responseLine(const EStatusCode &statusCode)
 	{
-		_bodyCompressLevel = level;
-		_bodyCompressGranula = granula;
+		Iterator iter = firstLineIterator();
+		using namespace boost::spirit::karma;
+		namespace karma = boost::spirit::karma;
+		namespace px = boost::phoenix;
+
+		return generate(firstLineIterator(),
+			"HTTP/"<<uint_[karma::_1 = _version._hi]<<'.'<<uint_[karma::_1 = _version._lo]<<' '<<
+			uint_[karma::_1 = statusCode]<<' '<<reasonPhrase(statusCode));
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	Message::Iterator Response::beginWriteHeader(const char *name, size_t size)
+	void Response::setContentLength(size_t size)
 	{
-		static const char nvdelim[] = ": ";
-		switch(_ewp)
-		{
-		case ewp_statusLine:
-			statusLine();
-			_writePosition = std::copy(name, name+size, _writePosition);
-			_writePosition = std::copy(nvdelim, nvdelim+2, _writePosition);
-			break;
-		case ewp_headers:
-			_writePosition = std::copy(name, name+size, _writePosition);
-			_writePosition = std::copy(nvdelim, nvdelim+2, _writePosition);
-			break;
-		default:
-			assert(0);
-			return _writePosition;
-		}
-		return _writePosition;
+		_contentLength = size;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::endWriteHeader(MessageIterator iter)
+	void Response::setContentCompress(int level)
 	{
-		static const char crlf[] = "\r\n";
-		switch(_ewp)
-		{
-		case ewp_statusLine:
-			assert(!"beginWriteHeader was called?");
-			statusLine();
-			_writePosition = std::copy(crlf, crlf+2, iter);
-			break;
-		case ewp_headers:
-			_writePosition = std::copy(crlf, crlf+2, iter);
-			break;
-		default:
-			assert(0);
-			_writePosition = iter;
-			return;
-		}
+		_contentEncodingCompressLevel = level;
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::pushFullBuffers2Filter()
-	{
-		size_t bodyOffset = _bodyPosition.isEndInfinity()?std::numeric_limits<size_t>::max():_bodyPosition.absolutePosition();
-		size_t writeOffset = _writePosition.isEndInfinity()?0:_writePosition.absolutePosition();
-
-		while(_firstBuffer)
-		{
-			if(writeOffset < _firstBuffer->offset() + _firstBuffer->size())
-			{
-				return true;
-			}
-
-			net::http::impl::MessageBufferPtr firstBuffer = _firstBuffer;
-			net::http::impl::Message::dropFront();
-
-			size_t offsetInPacket;
-			Packet packet = firstBuffer->asPacket(offsetInPacket);
-
-			if(!_mostContentFilter)
-			{
-				_mostContentFilter = shared_from_this();
-			}
-			if(_mostContentFilter == boost::shared_static_cast<net::http::impl::ContentFilter>(shared_from_this()))
-			{
-				//нет фильтров, и заголовки и тело - все идет подряд
-
-				if(!/*this->*/filterPush(packet, offsetInPacket))
-				{
-					return false;
-				}
-
-			}
-			else
-			{
-				//есть фильтры тела, заголовки без фильтров, тело с фильтрами
-				if(bodyOffset < firstBuffer->offset())
-				{
-					//тело целиком
-					if(!_mostContentFilter)
-					{
-						_mostContentFilter = shared_from_this();
-					}
-					if(!_mostContentFilter->filterPush(packet, offsetInPacket))
-					{
-						return false;
-					}
-				}
-				else if(bodyOffset >= firstBuffer->offset() + firstBuffer->size())
-				{
-					//заголовок целиком
-					if(!/*this->*/filterPush(packet, offsetInPacket))
-					{
-						return false;
-					}
-				}
-				else
-				{
-					//заголовок и тело
-					Packet headersPacket = packet;
-					headersPacket._size = offsetInPacket + bodyOffset;
-					/*this->*/filterPush(headersPacket, offsetInPacket);
-
-					if(!_mostContentFilter)
-					{
-						_mostContentFilter = shared_from_this();
-					}
-					if(!_mostContentFilter->filterPush(packet, bodyOffset + offsetInPacket))
-					{
-						return false;
-					}
-				}
-			}
-		}
-
-		return true;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::obtainMoreBuffers(bool force)
-	{
-		if(!pushFullBuffers2Filter())
-		{
-			return false;
-		}
-
-		size_t size = _outputGranula;
-		Packet packet(boost::shared_array<char>(new char[size]), size);
-		pushBuffer(packet);
-		return true;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::filterPush(const Packet &packet, size_t offset)
-	{
-		/*
-		if(offset)
-		{
-			Packet p(boost::shared_array<char>(new char[packet._size - offset]), packet._size - offset);
-			memcpy(p._data.get(), packet._data.get()+offset, p._size);
-			return _channel.send(p).data()?false:true;
-
-		}
-		return _channel.send(packet).data()?false:true;
-		*/
-
-		assert(packet._size > offset);
-		size_t dataSize = packet._size - offset;
-		while(dataSize)
-		{
-			if(!_output._data)
-			{
-				_output._data.reset(new char[_outputGranula]);
-				_output._size = 0;
-			}
-
-			size_t spaceSize = _outputGranula - _output._size;
-			if(dataSize >= spaceSize)
-			{
-				memcpy(_output._data.get()+_output._size, packet._data.get()+offset, spaceSize);
-				_output._size += spaceSize;
-				offset += spaceSize;
-				dataSize -= spaceSize;
-				if(!filterFlush())
-				{
-					return false;
-				}
-			}
-			else
-			{
-				memcpy(_output._data.get()+_output._size, packet._data.get()+offset, dataSize);
-				_output._size += dataSize;
-				//offset += dataSize;
-				//dataSize -= dataSize;
-				return true;
-			}
-
-		}
-		return true;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::filterFlush()
-	{
-		//return true;
-
-		if(_output._data)
-		{
-			assert(_output._size);
-			if(_channel.send(_output).data())
-			{
-				return false;
-			}
-			_output._data.reset();
-			_output._size = 0;
-		}
-
-		return true;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::systemHeaders()
+	bool Response::writeSystemHeaders()
 	{
 		//keep alive
 		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
-		if(!hvConnection.isCorrect() && _version >= Version(1,1))
+		if(!hvConnection.isCorrect())
 		{
-			hvConnection = ec_keepAlive;
+			_keepAlive = _version >= Version(1,1);
+		}
+		else
+		{
+			_keepAlive = ec_keepAlive == hvConnection.value();
 		}
 
 		//chunked
@@ -459,18 +113,18 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			if(_version >= Version(1,1))
 			{
-				hvTransferEncoding = ete_chunked;
+				_chunked = true;
 			}
 		}
 		else
 		{
 			if(hvTransferEncoding.value() & ete_chunked)
 			{
-				hvTransferEncoding = ete_chunked;
+				_chunked = true;
 			}
 			else
 			{
-				hvTransferEncoding.setIsCorrect(false);
+				_chunked = false;
 			}
 		}
 
@@ -480,166 +134,152 @@ namespace net { namespace http { namespace server { namespace impl
 		{
 			if(hvContentEncoding.value() & ece_deflate)
 			{
-				hvContentEncoding = ece_deflate;
+				_contentEncoding = ece_deflate;
 			}
 			else if(hvContentEncoding.value() & ece_gzip)
 			{
-				hvContentEncoding = ece_gzip;
+				_contentEncoding = ece_gzip;
 			}
 			else
 			{
-				hvContentEncoding.setIsCorrect(false);
+				_contentEncoding = ece_identity;
 			}
+		}
+		else
+		{
+			_contentEncoding = ece_identity;
 		}
 
 		//content length
-		HeaderValue<Unsigned> hvContentLength;
-		if(_unknownBodySize != _bodySize)
+		if(_unknownContentLength != _contentLength)
 		{
 			//будет тело
-			hvContentLength = _bodySize;
-
-			if(_bodySize)
+			if(_contentLength)
 			{
-				bool compress = hvContentEncoding.isCorrect() && (hvContentEncoding.value()&(ece_deflate|ece_gzip));
-				bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
-				bool contentLength = hvContentLength.isCorrect();
-				bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
-
 				//логика по сжатию
-				if(_bodyCompressLevel)
+				if(_contentEncodingCompressLevel)
 				{
-					//нужен compress && (chunked || !keepAlive)
-					if(compress)
+					//нужен chunked || !keepAlive
+					if(_contentEncoding != ece_identity)
 					{
 						//у пресованного потока пока длина не известна
-						contentLength = false;
-						hvContentLength.setIsCorrect(false);
+						_contentLength = _unknownContentLength;
 
-						if(!chunked && keepAlive)
+						if(!_chunked && _keepAlive)
 						{
 							//невозможно определить длину, бросить keepAlive
-							keepAlive = false;
-							hvConnection.setIsCorrect(false);
+							_keepAlive = false;
 						}
 					}
 					else
 					{
-						_bodyCompressLevel = 0;
+						//без компрессии, клиент не поддерживает
+						if(_contentLength && _chunked)
+						{
+							//chunked или contentLength лишний
+							_chunked = false;
+						}
 					}
 				}
-
-				if(!_bodyCompressLevel)
+				else
 				{
-					//без компрессии
-					if(contentLength && chunked)
-					{
-						//chunked или contentLength лишний
-						chunked = false;
-						hvTransferEncoding.setIsCorrect(false);
-					}
-					hvContentEncoding.setIsCorrect(false);
+					//без сжатия
+					_contentEncoding = ece_identity;
 				}
 			}
-			else//if(_bodySize)
+			else//if(_contentLength)
 			{
-				hvContentEncoding.setIsCorrect(false);
-				hvTransferEncoding.setIsCorrect(false);
+				//нулевое тело, бросить кодирование
+				_contentEncoding = ece_identity;
+				_chunked = false;
 			}
 
 		}
 		else
 		{
 			//неизвестно, будет тело или нет
-			hvContentLength.setIsCorrect(false);
-			bool chunked = hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked);
-			bool keepAlive = hvConnection.isCorrect() && (hvConnection.value()==ec_keepAlive);
-
-			if(!chunked && keepAlive)
+			if(!_chunked && _keepAlive)
 			{
 				//невозможно определить длину, бросить keepAlive
-				keepAlive = false;
-				hvConnection.setIsCorrect(false);
+				_keepAlive = false;
 			}
 		}
 
 
 		//писать заголовки
-		if(hvContentLength.isCorrect())
+		if(_unknownContentLength != _contentLength)
 		{
-			header(hn::contentLength, hvContentLength);
-		}
-		if(hvTransferEncoding.isCorrect())
-		{
-			header(hn::transferEncoding, hvTransferEncoding);
-
-			if(!_mostContentFilter)
+			if(!header(hn::contentLength, HeaderValue<Unsigned>(_contentLength)))
 			{
-				_mostContentFilter = shared_from_this();
+					return false;
 			}
-			net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeChunked(_mostContentFilter, _outputGranula));
-			_mostContentFilter = ch;
-			_filterKeeper.push_back(ch);
 		}
 
-		if(hvContentEncoding.isCorrect())
+		if(_chunked)
 		{
-			if(hvContentEncoding.value() & ece_deflate)
+			if(!header(hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked)))
 			{
-				hvContentEncoding.value() = ece_deflate;
-
-				if(!_mostContentFilter)
-				{
-					_mostContentFilter = shared_from_this();
-				}
-				net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeZlib(
-					_mostContentFilter,
-					net::http::ece_deflate,
-					_bodyCompressLevel,
-					_bodyCompressGranula));
-
-				_mostContentFilter = ch;
-				_filterKeeper.push_back(ch);
-
+					return false;
 			}
-			else if(hvContentEncoding.value() & ece_gzip)
-			{
-				hvContentEncoding.value() = ece_gzip;
-
-				if(!_mostContentFilter)
-				{
-					_mostContentFilter = shared_from_this();
-				}
-				net::http::impl::ContentFilterPtr ch(new net::http::impl::ContentFilterEncodeZlib(
-					_mostContentFilter,
-					net::http::ece_gzip,
-					_bodyCompressLevel,
-					_bodyCompressGranula));
-
-				_mostContentFilter = ch;
-				_filterKeeper.push_back(ch);
-
-			}
-			else
-			{
-				hvContentEncoding.value() = ece_identity;
-			}
-
-			header(hn::contentEncoding, hvContentEncoding);
 		}
-		if(hvConnection.isCorrect())
-		{
-			header(hn::connection, hvConnection);
 
-			_keepAlive = hvConnection.value() == ec_keepAlive;
+		if(_contentEncoding != ece_identity)
+		{
+			if(!header(hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding)))
+			{
+					return false;
+			}
+		}
+
+		if(_keepAlive)
+		{
+			if(!header(hn::connection, HeaderValue<Connection>(ec_keepAlive)))
+			{
+					return false;
+			}
 		}
 		else
 		{
-			_keepAlive = false;
+			if(hvConnection.isCorrect() || _version>=Version(1,1))
+			{
+				if(!header(hn::connection, HeaderValue<Connection>(ec_close)))
+				{
+						return false;
+				}
+			}
 		}
-		header(hn::date, HeaderValue<Date>(time(NULL)));
-		header(hn::server, "haws", 4);
 
+		if(!header(hn::date, HeaderValue<Date>(time(NULL))))
+		{
+				return false;
+		}
+
+		if(!header(hn::server, "haws", 4))
+		{
+			return false;
+		}
+
+		return net::http::impl::MessageOut::writeSystemHeaders();
 	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	bool Response::setupBodyFilters()
+	{
+		if(_chunked)
+		{
+			net::http::impl::ContentFilterPtr cf(new net::http::impl::ContentFilterEncodeChunked(_contentFilter, _server->responseWriteGranula()));
+			_contentFilter = cf;
+		}
+
+		if(_contentEncoding != ece_identity)
+		{
+			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
+			net::http::impl::ContentFilterPtr cf(new net::http::impl::ContentFilterEncodeZlib(_contentFilter, _contentEncoding, _contentEncodingCompressLevel, _server->responseWriteGranula()));
+			_contentFilter = cf;
+		}
+
+		return net::http::impl::MessageOut::setupBodyFilters();
+	}
+
 
 }}}}
