@@ -1,77 +1,77 @@
 #include "pch.hpp"
-#include "net/http/messageOut.hpp"
-#include "net/http/impl/messageOut.hpp"
+#include "net/http/outputMessage.hpp"
+#include "net/http/impl/outputMessage.hpp"
 
 namespace net { namespace http
 {
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator::Iterator()
+	OutputMessage::Iterator::Iterator()
 		: _message(NULL)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator::Iterator(const Iterator &i)
+	OutputMessage::Iterator::Iterator(const Iterator &i)
 		: _message(i._message)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator::~Iterator()
+	OutputMessage::Iterator::~Iterator()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	char *MessageOut::Iterator::bufferGet(size_t &size)
+	char *OutputMessage::Iterator::bufferGet(size_t &size)
 	{
 		assert(_message);
 		return _message->bufferGet(size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::bufferInc(size_t size)
+	bool OutputMessage::Iterator::bufferInc(size_t size)
 	{
 		assert(_message);
 		return _message->bufferInc(size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::write(const char *data, size_t size)
+	bool OutputMessage::Iterator::write(const char *data, size_t size)
 	{
 		assert(_message);
 		return _message->write(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::write(const char *dataz)
+	bool OutputMessage::Iterator::write(const char *dataz)
 	{
 		assert(_message);
 		return _message->write(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::write(const std::string &data)
+	bool OutputMessage::Iterator::write(const std::string &data)
 	{
 		assert(_message);
 		return _message->write(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator::reference MessageOut::Iterator::dereference() const
+	OutputMessage::Iterator::reference OutputMessage::Iterator::dereference() const
 	{
 		assert(_message);
 		return _message->iteratorDereference();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::increment()
+	bool OutputMessage::Iterator::increment()
 	{
 		assert(_message);
 		return _message->iteratorIncrement();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator::Iterator(impl::MessageOut *message)
+	OutputMessage::Iterator::Iterator(impl::OutputMessage *message)
 		: _message(message)
 	{
 		assert(_message);
@@ -85,126 +85,126 @@ namespace net { namespace http
 
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::MessageOut(ImplPtr impl)
+	OutputMessage::OutputMessage(ImplPtr impl)
 		: _impl(impl)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::~MessageOut()
+	OutputMessage::~OutputMessage()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::isConnected() const
+	bool OutputMessage::isConnected() const
 	{
 		return _impl->isConnected();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator MessageOut::firstLineIterator()
+	OutputMessage::Iterator OutputMessage::firstLineIterator()
 	{
 		return _impl->firstLineIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::firstLine(const char *data, size_t size)
+	bool OutputMessage::firstLine(const char *data, size_t size)
 	{
 		return _impl->firstLine(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::firstLine(const char *dataz)
+	bool OutputMessage::firstLine(const char *dataz)
 	{
 		return _impl->firstLine(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::firstLine(const std::string &data)
+	bool OutputMessage::firstLine(const std::string &data)
 	{
 		return _impl->firstLine(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::firstLineFlush()
+	bool OutputMessage::firstLineFlush()
 	{
 		return _impl->firstLineFlush();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator MessageOut::headersIterator()
+	OutputMessage::Iterator OutputMessage::headersIterator()
 	{
 		return _impl->headersIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const char *data, size_t size)
+	bool OutputMessage::header(const char *data, size_t size)
 	{
 		return _impl->header(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const char *dataz)
+	bool OutputMessage::header(const char *dataz)
 	{
 		return _impl->header(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const std::string &data)
+	bool OutputMessage::header(const std::string &data)
 	{
 		return _impl->header(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const HeaderName &name, const std::string &value)
+	bool OutputMessage::header(const HeaderName &name, const std::string &value)
 	{
 		return _impl->header(name, value);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const HeaderName &name, const char *value, size_t valueSize)
+	bool OutputMessage::header(const HeaderName &name, const char *value, size_t valueSize)
 	{
 		return _impl->header(name, value, valueSize);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::header(const HeaderName &name, const char *valuez)
+	bool OutputMessage::header(const HeaderName &name, const char *valuez)
 	{
 		return _impl->header(name, valuez);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::headersFlush()
+	bool OutputMessage::headersFlush()
 	{
 		return _impl->headersFlush();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	MessageOut::Iterator MessageOut::bodyIterator()
+	OutputMessage::Iterator OutputMessage::bodyIterator()
 	{
 		return _impl->bodyIterator();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::body(const char *data, size_t size)
+	bool OutputMessage::body(const char *data, size_t size)
 	{
 		return _impl->body(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::body(const char *dataz)
+	bool OutputMessage::body(const char *dataz)
 	{
 		return _impl->body(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::body(const std::string &data)
+	bool OutputMessage::body(const std::string &data)
 	{
 		return _impl->body(data);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::bodyFlush()
+	bool OutputMessage::bodyFlush()
 	{
 		return _impl->bodyFlush();
 	}

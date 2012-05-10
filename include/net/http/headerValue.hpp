@@ -1,7 +1,7 @@
 #ifndef _NET_HTTP_HEADERVALUE_HPP_
 #define _NET_HTTP_HEADERVALUE_HPP_
 
-#include "net/http/message.hpp"
+#include "net/http/inputMessage.hpp"
 #include "net/http/transferEncoding.hpp"
 #include "net/http/contentEncoding.hpp"
 #include "net/http/connection.hpp"
@@ -23,12 +23,12 @@ namespace net { namespace http
 		{
 		}
 
-		HeaderValue(const Message::Segment &src)
+		HeaderValue(const InputMessage::Segment &src)
 			: _isCorrect(parse(src))
 		{
 		}
 
-		HeaderValue(const Message::Segment *src)
+		HeaderValue(const InputMessage::Segment *src)
 			: _isCorrect(src?parse(*src):false)
 		{
 		}
@@ -54,10 +54,24 @@ namespace net { namespace http
 			return _isCorrect;
 		}
 
-		HeaderValue &operator=(const Message::Segment &source)
+		HeaderValue &operator=(const InputMessage::Segment &source)
 		{
 			_value = Value();
 			_isCorrect = parse(source);
+			return *this;
+		}
+
+		HeaderValue &operator=(const InputMessage::Segment *source)
+		{
+			_value = Value();
+			if(source)
+			{
+				_isCorrect = parse(*source);
+			}
+			else
+			{
+				_isCorrect = false;
+			}
 			return *this;
 		}
 
@@ -86,7 +100,7 @@ namespace net { namespace http
 		}
 
 	public:
-		bool parse(const Message::Segment &src);
+		bool parse(const InputMessage::Segment &src);
 
 		template <class Iterator>
 		bool generate(Iterator &outIterator) const;

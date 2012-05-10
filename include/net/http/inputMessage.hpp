@@ -1,5 +1,5 @@
-#ifndef _NET_HTTP_MESSAGEIN_HPP_
-#define _NET_HTTP_MESSAGEIN_HPP_
+#ifndef _NET_HTTP_INPUTMESSAGE_HPP_
+#define _NET_HTTP_INPUTMESSAGE_HPP_
 
 #include "net/http/headerName.hpp"
 
@@ -7,32 +7,31 @@ namespace net { namespace http
 {
 	namespace impl
 	{
-		class MessageIn;
-		typedef boost::shared_ptr<MessageIn> MessageInPtr;
+		class InputMessage;
+		typedef boost::shared_ptr<InputMessage> InputMessagePtr;
 
-		class MessageInBuffer;
-		typedef boost::shared_ptr<MessageInBuffer> MessageInBufferPtr;
-}
+		class InputMessageBuffer;
+	}
 
 	///////////////////////////////////////////////////////////////
-	class MessageIn
+	class InputMessage
 	{
 	protected:
-		typedef impl::MessageInPtr ImplPtr;
+		typedef impl::InputMessagePtr ImplPtr;
 		ImplPtr	_impl;
 
 	public:
 		class Iterator
-			: public boost::iterator_facade<Iterator, char, boost::random_access_traversal_tag>
+			: public boost::iterator_facade<Iterator, const char, boost::random_access_traversal_tag>
 		{
 		public:
 			typedef size_t size_type;
 
 		public:
-			Iterator();
 			Iterator(const Iterator &i);
 			~Iterator();
 
+			Iterator &operator=(const Iterator &i);
 			size_type absolutePosition() const;
 
 		private:
@@ -46,20 +45,20 @@ namespace net { namespace http
 			difference_type distance_to(const Iterator &i) const;
 
 		private:
-			friend class impl::MessageIn;
-			Iterator(const impl::MessageInBufferPtr buffer, char *position);
-
+			friend class impl::InputMessage;
+			Iterator();//endInfinity
+			Iterator(impl::InputMessageBuffer *buffer, const char *position);//normal
 		private:
-			impl::MessageInBufferPtr _buffer;
-			char					*_position;
+			impl::InputMessageBuffer	*_buffer;
+			const char				*_position;
 		};
 		typedef boost::iterator_range<Iterator> Segment;
 
 	protected:
-		MessageIn();
+		InputMessage();
 
 	public:
-		~MessageIn();
+		~InputMessage();
 
 		bool isConnected() const;
 
@@ -69,18 +68,17 @@ namespace net { namespace http
 
 
 		//requestLine, responseLine
-		const Segment *firstLine() const;
+		const Segment &firstLine() const;
 
 		//headers
+		const Segment &headers() const;
 		const Segment *header(const HeaderName &name) const;
 		const Segment *header(size_t key) const;
 		const Segment *header(const std::string &name) const;
 		const Segment *header(const char *name, size_t nameSize) const;
 		const Segment *header(const char *namez) const;
 
-		const Segment *body() const;
-
-		bool flush();
+		const Segment &body() const;
 	};
 }}
 

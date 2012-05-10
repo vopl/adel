@@ -99,11 +99,11 @@ namespace net { namespace http
 
 	//////////////////////////////////////////////////////////////////////
 	template <>
-	bool HeaderValue<Date>::parse(const Message::Segment &src)
+	bool HeaderValue<Date>::parse(const InputMessage::Segment &src)
 	{
 		struct tm stm = {};
 
-		rule<MessageIterator> time = 
+		rule<InputMessage::Iterator> time =
 			uint_[px::ref(stm.tm_hour) = qi::_1] >>
 			':' >>
 			uint_[px::ref(stm.tm_min) = qi::_1] >>
@@ -111,7 +111,7 @@ namespace net { namespace http
 			uint_[px::ref(stm.tm_sec) = qi::_1];
 
 		//rfc1123-date = wkday "," SP date1 SP time SP "GMT"
-		rule <MessageIterator> rfc1123 = 
+		rule <InputMessage::Iterator> rfc1123 =
 			wkday[px::ref(stm.tm_wday) = qi::_1] >>
 
 			',' >> 
@@ -125,7 +125,7 @@ namespace net { namespace http
 			" GMT";
 
 		//rfc850-date  = weekday "," SP date2 SP time SP "GMT"
-		rule<MessageIterator> rfc850 = 
+		rule<InputMessage::Iterator> rfc850 =
 			weekday[px::ref(stm.tm_wday) = qi::_1] >>
 
 			',' >> 
@@ -140,7 +140,7 @@ namespace net { namespace http
 		//	asctime-date = wkday SP date3 SP time SP 4DIGIT
 		//	date3        = month SP ( 2DIGIT | ( SP 1DIGIT ))
 		//	; month day (e.g., Jun  2)
-		rule<MessageIterator> asctime = 
+		rule<InputMessage::Iterator> asctime =
 			weekday[px::ref(stm.tm_wday) = qi::_1] >>
 
 			+lit(' ') >> month[px::ref(stm.tm_mon) = qi::_1] >>
@@ -165,7 +165,7 @@ namespace net { namespace http
 
 	//////////////////////////////////////////////////////////////////////
 	template <>
-	bool HeaderValue<Unsigned>::parse(const Message::Segment &src)
+	bool HeaderValue<Unsigned>::parse(const InputMessage::Segment &src)
 	{
 		return qi::parse(src.begin(), src.end(), uint_parser<Value, 10>()[px::ref(_value) = qi::_1]);
 	}
@@ -184,7 +184,7 @@ namespace net { namespace http
 	}
 	//////////////////////////////////////////////////////////////////////
 	template <>
-	bool HeaderValue<Connection>::parse(const Message::Segment &src)
+	bool HeaderValue<Connection>::parse(const InputMessage::Segment &src)
 	{
 		return qi::parse(src.begin(), src.end(), boost::spirit::ascii::no_case[connection[px::ref(_value) = qi::_1]]);
 	}
@@ -192,9 +192,9 @@ namespace net { namespace http
 	//////////////////////////////////////////////////////////////////////
 	namespace
 	{
-		rule<MessageIterator, double()> itemWeightInit()
+		rule<InputMessage::Iterator, double()> itemWeightInit()
 		{
-			rule<MessageIterator, double()> res = 
+			rule<InputMessage::Iterator, double()> res =
 				omit[
 					*char_(' ') >> lit(';') >>
 					*char_(' ') >> char_('q') >>
@@ -204,12 +204,12 @@ namespace net { namespace http
 
 			return res;
 		}
-		static const rule<MessageIterator, double()> itemWeight = itemWeightInit();
+		static const rule<InputMessage::Iterator, double()> itemWeight = itemWeightInit();
 	}
 	//////////////////////////////////////////////////////////////////////
 	
 	template <>
-	bool HeaderValue<TransferEncoding>::parse(const Message::Segment &src)
+	bool HeaderValue<TransferEncoding>::parse(const InputMessage::Segment &src)
 	{
 		double w;
 		ETransferEncoding ete;
@@ -240,7 +240,7 @@ namespace net { namespace http
 
 	//////////////////////////////////////////////////////////////////////
 	template <>
-	bool HeaderValue<ContentEncoding>::parse(const Message::Segment &src)
+	bool HeaderValue<ContentEncoding>::parse(const InputMessage::Segment &src)
 	{
 		double w;
 		EContentEncoding ece;

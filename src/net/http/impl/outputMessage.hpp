@@ -1,7 +1,7 @@
-#ifndef _NET_HTTP_IMPL_MESSAGEOUT_HPP_
-#define _NET_HTTP_IMPL_MESSAGEOUT_HPP_
+#ifndef _NET_HTTP_IMPL_OUTPUTMESSAGE_HPP_
+#define _NET_HTTP_IMPL_OUTPUTMESSAGE_HPP_
 
-#include "net/http/messageOut.hpp"
+#include "net/http/outputMessage.hpp"
 #include "net/http/impl/contentFilter.hpp"
 #include "net/channel.hpp"
 #include <boost/enable_shared_from_this.hpp>
@@ -9,15 +9,15 @@
 namespace net { namespace http { namespace impl
 {
 	////////////////////////////////////////////////////////////////////////
-	class MessageOut
-		: public boost::enable_shared_from_this<MessageOut>
+	class OutputMessage
+		: public boost::enable_shared_from_this<OutputMessage>
 	{
 	public:
-		typedef net::http::MessageOut::Iterator Iterator;
+		typedef net::http::OutputMessage::Iterator Iterator;
 
 	public:
-		MessageOut(const Channel &channel, size_t granula);
-		virtual ~MessageOut();
+		OutputMessage(const Channel &channel, size_t granula);
+		virtual ~OutputMessage();
 
 		///////////////////////////////////////////////
 		bool isConnected() const;
@@ -100,7 +100,7 @@ namespace net { namespace http { namespace impl
 		bool ensureMode(EMode em);
 
 	private:
-		friend class net::http::MessageOut::Iterator;
+		friend class net::http::OutputMessage::Iterator;
 		bool iteratorIncrement();
 		char &iteratorDereference();
 
@@ -108,14 +108,14 @@ namespace net { namespace http { namespace impl
 		ContentFilterPtr	_contentFilter;
 	};
 
-	typedef boost::shared_ptr<MessageOut> MessageOutPtr;
+	typedef boost::shared_ptr<OutputMessage> OutputMessagePtr;
 
 
 
 
 	////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool MessageOut::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
+	bool OutputMessage::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
 	{
 		Iterator iter = headersIterator();
 		if(!write(name, nameSize))
@@ -139,21 +139,21 @@ namespace net { namespace http { namespace impl
 
 	////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool MessageOut::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	bool OutputMessage::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(namez, strlen(namez), value);
 	}
 
 	////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool MessageOut::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	bool OutputMessage::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(name.data(), name.size(), value);
 	}
 
 	////////////////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool		MessageOut::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	bool OutputMessage::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(name.csz, name.size, value);
 	}

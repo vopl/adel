@@ -14,7 +14,7 @@ namespace net { namespace http
 			, cszlc(Initier::cszlc())
 			, str(Initier::str())
 			, strlc(Initier::strlc())
-			, hash(Initier::hash)
+			, key(Initier::key)
 			, size(Initier::size)
 		{
 		}
@@ -23,7 +23,7 @@ namespace net { namespace http
 		const char * const	cszlc;
 		const std::string	&str;
 		const std::string	&strlc;
-		const size_t		hash;
+		const size_t		key;
 		const size_t		size;
 	};
 }}
@@ -53,7 +53,7 @@ namespace net { namespace http { namespace hn
 {
 	//////////////////////////////////////////////////////////////////////////////
 	template <class Iterator>
-	inline size_t hash(Iterator begin, Iterator end)
+	inline size_t key(Iterator begin, Iterator end)
 	{
 		size_t seed = 0;
 
@@ -72,27 +72,27 @@ namespace net { namespace http { namespace hn
 
 	//////////////////////////////////////////////////////////////////////////////
 	template <class Iterator>
-	inline size_t hash(const boost::iterator_range<Iterator> &range)
+	inline size_t key(const boost::iterator_range<Iterator> &range)
 	{
-		return hn::hash(range.begin(), range.end());
+		return hn::key(range.begin(), range.end());
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	inline size_t hash(const std::string &str)
+	inline size_t key(const std::string &str)
 	{
-		return hash(str.begin(), str.end());
+		return key(str.begin(), str.end());
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	inline size_t hash(const char *csz)
+	inline size_t key(const char *csz)
 	{
-		return hash(csz, csz + strlen(csz));
+		return key(csz, csz + strlen(csz));
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	inline size_t hash(const char *data, size_t dataSize)
+	inline size_t key(const char *data, size_t dataSize)
 	{
-		return hash(data, data + dataSize);
+		return key(data, data + dataSize);
 	}
 
 }}}

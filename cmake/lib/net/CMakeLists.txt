@@ -62,10 +62,8 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 set(INCLUDE_HTTP
 	${PINC}/http/server.hpp
 	${PINC}/http/client.hpp
-	${PINC}/http/message.hpp
-	${PINC}/http/messageIn.hpp
-	${PINC}/http/messageOut.hpp
-	${PINC}/http/messageIterator.hpp
+	${PINC}/http/inputMessage.hpp
+	${PINC}/http/outputMessage.hpp
 	${PINC}/http/statusCode.hpp
 	${PINC}/http/method.hpp
 	${PINC}/http/version.hpp
@@ -88,10 +86,8 @@ set(SRC_HTTP
 	${PSRC}/http/statusCode.cpp
 	${PSRC}/http/headerValue_parsers.cpp
 	${PSRC}/http/headerValue_generators.cpp
-	${PSRC}/http/message.cpp
-	${PSRC}/http/messageIterator.cpp
-	${PSRC}/http/messageIn.cpp
-	${PSRC}/http/messageOut.cpp
+	${PSRC}/http/inputMessage.cpp
+	${PSRC}/http/outputMessage.cpp
 )
 source_group(src/http FILES ${SRC_HTTP})
 
@@ -102,34 +98,30 @@ source_group(src/http FILES ${SRC_HTTP_HDR})
 set(SRC_HTTP_IMPL
 	${PSRC}/http/impl/server.cpp
 	${PSRC}/http/impl/client.cpp
-	${PSRC}/http/impl/message.cpp
-	${PSRC}/http/impl/messageBuffer.cpp
 	${PSRC}/http/impl/contentFilter.cpp
 	${PSRC}/http/impl/contentFilterChannelWriter.cpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.cpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.cpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.cpp
 	${PSRC}/http/impl/contentFilterDecodeChunked.cpp
-	${PSRC}/http/impl/messageIn.cpp
-	${PSRC}/http/impl/messageInBuffer.cpp
-	${PSRC}/http/impl/messageOut.cpp
+	${PSRC}/http/impl/inputMessage.cpp
+	${PSRC}/http/impl/inputMessageBuffer.cpp
+	${PSRC}/http/impl/outputMessage.cpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL})
 
 set(SRC_HTTP_IMPL_HDR
 	${PSRC}/http/impl/server.hpp
 	${PSRC}/http/impl/client.hpp
-	${PSRC}/http/impl/message.hpp
-	${PSRC}/http/impl/messageBuffer.hpp
 	${PSRC}/http/impl/contentFilter.hpp
 	${PSRC}/http/impl/contentFilterChannelWriter.hpp
 	${PSRC}/http/impl/contentFilterEncodeZlib.hpp
 	${PSRC}/http/impl/contentFilterEncodeChunked.hpp
 	${PSRC}/http/impl/contentFilterDecodeZlib.hpp
 	${PSRC}/http/impl/contentFilterDecodeChunked.hpp
-	${PSRC}/http/impl/messageIn.hpp
-	${PSRC}/http/impl/messageInBuffer.hpp
-	${PSRC}/http/impl/messageOut.hpp
+	${PSRC}/http/impl/inputMessage.hpp
+	${PSRC}/http/impl/inputMessageBuffer.hpp
+	${PSRC}/http/impl/outputMessage.hpp
 )
 source_group(src/http/impl FILES ${SRC_HTTP_IMPL_HDR})
 

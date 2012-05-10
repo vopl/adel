@@ -1,7 +1,7 @@
 #ifndef _NET_HTTP_SERVER_IMPL_RESPONSE_HPP_
 #define _NET_HTTP_SERVER_IMPL_RESPONSE_HPP_
 
-#include "net/http/impl/messageOut.hpp"
+#include "net/http/impl/outputMessage.hpp"
 #include "net/http/statusCode.hpp"
 #include "net/http/version.hpp"
 #include "net/http/contentEncoding.hpp"
@@ -23,12 +23,12 @@ namespace net { namespace http { namespace server { namespace impl
 	typedef boost::shared_ptr<Response> ResponsePtr;
 	////////////////////////////////////////////////////////
 	class Response
-		: public net::http::impl::MessageOut
+		: public net::http::impl::OutputMessage
 	{
 	public:
 		ResponsePtr shared_from_this()
 		{
-			return boost::static_pointer_cast<Response>(net::http::impl::MessageOut::shared_from_this());
+			return boost::static_pointer_cast<Response>(net::http::impl::OutputMessage::shared_from_this());
 		}
 
 	public:

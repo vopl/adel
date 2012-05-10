@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "net/http/headerValue.hpp"
-#include "net/http/messageOut.hpp"
+#include "net/http/outputMessage.hpp"
 
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_string.hpp>
@@ -113,8 +113,7 @@ namespace net { namespace http
 		assert(res);
 		return res;
 	}
-	template bool HeaderValue<Date>::generate<MessageOut::Iterator>(MessageOut::Iterator &outIter) const;
-	template bool HeaderValue<Date>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<Date>::generate<OutputMessage::Iterator>(OutputMessage::Iterator &outIter) const;
 	template bool HeaderValue<Date>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 
@@ -125,8 +124,7 @@ namespace net { namespace http
 	{
 		return karma::generate(outIter, uint_generator<Value, 10>()[karma::_1 = _value]);
 	}
-	template bool HeaderValue<Unsigned>::generate<MessageOut::Iterator>(MessageOut::Iterator &outIter) const;
-	template bool HeaderValue<Unsigned>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<Unsigned>::generate<OutputMessage::Iterator>(OutputMessage::Iterator &outIter) const;
 	template bool HeaderValue<Unsigned>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 	//////////////////////////////////////////////////////////////////////
@@ -155,8 +153,7 @@ namespace net { namespace http
 
 		return false;
 	}
-	template bool HeaderValue<Connection>::generate<MessageOut::Iterator>(MessageOut::Iterator &outIter) const;
-	template bool HeaderValue<Connection>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<Connection>::generate<OutputMessage::Iterator>(OutputMessage::Iterator &outIter) const;
 	template bool HeaderValue<Connection>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 	//////////////////////////////////////////////////////////////////////
@@ -204,8 +201,7 @@ namespace net { namespace http
 
 		return true;
 	}
-	template bool HeaderValue<TransferEncoding>::generate<MessageOut::Iterator>(MessageOut::Iterator &outIter) const;
-	template bool HeaderValue<TransferEncoding>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<TransferEncoding>::generate<OutputMessage::Iterator>(OutputMessage::Iterator &outIter) const;
 	template bool HeaderValue<TransferEncoding>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 	//////////////////////////////////////////////////////////////////////
@@ -246,8 +242,7 @@ namespace net { namespace http
 
 		return true;
 	}
-	template bool HeaderValue<ContentEncoding>::generate<MessageOut::Iterator>(MessageOut::Iterator &outIter) const;
-	template bool HeaderValue<ContentEncoding>::generate<Message::Iterator>(Message::Iterator &outIter) const;
+	template bool HeaderValue<ContentEncoding>::generate<OutputMessage::Iterator>(OutputMessage::Iterator &outIter) const;
 	template bool HeaderValue<ContentEncoding>::generate<std::back_insert_iterator<std::string> >(std::back_insert_iterator<std::string> &outIter) const;
 
 }}

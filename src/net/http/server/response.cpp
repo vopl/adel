@@ -7,7 +7,7 @@ namespace net { namespace http { namespace server
 
 	/////////////////////////////////////////////////////////////////////
 	Response::Response(ImplPtr impl)
-		: MessageOut(impl)
+		: OutputMessage(impl)
 		, _impl(impl)
 	{
 

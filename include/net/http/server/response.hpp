@@ -1,7 +1,7 @@
 #ifndef _NET_HTTP_SERVER_RESPONSE_HPP_
 #define _NET_HTTP_SERVER_RESPONSE_HPP_
 
-#include "net/http/messageOut.hpp"
+#include "net/http/outputMessage.hpp"
 #include "net/http/version.hpp"
 #include "net/http/statusCode.hpp"
 #include "net/http/headerValue.hpp"
@@ -18,7 +18,7 @@ namespace net { namespace http { namespace server
 	class Request;
 	///////////////////////////////////////////////////////
 	class Response
-		: public MessageOut
+		: public OutputMessage
 	{
 	protected:
 		typedef impl::ResponsePtr ImplPtr;

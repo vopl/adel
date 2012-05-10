@@ -21,10 +21,11 @@
 
 namespace net { namespace http { namespace server { namespace impl
 {
+/*
 	//////////////////////////////////////////////////////////////
 	RequestPtr Request::shared_from_this()
 	{
-		return boost::static_pointer_cast<Request>(net::http::impl::Message::shared_from_this());
+		return boost::static_pointer_cast<Request>(net::http::impl::InputMessage::shared_from_this());
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -59,7 +60,7 @@ namespace net { namespace http { namespace server { namespace impl
 		}
 		static const symbols<char, EMethod> g_parserMethod = g_parserMethodInitier();
 
-		static const rule<Message::Iterator> g_parserToken =
+		static const rule<InputMessage::Iterator> g_parserToken =
 				+(
 						char_ -
 						(
@@ -86,7 +87,7 @@ namespace net { namespace http { namespace server { namespace impl
 		namespace qi = boost::spirit::qi;
 		namespace px = boost::phoenix;
 
-		MessageIterator iter = begin();
+		InputMessage::Iterator iter = begin();
 		bool parseResult = parse(iter, endInfinity(),
 			raw[
 				raw[
@@ -139,7 +140,7 @@ namespace net { namespace http { namespace server { namespace impl
 
 		std::pair<size_t, SHeader> hdr;
 
-		MessageIterator iter = _request_.end();
+		InputMessage::Iterator iter = _request_.end();
 		bool parseResult = parse(iter, endInfinity(),
 			raw[
 			    *(
@@ -148,7 +149,7 @@ namespace net { namespace http { namespace server { namespace impl
 							g_parserToken
 						][
 						  px::ref(hdr.second._name_) = qi::_1,
-						  px::ref(hdr.first) = px::bind((size_t(*)(const Segment&))&hn::hash<MessageIterator>, qi::_1)] >>
+						  px::ref(hdr.first) = px::bind((size_t(*)(const Segment&))&hn::key<InputMessage::Iterator>, qi::_1)] >>
 
 						':' >> *space >>
 
@@ -261,19 +262,19 @@ namespace net { namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////
 	const Request::Segment *Request::header(const std::string &name) const
 	{
-		return header(hn::hash(name));
+		return header(hn::key(name));
 	}
 
 	//////////////////////////////////////////////////////////////
 	const Request::Segment *Request::header(const char *namez) const
 	{
-		return header(hn::hash(namez));
+		return header(hn::key(namez));
 	}
 
 	//////////////////////////////////////////////////////////////
 	const Request::Segment *Request::header(const char *name, size_t nameSize) const
 	{
-		return header(hn::hash(name, nameSize));
+		return header(hn::key(name, nameSize));
 	}
 
 
@@ -322,7 +323,7 @@ namespace net { namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////
 	void Request::reinit()
 	{
-		MessageIterator lastReadedPos = _request_.end();
+		InputMessage::Iterator lastReadedPos = _request_.end();
 		if(lastReadedPos.buffer())
 		{
 			dropFront(lastReadedPos.absolutePosition());
@@ -351,5 +352,5 @@ namespace net { namespace http { namespace server { namespace impl
 
 	}
 
-
+*/
 }}}}

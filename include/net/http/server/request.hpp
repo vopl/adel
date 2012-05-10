@@ -3,7 +3,7 @@
 
 #include "net/http/server/response.hpp"
 #include "net/channel.hpp"
-#include "net/http/message.hpp"
+#include "net/http/inputMessage.hpp"
 #include "net/http/method.hpp"
 #include "net/http/version.hpp"
 
@@ -17,7 +17,7 @@ namespace net { namespace http { namespace server
 	}
 	///////////////////////////////////////////////////////
 	class Request
-		: public net::http::Message
+		: public net::http::InputMessage
 	{
 	protected:
 		typedef impl::RequestPtr ImplPtr;
@@ -32,22 +32,22 @@ namespace net { namespace http { namespace server
 		bool readRequestLine();
 		bool readHeaders();
 		bool readBody();
-		bool ignoreBody();
 
-		const Segment &requestLine_() const;
+		const Segment &requestLine() const;
 
 		//method uri version
-		const EMethod &method() const;
-		const Segment &method_() const;
+		const EMethod &method_() const;
+		const Segment &method() const;
 
-		const Version &version() const;
-		const Segment &version_() const;
+		const Version &version_() const;
+		const Segment &version() const;
 
-		const Segment &uri_() const;
-		const Segment &path_() const;
-		const Segment &queryString_() const;
+		const Segment &uri() const;
+		const Segment &path() const;
+		const Segment &queryString() const;
 
 		//headers
+		const Segment &headers() const;
 		const Segment *header(const HeaderName &name) const;
 		const Segment *header(size_t hash) const;
 		const Segment *header(const std::string &name) const;
@@ -55,6 +55,7 @@ namespace net { namespace http { namespace server
 		const Segment *header(const char *name, size_t nameSize) const;
 
 		//body
+		const Segment &body() const;
 
 		//params uri
 		//params body

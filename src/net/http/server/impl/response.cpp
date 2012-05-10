@@ -2,7 +2,6 @@
 #include "net/http/server/impl/response.hpp"
 #include "net/http/server/impl/request.hpp"
 #include "net/http/impl/server.hpp"
-#include "net/http/impl/messageBuffer.hpp"
 #include "net/http/impl/contentFilterEncodeChunked.hpp"
 #include "net/http/impl/contentFilterEncodeZlib.hpp"
 #include "net/http/headerName.hpp"
@@ -22,10 +21,10 @@ namespace net { namespace http { namespace server { namespace impl
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const net::http::impl::ServerPtr &server, const Channel &channel, Request *request)
-		: net::http::impl::MessageOut(channel, server->responseWriteGranula())
+		: net::http::impl::OutputMessage(channel, server->responseWriteGranula())
 		, _server(server)
 		, _request(request)
-		, _version(request->version())
+		, _version(request->version_())
 		, _contentLength(_unknownContentLength)
 		, _chunked(false)
 		, _keepAlive(false)
@@ -42,7 +41,7 @@ namespace net { namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	bool Response::bodyFlush()
 	{
-		if(!net::http::impl::MessageOut::bodyFlush())
+		if(!net::http::impl::OutputMessage::bodyFlush())
 		{
 			return false;
 		}
@@ -263,7 +262,7 @@ namespace net { namespace http { namespace server { namespace impl
 			return false;
 		}
 
-		return net::http::impl::MessageOut::writeSystemHeaders();
+		return net::http::impl::OutputMessage::writeSystemHeaders();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -282,7 +281,7 @@ namespace net { namespace http { namespace server { namespace impl
 			_contentFilter = cf;
 		}
 
-		return net::http::impl::MessageOut::setupBodyFilters();
+		return net::http::impl::OutputMessage::setupBodyFilters();
 	}
 
 

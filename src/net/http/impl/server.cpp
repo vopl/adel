@@ -182,10 +182,10 @@ namespace net { namespace http { namespace impl
 			return;
 		}
 
-		switch(request.method())
+		switch(request.method_())
 		{
 		default:
-			if(!request.ignoreBody()) return;
+			if(!request.readBody()) return;
 
 			{
 				Response response = request.response();

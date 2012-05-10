@@ -92,7 +92,7 @@ namespace net { namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void HandlerFs::onRequest(net::http::server::Request r)
 	{
-		path originalPath = std::string(r.path_().begin(), r.path_().end());
+		path originalPath = std::string(r.path().begin(), r.path().end());
 
 		{
 			path::iterator iter = originalPath.begin();
@@ -140,7 +140,7 @@ namespace net { namespace http { namespace server { namespace impl
 			assert(gres);
 			(void)gres;
 
-			const Message::Segment *seg = r.header(hn::ifNoneMatch);
+			const InputMessage::Segment *seg = r.header(hn::ifNoneMatch);
 			if(	seg &&
 				std::string(seg->begin(), seg->end()) == etag)
 			{

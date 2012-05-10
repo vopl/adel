@@ -5,7 +5,7 @@
 #include <boost/shared_ptr.hpp>
 #include "net/http/method.hpp"
 #include "net/http/version.hpp"
-#include "net/http/impl/message.hpp"
+#include "net/http/impl/inputMessage.hpp"
 #include "net/http/server/impl/response.hpp"
 
 #include <boost/unordered_map.hpp>
@@ -23,10 +23,10 @@ namespace net { namespace http { namespace server { namespace impl
 
 	///////////////////////////////////////////////////////////////////////////
 	class Request
-		: public net::http::impl::Message
+		: public net::http::impl::InputMessage
 	{
 	public:
-		typedef net::http::Message::Segment Segment;
+		typedef net::http::InputMessage::Segment Segment;
 
 	public:
 		RequestPtr shared_from_this();
@@ -39,26 +39,28 @@ namespace net { namespace http { namespace server { namespace impl
 		bool ignoreBody();
 
 		//method uri version
-		const Segment &requestLine_() const;
+		const Segment &requestLine() const;
 
-		const EMethod &method() const;
-		const Segment &method_() const;
+		const EMethod &method_() const;
+		const Segment &method() const;
 
-		const Version &version() const;
-		const Segment &version_() const;
+		const Version &version_() const;
+		const Segment &version() const;
 
-		const Segment &uri_() const;
+		const Segment &uri() const;
 
-		const Segment &path_() const;
-		const Segment &queryString_() const;
+		const Segment &path() const;
+		const Segment &queryString() const;
 
 		//headers
+		const Segment &headers() const;
 		const Segment *header(const HeaderName &name) const;
 		const Segment *header(size_t hash) const;
 		const Segment *header(const std::string &name) const;
 		const Segment *header(const char *namez) const;
 		const Segment *header(const char *name, size_t nameSize) const;
 
+		const Segment &body() const;
 	public:
 		ResponsePtr response();
 		void reinit();

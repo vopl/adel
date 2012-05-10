@@ -38,87 +38,93 @@ namespace net { namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool Request::ignoreBody()
+	const InputMessage::Segment &Request::requestLine() const
 	{
-		return _impl->ignoreBody();
+		return _impl->requestLine();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::requestLine_() const
-	{
-		return _impl->requestLine_();
-	}
-
-	//////////////////////////////////////////////////////////////
-	const EMethod &Request::method() const
-	{
-		return _impl->method();
-	}
-
-	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::method_() const
+	const EMethod &Request::method_() const
 	{
 		return _impl->method_();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Version &Request::version() const
+	const InputMessage::Segment &Request::method() const
 	{
-		return _impl->version();
+		return _impl->method();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::version_() const
+	const Version &Request::version_() const
 	{
 		return _impl->version_();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::uri_() const
+	const InputMessage::Segment &Request::version() const
 	{
-		return _impl->uri_();
+		return _impl->version();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::path_() const
+	const InputMessage::Segment &Request::uri() const
 	{
-		return _impl->path_();
+		return _impl->uri();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment &Request::queryString_() const
+	const InputMessage::Segment &Request::path() const
 	{
-		return _impl->queryString_();
+		return _impl->path();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment *Request::header(const HeaderName &name) const
+	const InputMessage::Segment &Request::queryString() const
 	{
-		return _impl->header(name.hash);
+		return _impl->queryString();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment *Request::header(size_t hash) const
+	const InputMessage::Segment &Request::headers() const
 	{
-		return _impl->header(hash);
+		return _impl->headers();
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment *Request::header(const std::string &name) const
+	const InputMessage::Segment *Request::header(const HeaderName &name) const
 	{
-		return _impl->header(hn::hash(name));
+		return _impl->header(name);
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment *Request::header(const char *namez) const
+	const InputMessage::Segment *Request::header(size_t key) const
 	{
-		return _impl->header(hn::hash(namez));
+		return _impl->header(key);
 	}
 
 	//////////////////////////////////////////////////////////////
-	const Message::Segment *Request::header(const char *name, size_t nameSize) const
+	const InputMessage::Segment *Request::header(const std::string &name) const
 	{
-		return _impl->header(hn::hash(name, nameSize));
+		return _impl->header(name);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const InputMessage::Segment *Request::header(const char *namez) const
+	{
+		return _impl->header(namez);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const InputMessage::Segment *Request::header(const char *name, size_t nameSize) const
+	{
+		return _impl->header(name, nameSize);
+	}
+
+	//////////////////////////////////////////////////////////////
+	const InputMessage::Segment &Request::body() const
+	{
+		return _impl->body();
 	}
 
 	//////////////////////////////////////////////////////////////
