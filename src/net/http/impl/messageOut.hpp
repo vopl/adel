@@ -60,14 +60,17 @@ namespace net { namespace http { namespace impl
 
 	public:
 		///////////////////////////////////////////////
-		char *getBuffer(size_t &size);
-		bool incBuffer(size_t size);
+		char *bufferGet(size_t &size);
+		bool bufferInc(size_t size);
+
 		bool write(const char *data, size_t size);
 		bool write(const char *dataz);
 		bool write(const std::string &data);
 
 	protected:
-		bool nextBuffer();
+		void bufferEnsure();
+		bool bufferFlush();
+		bool bufferNext();
 		Iterator iterator();
 
 	protected:
@@ -89,6 +92,7 @@ namespace net { namespace http { namespace impl
 		Packet	_buffer;
 		size_t	_granula;
 		EMode	_mode;
+		char 	*_writeBegin;
 		char 	*_writePosition;
 		char 	*_writeEnd;
 

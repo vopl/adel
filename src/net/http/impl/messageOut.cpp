@@ -9,13 +9,12 @@ namespace net { namespace http { namespace impl
 		: _channel(channel)
 		, _granula(granula)
 		, _mode(em_firstLine)
+		, _writeBegin(NULL)
 		, _writePosition(NULL)
 		, _writeEnd(NULL)
 		, _contentFilter(new ContentFilterChannelWriter(channel, granula))
 	{
-		bool b = nextBuffer();
-		assert(b);
-		(void)b;
+		//bufferEnsure();
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -217,19 +216,9 @@ namespace net { namespace http { namespace impl
 			return false;
 		}
 
-		assert(_buffer._size && _buffer._data);
-		_buffer._size = _writePosition - _buffer._data.get();
-		if(_buffer._size && _buffer._data)
+		if(!bufferFlush())
 		{
-			if(!_contentFilter->filterPush(_buffer, 0))
-			{
-				return false;
-			}
-
-			_buffer._data.reset();
-			_buffer._size = 0;
-			_writePosition = NULL;
-			_writeEnd = NULL;
+			return false;
 		}
 
 		if(!_contentFilter->filterFlush())
@@ -241,9 +230,11 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	char *MessageOut::getBuffer(size_t &size)
+	char *MessageOut::bufferGet(size_t &size)
 	{
-		assert(_writeEnd && _writePosition);
+		bufferEnsure();
+
+		assert(_writeBegin && _writeEnd && _writePosition);
 
 		size_t availSize = _writeEnd - _writePosition;
 		if(availSize < size)
@@ -254,14 +245,14 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool MessageOut::incBuffer(size_t size)
+	bool MessageOut::bufferInc(size_t size)
 	{
 		assert(_writePosition);
 		_writePosition += size;
 		assert(_writePosition <= _writeEnd);
 		if(_writePosition == _writeEnd)
 		{
-			return nextBuffer();
+			return bufferNext();
 		}
 		return true;
 	}
@@ -272,11 +263,11 @@ namespace net { namespace http { namespace impl
 		while(size)
 		{
 			size_t writeSize = size;
-			char *buf = getBuffer(writeSize);
+			char *buf = bufferGet(writeSize);
 
 			assert(writeSize && writeSize <= size);
 			memcpy(buf, data, writeSize);
-			if(!incBuffer(writeSize))
+			if(!bufferInc(writeSize))
 			{
 				return false;
 			}
@@ -299,31 +290,74 @@ namespace net { namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool MessageOut::nextBuffer()
+	void MessageOut::bufferEnsure()
 	{
-		if(_buffer._size && _buffer._data)
+		if(!_writePosition)
 		{
-			if(!_contentFilter->filterPush(_buffer, 0))
+			assert(!_buffer._data);
+			assert(!_buffer._size);
+			assert(!_writeEnd);
+			assert(!_writeBegin);
+
+			_buffer._size = _granula;
+			_buffer._data.reset(new char [_buffer._size]);
+
+			_writeBegin = _buffer._data.get();
+			_writePosition = _writeBegin;
+			_writeEnd = _writeBegin + _buffer._size;
+		}
+	}
+
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::bufferFlush()
+	{
+		assert(_buffer._data);
+		
+		Packet buf = _buffer;
+		buf._size = _writePosition - buf._data.get();
+		size_t offset = _writeBegin - buf._data.get();
+		assert(buf._size >= offset);
+
+		if(buf._size > offset)
+		{
+			if(!_contentFilter->filterPush(buf, offset))
 			{
 				return false;
 			}
+		}
 
+		if(_writePosition == _writeEnd)
+		{
 			_buffer._data.reset();
 			_buffer._size = 0;
+			_writeBegin = NULL;
 			_writePosition = NULL;
 			_writeEnd = NULL;
 		}
+		else
+		{
+			_writeBegin = _writePosition;
+		}
 
-		_buffer._size = _granula;
-		_buffer._data.reset(new char [_buffer._size]);
+		return true;
+	}
 
-		_writePosition = _buffer._data.get();
-		_writeEnd = _writePosition + _buffer._size;
+	//////////////////////////////////////////////////////////////
+	bool MessageOut::bufferNext()
+	{
+		if(!bufferFlush())
+		{
+			return false;
+		}
+		bufferEnsure();
+
 		return true;
 	}
 	//////////////////////////////////////////////////////////////
 	MessageOut::Iterator MessageOut::iterator()
 	{
+		bufferEnsure();
+
 		return Iterator(this);
 	}
 
@@ -387,6 +421,10 @@ namespace net { namespace http { namespace impl
 						return false;
 					}
 
+					if(!bufferFlush())
+					{
+						return false;
+					}
 					//setup body filters
 					if(!this->setupBodyFilters())
 					{
@@ -395,6 +433,7 @@ namespace net { namespace http { namespace impl
 
 					//now body
 					_mode = em_body;
+
 					return true;
 				default:
 					assert(!"unknown mode");
@@ -419,6 +458,10 @@ namespace net { namespace http { namespace impl
 						return false;
 					}
 
+					if(!bufferFlush())
+					{
+						return false;
+					}
 					//setup body filters
 					if(!this->setupBodyFilters())
 					{
@@ -451,7 +494,7 @@ namespace net { namespace http { namespace impl
 		_writePosition++;
 		if(_writePosition == _writeEnd)
 		{
-			if(!nextBuffer())
+			if(!bufferNext())
 			{
 				return false;
 			}

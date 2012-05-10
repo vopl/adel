@@ -22,17 +22,17 @@ namespace net { namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	char *MessageOut::Iterator::getBuffer(size_t &size)
+	char *MessageOut::Iterator::bufferGet(size_t &size)
 	{
 		assert(_message);
-		return _message->getBuffer(size);
+		return _message->bufferGet(size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool MessageOut::Iterator::incBuffer(size_t size)
+	bool MessageOut::Iterator::bufferInc(size_t size)
 	{
 		assert(_message);
-		return _message->incBuffer(size);
+		return _message->bufferInc(size);
 	}
 
 	//////////////////////////////////////////////////////////////////////////

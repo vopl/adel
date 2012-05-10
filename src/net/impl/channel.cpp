@@ -75,8 +75,15 @@ namespace net { namespace impl
 				asio::io_service::strand,
 				async::AsioBridge<Handler> > WrappedHandler;
 
+			void (*method)(TSocketSsl&, const Buffer&, BOOST_ASIO_MOVE_ARG(WrappedHandler)) = 
+				&boost::asio::async_write<TSocketSsl, Buffer, WrappedHandler>;
+
 			_sslStrand->dispatch(
-				bind(&boost::asio::async_write<TSocketSsl, Buffer, WrappedHandler>, boost::ref(*_socketSsl), b, _sslStrand->wrap(async::bridge(h))));
+				boost::bind(
+					method,
+					boost::ref(*_socketSsl), 
+					b, 
+					_sslStrand->wrap(async::bridge(h))));
 		}
 	}
 

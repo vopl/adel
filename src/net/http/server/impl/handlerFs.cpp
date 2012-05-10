@@ -213,13 +213,13 @@ namespace net { namespace http { namespace server { namespace impl
 			while(size)
 			{
 				size_t bufSize = size;
-				char *buf = iter.getBuffer(bufSize);
+				char *buf = iter.bufferGet(bufSize);
 				assert(buf && bufSize);
 
 				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
-				if(!iter.incBuffer(bufSize))
+				if(!iter.bufferInc(bufSize))
 				{
 					//connection lost?
 					break;

@@ -195,7 +195,7 @@ namespace net { namespace http { namespace server { namespace impl
 			}
 
 		}
-		else
+		else//if(_unknownContentLength != _contentLength)
 		{
 			//неизвестно, будет тело или нет
 			if(!_chunked && _keepAlive)
@@ -205,6 +205,10 @@ namespace net { namespace http { namespace server { namespace impl
 			}
 		}
 
+		if(_chunked && _contentLength!=_unknownContentLength)
+		{
+			_chunked = false;
+		}
 
 		//писать заголовки
 		if(_unknownContentLength != _contentLength)

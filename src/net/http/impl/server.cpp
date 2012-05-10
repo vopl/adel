@@ -36,7 +36,7 @@ namespace net { namespace http { namespace impl
 
 		options->addOption(
 			"response.writeGranula",
-			po::value<size_t>()->default_value(8192),
+			po::value<size_t>()->default_value(65536),
 			"buffer size during write response data");
 
 

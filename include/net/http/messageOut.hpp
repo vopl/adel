@@ -28,8 +28,8 @@ namespace net { namespace http
 			Iterator(const Iterator &i);
 			~Iterator();
 
-			char *getBuffer(size_t &size);
-			bool incBuffer(size_t size);
+			char *bufferGet(size_t &size);
+			bool bufferInc(size_t size);
 
 			bool write(const char *data, size_t size);
 			bool write(const char *dataz);
