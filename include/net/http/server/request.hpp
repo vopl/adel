@@ -29,12 +29,6 @@ namespace net { namespace http { namespace server
 	public:
 		~Request();
 
-		bool readRequestLine();
-		bool readHeaders();
-		bool readBody();
-
-		const Segment &requestLine() const;
-
 		//method uri version
 		const EMethod &method_() const;
 		const Segment &method() const;
@@ -45,17 +39,6 @@ namespace net { namespace http { namespace server
 		const Segment &uri() const;
 		const Segment &path() const;
 		const Segment &queryString() const;
-
-		//headers
-		const Segment &headers() const;
-		const Segment *header(const HeaderName &name) const;
-		const Segment *header(size_t hash) const;
-		const Segment *header(const std::string &name) const;
-		const Segment *header(const char *namez) const;
-		const Segment *header(const char *name, size_t nameSize) const;
-
-		//body
-		const Segment &body() const;
 
 		//params uri
 		//params body

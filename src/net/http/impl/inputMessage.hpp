@@ -22,9 +22,10 @@ namespace net { namespace http { namespace impl
 
 		bool isConnected() const;
 
-		bool readRequestLine();
+		bool readFirstLine();
 		bool readHeaders();
 		bool readBody();
+		bool ignoreBody();
 
 
 		//requestLine, responseLine
@@ -39,6 +40,9 @@ namespace net { namespace http { namespace impl
 		const Segment *header(const char *namez) const;
 
 		const Segment &body() const;
+
+	public:
+		void reinit();
 
 	protected:
 		InputMessageBufferPtr _firstBuffer;

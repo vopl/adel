@@ -62,7 +62,7 @@ namespace net { namespace http
 
 		bool isConnected() const;
 
-		bool readRequestLine();
+		bool readFirstLine();
 		bool readHeaders();
 		bool readBody();
 

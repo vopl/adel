@@ -175,7 +175,7 @@ namespace net { namespace http { namespace server { namespace impl
 		const ExtInfo &extInfo = getExtInfo(originalPath.extension());
 
 		net::http::server::Response response = r.response();
-		if(!response.responseLine(esc_200)) return;
+		if(!response.firstLine(esc_200)) return;
 		if(!response.header(hn::contentType, extInfo._mimeType)) return;
 
 		if(_allowETag)
@@ -237,7 +237,7 @@ namespace net { namespace http { namespace server { namespace impl
 	void HandlerFs::notFound(net::http::server::Request &r, const path &uri)
 	{
 		net::http::server::Response response = r.response();
-		response.responseLine(esc_404);
+		response.firstLine(esc_404);
 		response.setContentLength(0);
 		response.bodyFlush();
 	}
@@ -246,7 +246,7 @@ namespace net { namespace http { namespace server { namespace impl
 	void HandlerFs::notModified(net::http::server::Request &r, const path &uri)
 	{
 		net::http::server::Response response = r.response();
-		response.responseLine(esc_304);
+		response.firstLine(esc_304);
 		response.setContentLength(0);
 		response.bodyFlush();
 	}

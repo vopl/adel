@@ -32,8 +32,8 @@ namespace net { namespace http { namespace server
 	public:
 		~Response();
 
-		bool responseLine(const Version &version, const EStatusCode &statusCode);
-		bool responseLine(const EStatusCode &statusCode);
+		bool firstLine(const Version &version, const EStatusCode &statusCode);
+		bool firstLine(const EStatusCode &statusCode);
 		void setContentLength(size_t size);
 		void setContentCompress(int level);
 	};

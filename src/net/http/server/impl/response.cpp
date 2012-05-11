@@ -61,21 +61,21 @@ namespace net { namespace http { namespace server { namespace impl
 
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::responseLine(const Version &version, const EStatusCode &statusCode)
+	bool Response::firstLine(const Version &version, const EStatusCode &statusCode)
 	{
 		_version = version;
-		return responseLine(statusCode);
+		return firstLine(statusCode);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::responseLine(const EStatusCode &statusCode)
+	bool Response::firstLine(const EStatusCode &statusCode)
 	{
 		Iterator iter = firstLineIterator();
 		using namespace boost::spirit::karma;
 		namespace karma = boost::spirit::karma;
 		namespace px = boost::phoenix;
 
-		return generate(firstLineIterator(),
+		return generate(iter,
 			"HTTP/"<<uint_[karma::_1 = _version._hi]<<'.'<<uint_[karma::_1 = _version._lo]<<' '<<
 			uint_[karma::_1 = statusCode]<<' '<<reasonPhrase(statusCode));
 	}

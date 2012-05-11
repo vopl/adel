@@ -20,15 +20,15 @@ namespace net { namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::responseLine(const Version &version, const EStatusCode &statusCode)
+	bool Response::firstLine(const Version &version, const EStatusCode &statusCode)
 	{
-		return _impl->responseLine(version, statusCode);
+		return _impl->firstLine(version, statusCode);
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::responseLine(const EStatusCode &statusCode)
+	bool Response::firstLine(const EStatusCode &statusCode)
 	{
-		return _impl->responseLine(statusCode);
+		return _impl->firstLine(statusCode);
 	}
 
 	/////////////////////////////////////////////////////////////////////

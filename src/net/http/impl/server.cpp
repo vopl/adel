@@ -176,7 +176,7 @@ namespace net { namespace http { namespace impl
 	{
 		Request request = utils::ImplAccess<Request>(requestImpl);
 
-		if(	!request.readRequestLine() ||
+		if(	!request.readFirstLine() ||
 			!request.readHeaders())
 		{
 			return;
@@ -190,7 +190,7 @@ namespace net { namespace http { namespace impl
 			{
 				Response response = request.response();
 				if(
-					!response.responseLine(esc_405) ||
+					!response.firstLine(esc_405) ||
 					!response.header(net::http::hn::connection, HeaderValue<Connection>(ec_close)) ||
 					!response.bodyFlush())
 				{
@@ -202,7 +202,7 @@ namespace net { namespace http { namespace impl
 			{
 				Response response = request.response();
 				if(
-					!response.responseLine(esc_405) ||
+					!response.firstLine(esc_405) ||
 					!response.header("Allow: GET", 10) ||
 					!response.bodyFlush())
 				{
