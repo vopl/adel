@@ -25,4 +25,5 @@ use_pch(entry ${PSRC}/pch.hpp ${SRC})
 
 target_link_libraries(entry 
     adel
-    net)
+    net
+    http)

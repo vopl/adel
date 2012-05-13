@@ -3,4 +3,5 @@ add_subdirectory(async)
 add_subdirectory(adel)
 add_subdirectory(pgc)
 add_subdirectory(net)
+add_subdirectory(http)
 

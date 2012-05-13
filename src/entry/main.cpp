@@ -8,9 +8,10 @@
 #include "adel/log.hpp"
 #include "net/log.hpp"
 
-#include "net/http/server/log.hpp"
-#include "net/http/server.hpp"
-#include "net/http/server/handlerFs.hpp"
+#include "http/log.hpp"
+#include "http/server/log.hpp"
+#include "http/server.hpp"
+#include "http/server/handlerFs.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -44,9 +45,9 @@ int main(int argc, const char **argv)
 		//////////////////////////////////////
 		utils::OptionsPtr omanager = adel::Manager::prepareOptions("manager");
 		desc.add(omanager->desc());
-		utils::OptionsPtr ohttpServer1 = net::http::Server::prepareOptions("httpServer1");
+		utils::OptionsPtr ohttpServer1 = http::Server::prepareOptions("httpServer1");
 		desc.add(ohttpServer1->desc());
-		utils::OptionsPtr ohttpServer1HandlerFs = net::http::server::HandlerFs::prepareOptions("httpServer1.handlerFs");
+		utils::OptionsPtr ohttpServer1HandlerFs = http::server::HandlerFs::prepareOptions("httpServer1.handlerFs");
 		desc.add(ohttpServer1HandlerFs->desc());
 
 		//////////////////////////////////////
@@ -58,7 +59,9 @@ int main(int argc, const char **argv)
 		desc.add(opgcLog->desc());
 		utils::OptionsPtr onetLog = net::prepareOptionsLog();
 		desc.add(onetLog->desc());
-		utils::OptionsPtr ohttpLog = net::http::server::prepareOptionsLog();
+		utils::OptionsPtr ohttpServerLog = http::server::prepareOptionsLog();
+		desc.add(ohttpServerLog->desc());
+		utils::OptionsPtr ohttpLog = http::prepareOptionsLog();
 		desc.add(ohttpLog->desc());
 
 		if(varsGeneral.count("help"))
@@ -96,6 +99,7 @@ int main(int argc, const char **argv)
 		}
 
 		ohttpLog->store(&parsedOptions1, &parsedOptions2);
+		ohttpServerLog->store(&parsedOptions1, &parsedOptions2);
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
 		oadelLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
@@ -111,15 +115,16 @@ int main(int argc, const char **argv)
 			adel::initLog(oadelLog);
 			pgc::initLog(opgcLog);
 			net::initLog(onetLog);
-			net::http::server::initLog(ohttpLog);
+			http::initLog(ohttpLog);
+			http::server::initLog(ohttpServerLog);
 
 
 			adel::Manager manager(omanager);
 			{
-				net::http::Server httpServer1(manager.asrv(), ohttpServer1);
+				http::Server httpServer1(manager.asrv(), ohttpServer1);
 
-				net::http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
-				httpServer1.connectOnRequest(boost::bind(&net::http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
+				http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
+				httpServer1.connectOnRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
 
 				//adel::HttpClient httpClient(manager, "global");
 				//adel::Postgres postgres(manager, "global");
