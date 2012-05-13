@@ -28,6 +28,7 @@ namespace http
 			typedef size_t size_type;
 
 		public:
+			Iterator();//endInfinity
 			Iterator(const Iterator &i);
 			~Iterator();
 
@@ -46,18 +47,15 @@ namespace http
 
 		private:
 			friend class impl::InputMessage;
-			Iterator();//endInfinity
 			Iterator(impl::InputMessageBuffer *buffer, const char *position);//normal
 		private:
 			impl::InputMessageBuffer	*_buffer;
-			const char				*_position;
+			const char					*_position;
 		};
 		typedef boost::iterator_range<Iterator> Segment;
 
-	protected:
-		InputMessage();
-
 	public:
+		InputMessage(ImplPtr impl);
 		~InputMessage();
 
 		bool isConnected() const;

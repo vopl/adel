@@ -40,7 +40,7 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////
 	InputMessageBuffer *InputMessageBuffer::next()
 	{
-		assert(_next);
+		//assert(_next);
 		return _next.get();
 	}
 
@@ -49,6 +49,18 @@ namespace http { namespace impl
 	{
 		assert(_prev);
 		return _prev;
+	}
+
+	////////////////////////////////////////////////////////////////
+	void InputMessageBuffer::setNext(const InputMessageBufferPtr &b)
+	{
+		_next = b;
+	}
+
+	////////////////////////////////////////////////////////////////
+	void InputMessageBuffer::setPrev(InputMessageBuffer *b)
+	{
+		_prev = b;
 	}
 
 	////////////////////////////////////////////////////////////////

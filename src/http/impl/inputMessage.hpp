@@ -1,10 +1,11 @@
 #ifndef _HTTP_IMPL_INPUTMESSAGE_HPP_
 #define _HTTP_IMPL_INPUTMESSAGE_HPP_
 
-#include "net/packet.hpp"
+#include "net/channel.hpp"
 #include "http/inputMessage.hpp"
-#include "http/impl/inputMessageBuffer.hpp"
+#include "http/impl/contentFilterBufferAccumuler.hpp"
 #include <boost/enable_shared_from_this.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace http { namespace impl
 {
@@ -17,7 +18,7 @@ namespace http { namespace impl
 		typedef http::InputMessage::Segment Segment;
 
 	public:
-		InputMessage();
+		InputMessage(const net::Channel &channel, size_t granula);
 		virtual ~InputMessage();
 
 		bool isConnected() const;
@@ -45,8 +46,48 @@ namespace http { namespace impl
 		void reinit();
 
 	protected:
-		InputMessageBufferPtr _firstBuffer;
-		InputMessageBuffer 	*_lastBuffer;
+		net::Channel	_channel;
+		size_t			_granula;
+
+		enum EMode
+		{
+			em_firstLine=1,
+			em_headers=2,
+			em_body=3,
+			em_done=4,
+		} _em;
+
+	protected:
+		bool readBuffer(Segment *segment);
+		ContentFilterBufferAccumulerPtr	_bufferAccumuler;
+		ContentFilterPtr				_contentFilter;
+
+		bool readUntil(const char *tokenz, Segment &segment);
+
+	protected:
+		Segment	_firstLine;
+		Segment	_headers;
+		Segment	_body;
+
+
+
+		struct SHeader
+		{
+			Segment _header_;
+			Segment _name_;
+			Segment _value_;
+		};
+		struct HVHash
+			: public std::unary_function<size_t, size_t>
+		{
+			const std::size_t &operator()(const size_t &v) const
+			{
+				return v;
+			}
+		};
+
+		typedef boost::unordered_map<size_t, SHeader, HVHash, std::equal_to<size_t> > TMHeaders;
+		TMHeaders _headersMap;
 	};
 
 	typedef boost::shared_ptr<InputMessage> InputMessagePtr;

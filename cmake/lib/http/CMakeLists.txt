@@ -57,6 +57,7 @@ set(SRC_IMPL
 	${PSRC}/impl/contentFilterDecodeChunked.cpp
 	${PSRC}/impl/inputMessage.cpp
 	${PSRC}/impl/inputMessageBuffer.cpp
+	${PSRC}/impl/contentFilterBufferAccumuler.cpp
 	${PSRC}/impl/outputMessage.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
@@ -72,6 +73,7 @@ set(SRC_IMPL_HDR
 	${PSRC}/impl/contentFilterDecodeChunked.hpp
 	${PSRC}/impl/inputMessage.hpp
 	${PSRC}/impl/inputMessageBuffer.hpp
+	${PSRC}/impl/contentFilterBufferAccumuler.hpp
 	${PSRC}/impl/outputMessage.hpp
 )
 source_group(src/impl FILES ${SRC_IMPL_HDR})

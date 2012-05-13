@@ -12,7 +12,7 @@ namespace http
 	{
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -28,7 +28,7 @@ namespace http
 
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 
 		return *this;
 	}
@@ -38,7 +38,7 @@ namespace http
 	{
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 
 		return _buffer->offset() + (_position - _buffer->begin());
 	}
@@ -70,12 +70,14 @@ namespace http
 
 		if(_buffer->end() == _position)
 		{
-			_buffer = _buffer->next();
-			assert(_buffer);
-
-			_position = _buffer->begin();
-			assert(_position >= _buffer->begin());
-			assert(_position < _buffer->end());
+			impl::InputMessageBuffer *next = _buffer->next();
+			if(next)
+			{
+				_buffer = next;
+				_position = _buffer->begin();
+				assert(_position >= _buffer->begin());
+				assert(_position < _buffer->end());
+			}
 		}
 	}
 
@@ -84,7 +86,7 @@ namespace http
 	{
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 
 		if(_buffer->begin() == _position)
 		{
@@ -106,7 +108,7 @@ namespace http
 	{
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 
 		while(n>0)
 		{
@@ -118,12 +120,18 @@ namespace http
 			}
 			n -= distInThisBuffer;
 
-			_buffer = _buffer->next();
-			assert(_buffer);
-
-			_position = _buffer->begin();
-			assert(_position >= _buffer->begin());
-			assert(_position < _buffer->end());
+			impl::InputMessageBuffer *next = _buffer->next();
+			if(next)
+			{
+				_buffer = _buffer->next();
+				_position = _buffer->begin();
+				assert(_position >= _buffer->begin());
+				assert(_position < _buffer->end());
+			}
+			else
+			{
+				assert(!n);
+			}
 		}
 
 		assert(0 >= n);
@@ -165,7 +173,7 @@ namespace http
 	{
 		assert(_buffer);
 		assert(_position >= _buffer->begin());
-		assert(_position < _buffer->end());
+		assert(_position <= _buffer->end());
 	}
 
 
@@ -178,7 +186,8 @@ namespace http
 
 
 	//////////////////////////////////////////////////////////////////////////
-	InputMessage::InputMessage()
+	InputMessage::InputMessage(ImplPtr impl)
+		: _impl(impl)
 	{
 	}
 

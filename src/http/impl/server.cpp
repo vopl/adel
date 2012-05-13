@@ -174,7 +174,7 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void Server::onRequest_f(http::server::impl::RequestPtr requestImpl)
 	{
-		Request request = utils::ImplAccess<Request>(requestImpl);
+		Request request(requestImpl);
 
 		if(	!request.readFirstLine() ||
 			!request.readHeaders())

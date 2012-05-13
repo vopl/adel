@@ -24,21 +24,19 @@ namespace http { namespace server { namespace impl
 
 	//////////////////////////////////////////////////////////////////////////
 	Request::Request(const http::impl::ServerPtr &server, const net::Channel &channel)
+		: http::impl::InputMessage(channel, server->requestReadGranula())
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	Request::~Request()
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	RequestPtr Request::shared_from_this()
 	{
-		assert(0);
-		return RequestPtr();
+		return boost::static_pointer_cast<Request>(http::impl::InputMessage::shared_from_this());
 	}
 
 	//////////////////////////////////////////////////////////////////////////

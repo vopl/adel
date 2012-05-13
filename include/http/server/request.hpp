@@ -22,10 +22,8 @@ namespace http { namespace server
 		typedef impl::RequestPtr ImplPtr;
 		ImplPtr _impl;
 
-	protected:
-		Request();
-
 	public:
+		Request(ImplPtr impl);
 		~Request();
 
 		//method uri version
