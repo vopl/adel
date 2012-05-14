@@ -48,8 +48,9 @@ namespace http { namespace server { namespace impl
 
 		if(_keepAlive)
 		{
+			RequestPtr r = _request->shared_from_this();
 			_request->reinit();
-			_server->onRequest(_request->shared_from_this());
+			_server->onRequest(r);
 			//_channel.close();
 		}
 		else

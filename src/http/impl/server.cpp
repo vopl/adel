@@ -179,6 +179,7 @@ namespace http { namespace impl
 		if(	!request.readFirstLine() ||
 			!request.readHeaders())
 		{
+			//connection lost? ok
 			return;
 		}
 
@@ -195,6 +196,7 @@ namespace http { namespace impl
 					!response.bodyFlush())
 				{
 					//connection lost? ok
+					return;
 				}
 			}
 			return;
@@ -207,6 +209,7 @@ namespace http { namespace impl
 					!response.bodyFlush())
 				{
 					//connection lost? ok
+					return;
 				}
 			}
 			return;
@@ -222,6 +225,7 @@ namespace http { namespace impl
 				if(!response.flush())
 				{
 					//connection lost? ok
+					return;
 				}
 			}*/
 

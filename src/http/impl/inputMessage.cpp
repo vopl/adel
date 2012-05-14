@@ -202,6 +202,7 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void InputMessage::reinit()
 	{
+		_em = em_firstLine;
 		_bufferAccumuler->dropFront(_readedPos);
 		_contentFilter = _bufferAccumuler;
 		_readedPos = Iterator();
