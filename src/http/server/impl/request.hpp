@@ -49,7 +49,7 @@ namespace http { namespace server { namespace impl
 		const Segment &path() const;
 		const Segment &queryString() const;
 
-		ResponsePtr response();
+		const ResponsePtr &response();
 
 		void reinit();
 

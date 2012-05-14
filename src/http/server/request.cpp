@@ -8,7 +8,7 @@ namespace http { namespace server
 {
 
 	//////////////////////////////////////////////////////////////
-	Request::Request(ImplPtr impl)
+	Request::Request(const ImplPtr &impl)
 		: _impl(impl)
 		, http::InputMessage(impl)
 	{

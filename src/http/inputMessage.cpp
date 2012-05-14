@@ -202,7 +202,7 @@ namespace http
 
 
 	//////////////////////////////////////////////////////////////////////////
-	InputMessage::InputMessage(ImplPtr impl)
+	InputMessage::InputMessage(const ImplPtr &impl)
 		: _impl(impl)
 	{
 	}

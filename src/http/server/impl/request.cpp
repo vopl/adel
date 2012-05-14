@@ -152,7 +152,7 @@ namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	ResponsePtr Request::response()
+	const ResponsePtr &Request::response()
 	{
 		if(!_response)
 		{

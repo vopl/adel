@@ -85,7 +85,7 @@ namespace http
 
 
 	//////////////////////////////////////////////////////////////////////////
-	OutputMessage::OutputMessage(ImplPtr impl)
+	OutputMessage::OutputMessage(const ImplPtr &impl)
 		: _impl(impl)
 	{
 	}

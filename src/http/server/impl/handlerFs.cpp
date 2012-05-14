@@ -90,7 +90,7 @@ namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void HandlerFs::onRequest(http::server::Request r)
+	void HandlerFs::onRequest(http::server::Request &r)
 	{
 		path originalPath = std::string(r.path().begin(), r.path().end());
 

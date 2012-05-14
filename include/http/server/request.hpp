@@ -23,7 +23,7 @@ namespace http { namespace server
 		ImplPtr _impl;
 
 	public:
-		Request(ImplPtr impl);
+		Request(const ImplPtr &impl);
 		~Request();
 
 		bool readFirstLine();

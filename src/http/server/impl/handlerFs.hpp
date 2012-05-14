@@ -17,7 +17,7 @@ namespace http { namespace server { namespace impl
 		HandlerFs(utils::OptionsPtr options);
 		~HandlerFs();
 
-		void onRequest(http::server::Request r);
+		void onRequest(http::server::Request &r);
 
 	private:
 		boost::filesystem::path	_root;

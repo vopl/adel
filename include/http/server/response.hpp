@@ -26,7 +26,7 @@ namespace http { namespace server
 
 	private:
 		friend class http::server::Request;
-		Response(ImplPtr impl);
+		Response(const ImplPtr &impl);
 		Response();//without impl
 
 	public:

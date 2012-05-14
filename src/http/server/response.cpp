@@ -6,7 +6,7 @@ namespace http { namespace server
 {
 
 	/////////////////////////////////////////////////////////////////////
-	Response::Response(ImplPtr impl)
+	Response::Response(const ImplPtr &impl)
 		: OutputMessage(impl)
 		, _impl(impl)
 	{

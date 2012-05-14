@@ -56,7 +56,7 @@ namespace http
 		typedef boost::iterator_range<Iterator> Segment;
 
 	public:
-		InputMessage(ImplPtr impl);
+		InputMessage(const ImplPtr &impl);
 		~InputMessage();
 
 		bool isConnected() const;
