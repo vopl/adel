@@ -77,12 +77,14 @@ namespace net { namespace impl
 		{
 			Future<boost::system::error_code>		_res;
 			std::vector<boost::asio::const_buffer>	_buffers;
+			size_t									_size;
 			std::vector<Packet>						_packets4keep;
 
 			void swap(TSendIOV &with)
 			{
 				_res.swap(with._res);
 				_buffers.swap(with._buffers);
+				std::swap(_size, with._size);
 				_packets4keep.swap(with._packets4keep);
 			}
 		};

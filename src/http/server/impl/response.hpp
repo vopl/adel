@@ -45,7 +45,7 @@ namespace http { namespace server { namespace impl
 
 	private:
 		http::impl::ServerPtr	_server;
-		Request						*_request;
+		Request					*_request;
 
 	private:
 		Version				_version;

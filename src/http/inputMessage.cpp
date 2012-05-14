@@ -26,9 +26,9 @@ namespace http
 		_buffer = i._buffer;
 		_position = i._position;
 
-		assert(_buffer);
-		assert(_position >= _buffer->begin());
-		assert(_position <= _buffer->end());
+		//assert(_buffer);
+		//assert(_position >= _buffer->begin());
+		//assert(_position <= _buffer->end());
 
 		return *this;
 	}
@@ -41,6 +41,18 @@ namespace http
 		assert(_position <= _buffer->end());
 
 		return _buffer->offset() + (_position - _buffer->begin());
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	impl::InputMessageBuffer *InputMessage::Iterator::buffer() const
+	{
+		return _buffer;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	const char *InputMessage::Iterator::position() const
+	{
+		return _position;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -117,6 +129,10 @@ namespace http
 			{
 				_position += n;
 				return;
+			}
+			else
+			{
+				_position += distInThisBuffer;
 			}
 			n -= distInThisBuffer;
 

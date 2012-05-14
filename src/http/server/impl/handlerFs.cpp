@@ -222,6 +222,7 @@ namespace http { namespace server { namespace impl
 				if(!iter.bufferInc(bufSize))
 				{
 					//connection lost?
+					//assert(0);
 					break;
 				}
 				size -= bufSize;

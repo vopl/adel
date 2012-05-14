@@ -13,11 +13,7 @@
 #include <boost/spirit/include/qi_char.hpp>
 #include <boost/spirit/include/qi_lit.hpp>
 
-#include <boost/spirit/include/phoenix_statement.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
 #include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_container.hpp>
-#include <boost/spirit/include/phoenix_bind.hpp>
 
 namespace http { namespace server { namespace impl
 {
@@ -25,12 +21,86 @@ namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	Request::Request(const http::impl::ServerPtr &server, const net::Channel &channel)
 		: http::impl::InputMessage(channel, server->requestReadGranula())
+		, _method_(em_UNKNOWN)
+		, _version_(0,0)
+		, _server(server)
+		, _channel(channel)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	Request::~Request()
 	{
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		using namespace boost::spirit::qi;
+		symbols<char, EMethod> g_parserMethodInitier()
+		{
+			symbols<char, EMethod> p;
+			p.add("OPTIONS", em_OPTIONS);
+			p.add("GET", em_GET);
+			p.add("POST", em_POST);
+			p.add("HEAD", em_HEAD);
+			p.add("TRACE", em_TRACE);
+			p.add("PUT", em_PUT);
+			p.add("DELETE", em_DELETE);
+			p.add("CONNECT", em_CONNECT);
+			return p;
+		}
+		static const symbols<char, EMethod> g_parserMethod = g_parserMethodInitier();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	bool Request::readFirstLine()
+	{
+		if(!http::impl::InputMessage::readFirstLine())
+		{
+			return false;
+		}
+
+		using namespace boost::spirit::qi;
+		namespace qi = boost::spirit::qi;
+		namespace px = boost::phoenix;
+
+		Iterator iter = _firstLine.begin();
+		Iterator end = _firstLine.end();
+		bool parseResult = parse(iter, end,
+			raw[
+			    raw[
+			        g_parserMethod[px::ref(_method_) = qi::_1] |
+			        (*ascii::alpha)[px::ref(_method_) = em_UNKNOWN]
+				][px::ref(_method) = qi::_1] >>
+
+				' ' >>
+
+				raw[*(char_-char_(" ?"))][px::ref(_path) = qi::_1] >>
+					(
+						(
+							char_('?') >>
+							raw[*(char_-' ')][px::ref(_queryString) = qi::_1]
+						) |
+						raw[eps][px::ref(_queryString) = qi::_1]
+					)
+				][px::ref(_uri) = qi::_1] >>
+
+				" HTTP/" >>
+
+				raw[
+					digit[px::ref(_version_._hi) = qi::_1-'0'] >>
+					'.' >>
+					digit[px::ref(_version_._lo) = qi::_1-'0']
+				][px::ref(_version) = qi::_1]
+			);
+
+		if(!parseResult || iter!=end)
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -42,57 +112,72 @@ namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	const EMethod &Request::method_() const
 	{
-		assert(0);
-		return *(EMethod *)NULL;
+		return _method_;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Request::Segment &Request::method() const
 	{
-		assert(0);
-		return *(Request::Segment *)NULL;
+		return _method;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Version &Request::version_() const
 	{
-		assert(0);
-		return *(Version *)NULL;
+		return _version_;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Request::Segment &Request::version() const
 	{
-		assert(0);
-		return *(Request::Segment *)NULL;
+		return _version;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Request::Segment &Request::uri() const
 	{
-		assert(0);
-		return *(Request::Segment *)NULL;
+		return _uri;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Request::Segment &Request::path() const
 	{
-		assert(0);
-		return *(Request::Segment *)NULL;
+		return _path;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const Request::Segment &Request::queryString() const
 	{
-		assert(0);
-		return *(Request::Segment *)NULL;
+		return _queryString;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	ResponsePtr Request::response()
 	{
-		assert(0);
-		return ResponsePtr();
+		if(!_response)
+		{
+			_response.reset(new Response(_server, _channel, this));
+		}
+
+		return _response;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Request::reinit()
+	{
+		_method_ = em_UNKNOWN;
+		_method = Segment();
+
+		_version_ = Version(0,0);
+		_version = Segment();
+
+		_uri = Segment();
+		_path = Segment();
+		_queryString = Segment();
+
+		_response.reset();
+
+		return http::impl::InputMessage::reinit();
 	}
 
 }}}

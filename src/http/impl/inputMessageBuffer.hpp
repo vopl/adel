@@ -34,6 +34,10 @@ namespace http { namespace impl
 		void setNext(const InputMessageBufferPtr &b);
 		void setPrev(InputMessageBuffer *b);
 
+		void setBegin(const char *pos);
+		void setEnd(const char *pos);
+		void setOffset(size_t offset);
+
 	private:
 		size_t						_offset;
 		boost::shared_array<char>	_data;

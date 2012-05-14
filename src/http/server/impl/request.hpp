@@ -33,6 +33,9 @@ namespace http { namespace server { namespace impl
 
 		Request(const http::impl::ServerPtr &server, const net::Channel &channel);
 		~Request();
+
+		bool readFirstLine();
+
 		RequestPtr shared_from_this();
 		
 		//method uri version
@@ -47,6 +50,23 @@ namespace http { namespace server { namespace impl
 		const Segment &queryString() const;
 
 		ResponsePtr response();
+
+		void reinit();
+
+	private:
+		EMethod	_method_;
+		Segment	_method;
+
+		Version	_version_;
+		Segment	_version;
+
+		Segment	_uri;
+		Segment	_path;
+		Segment	_queryString;
+
+		http::impl::ServerPtr	_server;
+		net::Channel			_channel;
+		ResponsePtr				_response;
 	};
 }}}
 

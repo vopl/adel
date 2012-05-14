@@ -65,6 +65,7 @@ namespace http { namespace impl
 		bool readUntil(const char *tokenz, Segment &segment);
 
 	protected:
+		Iterator _readedPos;
 		Segment	_firstLine;
 		Segment	_headers;
 		Segment	_body;
@@ -77,16 +78,7 @@ namespace http { namespace impl
 			Segment _name_;
 			Segment _value_;
 		};
-		struct HVHash
-			: public std::unary_function<size_t, size_t>
-		{
-			const std::size_t &operator()(const size_t &v) const
-			{
-				return v;
-			}
-		};
-
-		typedef boost::unordered_map<size_t, SHeader, HVHash, std::equal_to<size_t> > TMHeaders;
+		typedef std::map<size_t, SHeader> TMHeaders;
 		TMHeaders _headersMap;
 	};
 

@@ -262,6 +262,7 @@ namespace net { namespace impl
 					return;
 				}
 
+				assert(writeRes.data2NoWait() == packet._size);
 				send._res(ec);
 			}
 			else
@@ -281,6 +282,7 @@ namespace net { namespace impl
 					return;
 				}
 
+				assert(writeRes.data2NoWait() == sendIOV._size);
 				sendIOV._res(ec);
 			}
 		}
@@ -368,10 +370,12 @@ namespace net { namespace impl
 		siov._res = res;
 
 		siov._buffers.reserve(buffers.size());
+		siov._size = 0;
 		for(size_t i(0); i<buffers.size(); i++)
 		{
 			const std::pair<const char *, size_t> &pb = buffers[i];
 			siov._buffers.push_back(buffer(pb.first, pb.second));
+			siov._size += pb.second;
 		}
 
 		siov._packets4keep = packets4keep;

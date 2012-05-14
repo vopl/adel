@@ -64,6 +64,28 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
+	void InputMessageBuffer::setBegin(const char *pos)
+	{
+		assert(_data);
+		assert(_data.get() <= pos);
+		_begin = pos;
+	}
+
+	////////////////////////////////////////////////////////////////
+	void InputMessageBuffer::setEnd(const char *pos)
+	{
+		assert(_data);
+		assert(_data.get() <= pos);
+		_end = pos;
+	}
+
+	////////////////////////////////////////////////////////////////
+	void InputMessageBuffer::setOffset(size_t offset)
+	{
+		_offset = offset;
+	}
+
+	////////////////////////////////////////////////////////////////
 	size_t InputMessageBuffer::size() const
 	{
 		return _end - _begin;

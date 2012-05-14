@@ -44,27 +44,10 @@ namespace http { namespace impl
 				return false;
 			}
 
-			TLOG("firstLine: _" <<std::string(_firstLine.begin(), _firstLine.end())<<"_");
+			_readedPos = _firstLine.end() + 2;
 			_em = em_headers;
 		}
 		return true;
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	namespace
-	{
-		using namespace boost::spirit::qi;
-		static const rule<InputMessage::Iterator> g_parserToken =
-				+(
-						char_ -
-						(
-								char_(0, 31) | char_(127) |
-								'(' | ')' | '<' | '>' | '@' |
-								',' | ';' | ':' | '\\' | '"' |
-								'/' | '[' | ']' | '?' | '=' |
-								'{' | '}' | ' ' | char_(9)
-						)
-				);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -80,9 +63,6 @@ namespace http { namespace impl
 
 		if(em_headers == _em)
 		{
-			Iterator begin(_firstLine.end()+2);
-			Iterator iter(begin);
-
 			std::pair<size_t, SHeader> hdr;
 
 			using namespace boost::spirit::qi;
@@ -91,39 +71,40 @@ namespace http { namespace impl
 
 			rule<InputMessage::Iterator> parser =
 				raw[
-					g_parserToken
+				    *(char_ - ':')
 				][px::ref(hdr.second._name_) = qi::_1] >>
 
-				':' >> *space >>
-
-				raw[
-					*char_
-				][px::ref(hdr.second._value_) = qi::_1]
+				':' >> *space
 			;
+
+			Iterator begin(_readedPos);
 
 			for(;;)
 			{
-				hdr.second._header_ = Segment(iter, _bufferAccumuler->end());
+				hdr.second._header_ = Segment(_readedPos, _bufferAccumuler->end());
 				if(!readUntil("\r\n", hdr.second._header_))
 				{
 					return false;
 				}
+				_readedPos = hdr.second._header_.end() + 2;
 
-				iter = hdr.second._header_.end()+2;
 				if(hdr.second._header_.empty())
 				{
 					break;
 				}
 
-				if(!parse(hdr.second._header_.begin(), hdr.second._header_.end(), parser))
+				Iterator piter = hdr.second._header_.begin();
+				if(!parse(piter, hdr.second._header_.end(), parser))
 				{
 					return false;
 				}
+				hdr.second._value_ = Segment(piter, hdr.second._header_.end());
 				hdr.first = http::hn::key(hdr.second._name_);
 				_headersMap.insert(hdr);
 			}
 
-			_headers = Segment(begin, iter);
+			begin--; begin++;
+			_headers = Segment(begin, _readedPos-2);
 			_em = em_body;
 		}
 
@@ -166,50 +147,49 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment &InputMessage::firstLine() const
 	{
-		assert(0);
-		return *(const InputMessage::Segment *)NULL;
+		return _firstLine;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment &InputMessage::headers() const
 	{
-		assert(0);
-		return *(const InputMessage::Segment *)NULL;
+		return _headers;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment *InputMessage::header(const HeaderName &name) const
 	{
-		assert(0);
-		return (const InputMessage::Segment *)NULL;
+		return header(name.key);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment *InputMessage::header(size_t key) const
 	{
-		assert(0);
-		return (const InputMessage::Segment *)NULL;
+		TMHeaders::const_iterator iter = _headersMap.find(key);
+		if(_headersMap.end() == iter)
+		{
+			return NULL;
+		}
+
+		return &iter->second._value_;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment *InputMessage::header(const std::string &name) const
 	{
-		assert(0);
-		return (const InputMessage::Segment *)NULL;
+		return header(http::hn::key(name));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment *InputMessage::header(const char *name, size_t nameSize) const
 	{
-		assert(0);
-		return (const InputMessage::Segment *)NULL;
+		return header(http::hn::key(name, nameSize));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment *InputMessage::header(const char *namez) const
 	{
-		assert(0);
-		return (const InputMessage::Segment *)NULL;
+		return header(http::hn::key(namez));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -222,7 +202,13 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void InputMessage::reinit()
 	{
-		assert(0);
+		_bufferAccumuler->dropFront(_readedPos);
+		_contentFilter = _bufferAccumuler;
+		_readedPos = Iterator();
+		_firstLine = Segment();
+		_headers = Segment();
+		_body = Segment();
+		_headersMap.clear();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -278,12 +264,12 @@ namespace http { namespace impl
 		class TokFinder
 		{
 			const char	*_tokenz;
-			size_t		_pos;
-			InputMessage::Iterator _iter;
+			size_t		_tokenPos;
+			InputMessage::Iterator _begin;
 		public:
 			TokFinder(const char *tokenz)
 				: _tokenz(tokenz)
-				, _pos(0)
+				, _tokenPos(0)
 			{
 			}
 			bool find(InputMessage::Segment &segment)
@@ -292,22 +278,22 @@ namespace http { namespace impl
 				InputMessage::Iterator end(segment.end());
 				for(; iter!=end; ++iter)
 				{
-					if(_tokenz[_pos] == *iter)
+					if(_tokenz[_tokenPos] == *iter)
 					{
-						if(!_pos)
+						if(!_tokenPos)
 						{
-							_iter = iter;
+							_begin = iter;
 						}
-						_pos++;
-						if(!_tokenz[_pos])
+						_tokenPos++;
+						if(!_tokenz[_tokenPos])
 						{
-							segment = InputMessage::Segment(_iter, segment.end());
+							segment = InputMessage::Segment(_begin, ++iter);
 							return true;
 						}
 					}
 					else
 					{
-						_pos = 0;
+						_tokenPos = 0;
 					}
 				}
 				segment = InputMessage::Segment(segment.end(), segment.end());

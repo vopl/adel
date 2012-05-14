@@ -36,6 +36,9 @@ namespace http
 			Iterator &operator=(const Iterator &i);
 			size_type absolutePosition() const;
 
+			impl::InputMessageBuffer	*buffer() const;
+			const char					*position() const;
+
 		private:
 			friend class boost::iterator_core_access;
 

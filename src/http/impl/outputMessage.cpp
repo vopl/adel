@@ -273,6 +273,7 @@ namespace http { namespace impl
 			}
 
 			size -= writeSize;
+			data += writeSize;
 		}
 		return true;
 	}

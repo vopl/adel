@@ -22,6 +22,12 @@ namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
+	bool Request::readFirstLine()
+	{
+		return _impl->readFirstLine();
+	}
+
+	//////////////////////////////////////////////////////////////
 	const EMethod &Request::method_() const
 	{
 		return _impl->method_();

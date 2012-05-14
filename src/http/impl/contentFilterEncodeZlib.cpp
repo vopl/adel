@@ -214,7 +214,7 @@ namespace http { namespace impl
 						break;
 					case Z_STREAM_END:
 						_output._size = _outputOffset;
-						if(!_upstream->filterPush(_output))
+						if(_output._size && !_upstream->filterPush(_output))
 						{
 							return false;
 						}

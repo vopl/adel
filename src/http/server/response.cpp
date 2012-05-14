@@ -43,4 +43,10 @@ namespace http { namespace server
 		return _impl->setContentCompress(level);
 	}
 
+	/////////////////////////////////////////////////////////////////////
+	bool Response::bodyFlush()
+	{
+		return _impl->bodyFlush();
+	}
+
 }}

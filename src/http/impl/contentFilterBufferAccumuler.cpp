@@ -78,4 +78,69 @@ namespace http { namespace impl
 		return http::InputMessage::Iterator(buf, buf->end());
 	}
 
+	////////////////////////////////////////////////////////////////
+	void ContentFilterBufferAccumuler::dropFront(const http::InputMessage::Iterator &pos)
+	{
+		if(!_first)
+		{
+			assert(0);
+			return;
+		}
+
+		InputMessageBuffer *boundBuffer = pos.buffer();
+		const char *boundPosition = pos.position();
+		assert(boundBuffer);
+		assert(boundPosition);
+
+		while(boundBuffer != _first.get())
+		{
+			assert(_first);
+			_size -= _first->size();
+			if(_first->next())
+			{
+				_first->next()->setPrev(NULL);
+				_first = _first->next()->shared_from_this();
+			}
+			else
+			{
+				_first.reset();
+				_last = NULL;
+			}
+		}
+		assert(_first.get() == boundBuffer);
+		assert(_first->begin() <= boundPosition);
+		assert(_first->end() >= boundPosition);
+
+		if(_first->end() == boundPosition)
+		{
+			_size -= _first->size();
+			if(_first->next())
+			{
+				_first->next()->setPrev(NULL);
+				_first = _first->next()->shared_from_this();
+			}
+			else
+			{
+				_first.reset();
+				_last = NULL;
+			}
+		}
+		else
+		{
+			_size -= boundPosition - _first->begin();
+			_first->setBegin(boundPosition);
+		}
+
+		InputMessageBuffer *buffer = _first.get();
+		size_t offset=0;
+		while(buffer)
+		{
+			buffer->setOffset(offset);
+			offset += buffer->size();
+			buffer = buffer->next();
+		}
+
+		assert(offset == _size);
+	}
+
 }}

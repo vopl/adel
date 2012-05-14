@@ -26,6 +26,8 @@ namespace http { namespace server
 		Request(ImplPtr impl);
 		~Request();
 
+		bool readFirstLine();
+
 		//method uri version
 		const EMethod &method_() const;
 		const Segment &method() const;

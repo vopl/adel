@@ -36,6 +36,8 @@ namespace http { namespace server
 		bool firstLine(const EStatusCode &statusCode);
 		void setContentLength(size_t size);
 		void setContentCompress(int level);
+
+		bool bodyFlush();
 	};
 }}
 
