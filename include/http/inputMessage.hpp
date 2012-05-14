@@ -30,6 +30,7 @@ namespace http
 		public:
 			Iterator();//endInfinity
 			Iterator(const Iterator &i);
+			Iterator(impl::InputMessageBuffer *buffer, const char *position);//normal
 			~Iterator();
 
 			Iterator &operator=(const Iterator &i);
@@ -45,9 +46,6 @@ namespace http
 			void advance(difference_type n);
 			difference_type distance_to(const Iterator &i) const;
 
-		private:
-			friend class impl::InputMessage;
-			Iterator(impl::InputMessageBuffer *buffer, const char *position);//normal
 		private:
 			impl::InputMessageBuffer	*_buffer;
 			const char					*_position;

@@ -3,6 +3,7 @@
 
 #include "http/impl/contentFilter.hpp"
 #include "http/impl/inputMessageBuffer.hpp"
+#include "http/inputMessage.hpp"
 
 namespace http { namespace impl
 {
@@ -18,6 +19,9 @@ namespace http { namespace impl
 
 		InputMessageBuffer	*firstBuffer();
 		InputMessageBuffer	*lastBuffer();
+
+		http::InputMessage::Iterator	begin();
+		http::InputMessage::Iterator	end();
 
 	private:
 		InputMessageBufferPtr	_first;

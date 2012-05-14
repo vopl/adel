@@ -63,4 +63,19 @@ namespace http { namespace impl
 	{
 		return _last;
 	}
+
+	////////////////////////////////////////////////////////////////
+	http::InputMessage::Iterator ContentFilterBufferAccumuler::begin()
+	{
+		InputMessageBuffer	*buf = firstBuffer();
+		return http::InputMessage::Iterator(buf, buf->begin());
+	}
+
+	////////////////////////////////////////////////////////////////
+	http::InputMessage::Iterator ContentFilterBufferAccumuler::end()
+	{
+		InputMessageBuffer	*buf = lastBuffer();
+		return http::InputMessage::Iterator(buf, buf->end());
+	}
+
 }}

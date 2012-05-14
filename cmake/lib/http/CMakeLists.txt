@@ -131,6 +131,11 @@ if(NOT ZLIB_FOUND)
 endif()
 include_directories(${ZLIB_INCLUDE_DIR})
 
+include(FindOpenSSL)
+if(NOT OPENSSL_FOUND)
+	message(FATAL_ERROR "OpenSSL required")
+endif()
+include_directories(${OPENSSL_INCLUDE_DIR})
 
 include_directories(${PSRC})
 

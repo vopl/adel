@@ -1,6 +1,15 @@
 #include "pch.hpp"
 #include "http/impl/inputMessage.hpp"
 #include "http/log.hpp"
+#include "http/method.hpp"
+#include "http/headerName.hpp"
+
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/qi_string.hpp>
+#include <boost/spirit/include/qi_char.hpp>
+#include <boost/spirit/include/qi_lit.hpp>
+
+#include <boost/spirit/include/phoenix_core.hpp>
 
 namespace http { namespace impl
 {
@@ -42,6 +51,23 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		using namespace boost::spirit::qi;
+		static const rule<InputMessage::Iterator> g_parserToken =
+				+(
+						char_ -
+						(
+								char_(0, 31) | char_(127) |
+								'(' | ')' | '<' | '>' | '@' |
+								',' | ';' | ':' | '\\' | '"' |
+								'/' | '[' | ']' | '?' | '=' |
+								'{' | '}' | ' ' | char_(9)
+						)
+				);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	bool InputMessage::readHeaders()
 	{
 		if(em_headers > _em)
@@ -54,22 +80,50 @@ namespace http { namespace impl
 
 		if(em_headers == _em)
 		{
-			//TODO: заголовки брать поштучно и распихивать в _headersMap
-			_headers = Segment(
-				_firstLine.end()+2,
-				Iterator(
-					_bufferAccumuler->lastBuffer(),
-					_bufferAccumuler->lastBuffer()->end()
-				)
-			);
+			Iterator begin(_firstLine.end()+2);
+			Iterator iter(begin);
 
-			TLOG("headers pre: _" <<std::string(_headers.begin(), _headers.end())<<"_");
-			if(!readUntil("\r\n\r\n", _headers))
+			std::pair<size_t, SHeader> hdr;
+
+			using namespace boost::spirit::qi;
+			namespace qi = boost::spirit::qi;
+			namespace px = boost::phoenix;
+
+			rule<InputMessage::Iterator> parser =
+				raw[
+					g_parserToken
+				][px::ref(hdr.second._name_) = qi::_1] >>
+
+				':' >> *space >>
+
+				raw[
+					*char_
+				][px::ref(hdr.second._value_) = qi::_1]
+			;
+
+			for(;;)
 			{
-				return false;
+				hdr.second._header_ = Segment(iter, _bufferAccumuler->end());
+				if(!readUntil("\r\n", hdr.second._header_))
+				{
+					return false;
+				}
+
+				iter = hdr.second._header_.end()+2;
+				if(hdr.second._header_.empty())
+				{
+					break;
+				}
+
+				if(!parse(hdr.second._header_.begin(), hdr.second._header_.end(), parser))
+				{
+					return false;
+				}
+				hdr.first = http::hn::key(hdr.second._name_);
+				_headersMap.insert(hdr);
 			}
-			_headers = Segment(_headers.begin(), _headers.end()+2);
-			TLOG("headers: _" <<std::string(_headers.begin(), _headers.end())<<"_");
+
+			_headers = Segment(begin, iter);
 			_em = em_body;
 		}
 

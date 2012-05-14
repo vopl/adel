@@ -10,9 +10,9 @@ namespace http
 		: _buffer(i._buffer)
 		, _position(i._position)
 	{
-		assert(_buffer);
-		assert(_position >= _buffer->begin());
-		assert(_position <= _buffer->end());
+		//assert(_buffer);
+		//assert(_position >= _buffer->begin());
+		//assert(_position <= _buffer->end());
 	}
 
 	//////////////////////////////////////////////////////////////////////////
