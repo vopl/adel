@@ -14,8 +14,8 @@ namespace http { namespace impl
 		ContentFilterBufferAccumuler();
 		~ContentFilterBufferAccumuler();
 
-		virtual bool filterPush(const net::Packet &packet, size_t offset=0);
-		virtual bool filterFlush();
+		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code filterFlush();
 
 		InputMessageBuffer	*firstBuffer();
 		InputMessageBuffer	*lastBuffer();

@@ -219,19 +219,19 @@ namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readFirstLine()
+	boost::system::error_code InputMessage::readFirstLine()
 	{
 		return _impl->readFirstLine();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readHeaders()
+	boost::system::error_code InputMessage::readHeaders()
 	{
 		return _impl->readHeaders();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readBody()
+	boost::system::error_code InputMessage::readBody()
 	{
 		return _impl->readBody();
 	}

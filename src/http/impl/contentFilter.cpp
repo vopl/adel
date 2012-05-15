@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "http/impl/contentFilter.hpp"
+#include "http/error.hpp"
 
 
 namespace http { namespace impl
@@ -15,17 +16,17 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilter::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilter::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"must be reimplemented");
-		return false;
+		return http::error::make(http::error::not_implemented);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilter::filterFlush()
+	boost::system::error_code ContentFilter::filterFlush()
 	{
 		assert(!"must be reimplemented");
-		return false;
+		return http::error::make(http::error::not_implemented);
 	}
 
 }}

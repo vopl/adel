@@ -22,6 +22,7 @@ set(INCLUDE
 	${PINC}/connection.hpp
 	${PINC}/headerValue.hpp
 	${PINC}/headerName.hpp
+	${PINC}/error.hpp
 )
 source_group(include FILES ${INCLUDE})
 

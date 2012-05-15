@@ -12,8 +12,8 @@ namespace http { namespace impl
 		ContentFilterEncodeChunked(ContentFilterPtr upstream, size_t granula);
 		virtual ~ContentFilterEncodeChunked();
 
-		virtual bool filterPush(const net::Packet &packet, size_t offset=0);
-		virtual bool filterFlush();
+		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code filterFlush();
 
 	protected:
 		struct SChunk
@@ -27,7 +27,7 @@ namespace http { namespace impl
 		std::vector<SChunk>	_chunks;
 		size_t				_size;
 	protected:
-		bool push2Upstream(bool finish = false);
+		boost::system::error_code push2Upstream(bool finish = false);
 	};
 	typedef boost::shared_ptr<ContentFilterEncodeChunked> ContentFilterEncodeChunkedPtr;
 }}

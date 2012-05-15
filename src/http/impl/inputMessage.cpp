@@ -3,6 +3,7 @@
 #include "http/log.hpp"
 #include "http/method.hpp"
 #include "http/headerName.hpp"
+#include "http/error.hpp"
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_string.hpp>
@@ -35,29 +36,31 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readFirstLine()
+	boost::system::error_code InputMessage::readFirstLine()
 	{
 		if(em_firstLine == _em)
 		{
-			if(!readUntil("\r\n", _firstLine))
+			boost::system::error_code ec;
+			if((ec = readUntil("\r\n", _firstLine)))
 			{
-				return false;
+				return ec;
 			}
 
 			_readedPos = _firstLine.end() + 2;
 			_em = em_headers;
 		}
-		return true;
+		return http::error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readHeaders()
+	boost::system::error_code InputMessage::readHeaders()
 	{
+		boost::system::error_code ec;
 		if(em_headers > _em)
 		{
-			if(!readFirstLine())
+			if((ec = readFirstLine()))
 			{
-				return false;
+				return ec;
 			}
 		}
 
@@ -82,9 +85,9 @@ namespace http { namespace impl
 			for(;;)
 			{
 				hdr.second._header_ = Segment(_readedPos, _bufferAccumuler->end());
-				if(!readUntil("\r\n", hdr.second._header_))
+				if((ec = readUntil("\r\n", hdr.second._header_)))
 				{
-					return false;
+					return ec;
 				}
 				_readedPos = hdr.second._header_.end() + 2;
 
@@ -96,7 +99,7 @@ namespace http { namespace impl
 				Iterator piter = hdr.second._header_.begin();
 				if(!parse(piter, hdr.second._header_.end(), parser))
 				{
-					return false;
+					return http::error::make(http::error::invalid_message);
 				}
 				hdr.second._value_ = Segment(piter, hdr.second._header_.end());
 				hdr.first = http::hn::key(hdr.second._name_);
@@ -108,19 +111,20 @@ namespace http { namespace impl
 			_em = em_body;
 		}
 
-		return true;
+		return http::error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readBody()
+	boost::system::error_code InputMessage::readBody()
 	{
 		assert(!"not impl");
 
+		boost::system::error_code ec;
 		if(em_body > _em)
 		{
-			if(!readHeaders())
+			if((ec = readHeaders()))
 			{
-				return false;
+				return ec;
 			}
 		}
 
@@ -134,14 +138,14 @@ namespace http { namespace impl
 			_em = em_done;
 		}
 
-		return true;
+		return http::error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::ignoreBody()
+	boost::system::error_code InputMessage::ignoreBody()
 	{
 		assert(0);
-		return false;
+		return http::error::make(http::error::not_implemented);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -213,10 +217,11 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readBuffer(Segment *segment)
+	boost::system::error_code InputMessage::readBuffer(Segment *segment)
 	{
 		InputMessageBuffer 	*lastBuffer = _bufferAccumuler->lastBuffer();
 
+		boost::system::error_code ec;
 		do
 		{
 			async::Future2<boost::system::error_code, net::Packet> res =
@@ -226,12 +231,12 @@ namespace http { namespace impl
 
 			if(res.data1NoWait())
 			{
-				return false;
+				return res.data1NoWait();
 			}
 
-			if(!_contentFilter->filterPush(res.data2NoWait(), 0))
+			if((ec = _contentFilter->filterPush(res.data2NoWait(), 0)))
 			{
-				return false;
+				return ec;
 			}
 		}
 		while(lastBuffer == _bufferAccumuler->lastBuffer());
@@ -256,7 +261,7 @@ namespace http { namespace impl
 			}
 		}
 
-		return true;
+		return http::error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -304,7 +309,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool InputMessage::readUntil(const char *tokenz, Segment &segment)
+	boost::system::error_code InputMessage::readUntil(const char *tokenz, Segment &segment)
 	{
 		TokFinder tf(tokenz);
 
@@ -314,16 +319,17 @@ namespace http { namespace impl
 			if(tf.find(lseg))
 			{
 				segment = Segment(segment.begin(), lseg.begin());
-				return true;
+				return http::error::make();
 			}
 		}
 
+		boost::system::error_code ec;
 		for(;;)
 		{
 			Segment lseg;
-			if(!readBuffer(&lseg))
+			if((ec = readBuffer(&lseg)))
 			{
-				return false;
+				return ec;
 			}
 			if(segment.empty())
 			{
@@ -332,12 +338,12 @@ namespace http { namespace impl
 			if(tf.find(lseg))
 			{
 				segment = Segment(segment.begin(), lseg.begin());
-				return true;
+				return http::error::make();
 			}
 		}
 
 		assert(!"never here");
-		return true;
+		return http::error::make(http::error::unexpected);
 	}
 
 }}

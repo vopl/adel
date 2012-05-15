@@ -23,10 +23,10 @@ namespace http { namespace impl
 
 		bool isConnected() const;
 
-		bool readFirstLine();
-		bool readHeaders();
-		bool readBody();
-		bool ignoreBody();
+		boost::system::error_code readFirstLine();
+		boost::system::error_code readHeaders();
+		boost::system::error_code readBody();
+		boost::system::error_code ignoreBody();
 
 
 		//requestLine, responseLine
@@ -58,11 +58,11 @@ namespace http { namespace impl
 		} _em;
 
 	protected:
-		bool readBuffer(Segment *segment);
+		boost::system::error_code readBuffer(Segment *segment);
 		ContentFilterBufferAccumulerPtr	_bufferAccumuler;
 		ContentFilterPtr				_contentFilter;
 
-		bool readUntil(const char *tokenz, Segment &segment);
+		boost::system::error_code readUntil(const char *tokenz, Segment &segment);
 
 	protected:
 		Iterator _readedPos;

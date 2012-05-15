@@ -34,7 +34,7 @@ namespace http { namespace server { namespace impl
 		Request(const http::impl::ServerPtr &server, const net::Channel &channel);
 		~Request();
 
-		bool readFirstLine();
+		boost::system::error_code readFirstLine();
 
 		RequestPtr shared_from_this();
 		

@@ -26,7 +26,7 @@ namespace http { namespace server
 		Request(const ImplPtr &impl);
 		~Request();
 
-		bool readFirstLine();
+		boost::system::error_code readFirstLine();
 
 		//method uri version
 		const EMethod &method_() const;

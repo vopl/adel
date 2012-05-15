@@ -35,11 +35,11 @@ namespace http { namespace server { namespace impl
 		Response(const http::impl::ServerPtr &server, const net::Channel &channel, Request *request);
 		~Response();
 
-		bool bodyFlush();
+		boost::system::error_code bodyFlush();
 
 
-		bool firstLine(const Version &version, const EStatusCode &statusCode);
-		bool firstLine(const EStatusCode &statusCode);
+		boost::system::error_code firstLine(const Version &version, const EStatusCode &statusCode);
+		boost::system::error_code firstLine(const EStatusCode &statusCode);
 		void setContentLength(size_t size);
 		void setContentCompress(int level);
 
@@ -58,8 +58,8 @@ namespace http { namespace server { namespace impl
 		int					_contentEncodingCompressLevel;
 
 	private:
-		virtual bool writeSystemHeaders();
-		virtual bool setupBodyFilters();
+		virtual boost::system::error_code writeSystemHeaders();
+		virtual boost::system::error_code setupBodyFilters();
 	};
 
 }}}

@@ -14,8 +14,8 @@ namespace http { namespace impl
 		ContentFilterEncodeZlib(ContentFilterPtr upstream, EContentEncoding ece, int level, size_t granula);
 		virtual ~ContentFilterEncodeZlib();
 
-		virtual bool filterPush(const net::Packet &packet, size_t offset=0);
-		virtual bool filterFlush();
+		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code filterFlush();
 
 	protected:
 		ContentFilterPtr	_upstream;

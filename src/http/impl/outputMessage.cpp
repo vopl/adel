@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "http/impl/outputMessage.hpp"
 #include "http/impl/contentFilterChannelWriter.hpp"
+#include "http/error.hpp"
 
 namespace http { namespace impl
 {
@@ -31,45 +32,49 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////
 	OutputMessage::Iterator	OutputMessage::firstLineIterator()
 	{
-		if(!ensureMode(em_firstLine))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_firstLine)))
 		{
-			return false;
+			return iterator();
 		}
 		return iterator();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::firstLine(const char *data, size_t size)
+	boost::system::error_code OutputMessage::firstLine(const char *data, size_t size)
 	{
-		if(!ensureMode(em_firstLine))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_firstLine)))
 		{
-			return false;
+			return ec;
 		}
 		return write(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::firstLine(const char *dataz)
+	boost::system::error_code OutputMessage::firstLine(const char *dataz)
 	{
-		if(!ensureMode(em_firstLine))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_firstLine)))
 		{
-			return false;
+			return ec;
 		}
 		return write(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::firstLine(const std::string &data)
+	boost::system::error_code OutputMessage::firstLine(const std::string &data)
 	{
-		if(!ensureMode(em_firstLine))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_firstLine)))
 		{
-			return false;
+			return ec;
 		}
 		return write(data);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::firstLineFlush()
+	boost::system::error_code OutputMessage::firstLineFlush()
 	{
 		return ensureMode(em_headers);
 	}
@@ -77,94 +82,98 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////
 	OutputMessage::Iterator OutputMessage::headersIterator()
 	{
-		bool b = ensureMode(em_headers);
-		assert(b);
-		(void)b;
+		boost::system::error_code ec = ensureMode(em_headers);
+		assert(!ec);
+		(void)ec;
 		return iterator();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const char *data, size_t size)
+	boost::system::error_code OutputMessage::header(const char *data, size_t size)
 	{
-		if(!ensureMode(em_headers))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_headers)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(data, size))
+		if((ec = write(data, size)))
 		{
-			return false;
+			return ec;
 		}
 		return write("\r\n", 2);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const char *dataz)
+	boost::system::error_code OutputMessage::header(const char *dataz)
 	{
-		if(!ensureMode(em_headers))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_headers)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(dataz))
+		if((ec = write(dataz)))
 		{
-			return false;
+			return ec;
 		}
 		return write("\r\n", 2);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const std::string &data)
+	boost::system::error_code OutputMessage::header(const std::string &data)
 	{
-		if(!ensureMode(em_headers))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_headers)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(data))
+		if((ec = write(data)))
 		{
-			return false;
+			return ec;
 		}
 		return write("\r\n", 2);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const HeaderName &name, const std::string &value)
+	boost::system::error_code OutputMessage::header(const HeaderName &name, const std::string &value)
 	{
 		return header(name, value.data(), value.size());
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const HeaderName &name, const char *value, size_t valueSize)
+	boost::system::error_code OutputMessage::header(const HeaderName &name, const char *value, size_t valueSize)
 	{
-		if(!ensureMode(em_headers))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_headers)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(name.str))
+		if((ec = write(name.str)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(": ", 2))
+		if((ec = write(": ", 2)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write(value, valueSize))
+		if((ec = write(value, valueSize)))
 		{
-			return false;
+			return ec;
 		}
-		if(!write("\r\n", 2))
+		if((ec = write("\r\n", 2)))
 		{
-			return false;
+			return ec;
 		}
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::header(const HeaderName &name, const char *valuez)
+	boost::system::error_code OutputMessage::header(const HeaderName &name, const char *valuez)
 	{
 		return header(name, valuez, strlen(valuez));
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::headersFlush()
+	boost::system::error_code OutputMessage::headersFlush()
 	{
 		return ensureMode(em_body);
 	}
@@ -172,61 +181,65 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////
 	OutputMessage::Iterator OutputMessage::bodyIterator()
 	{
-		bool b = ensureMode(em_body);
-		assert(b);
-		(void)b;
+		boost::system::error_code ec = ensureMode(em_body);
+		assert(!ec);
+		(void)ec;
 		return iterator();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::body(const char *data, size_t size)
+	boost::system::error_code OutputMessage::body(const char *data, size_t size)
 	{
-		if(!ensureMode(em_body))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_body)))
 		{
-			return false;
+			return ec;
 		}
 		return write(data, size);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::body(const char *dataz)
+	boost::system::error_code OutputMessage::body(const char *dataz)
 	{
-		if(!ensureMode(em_body))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_body)))
 		{
-			return false;
+			return ec;
 		}
 		return write(dataz);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::body(const std::string &data)
+	boost::system::error_code OutputMessage::body(const std::string &data)
 	{
-		if(!ensureMode(em_body))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_body)))
 		{
-			return false;
+			return ec;
 		}
 		return write(data);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::bodyFlush()
+	boost::system::error_code OutputMessage::bodyFlush()
 	{
-		if(!ensureMode(em_body))
+		boost::system::error_code ec;
+		if((ec = ensureMode(em_body)))
 		{
-			return false;
+			return ec;
 		}
 
-		if(!bufferFlush())
+		if((ec = bufferFlush()))
 		{
-			return false;
+			return ec;
 		}
 
-		if(!_contentFilter->filterFlush())
+		if((ec = _contentFilter->filterFlush()))
 		{
-			return false;
+			return ec;
 		}
 		_mode = em_firstLine;
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
@@ -245,7 +258,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::bufferInc(size_t size)
+	boost::system::error_code OutputMessage::bufferInc(size_t size)
 	{
 		assert(_writePosition);
 		_writePosition += size;
@@ -254,12 +267,13 @@ namespace http { namespace impl
 		{
 			return bufferNext();
 		}
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::write(const char *data, size_t size)
+	boost::system::error_code OutputMessage::write(const char *data, size_t size)
 	{
+		boost::system::error_code ec;
 		while(size)
 		{
 			size_t writeSize = size;
@@ -267,25 +281,25 @@ namespace http { namespace impl
 
 			assert(writeSize && writeSize <= size);
 			memcpy(buf, data, writeSize);
-			if(!bufferInc(writeSize))
+			if((ec = bufferInc(writeSize)))
 			{
-				return false;
+				return ec;
 			}
 
 			size -= writeSize;
 			data += writeSize;
 		}
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::write(const char *dataz)
+	boost::system::error_code OutputMessage::write(const char *dataz)
 	{
 		return write(dataz, strlen(dataz));
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::write(const std::string &data)
+	boost::system::error_code OutputMessage::write(const std::string &data)
 	{
 		return write(data.data(), data.size());
 	}
@@ -310,7 +324,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::bufferFlush()
+	boost::system::error_code OutputMessage::bufferFlush()
 	{
 		assert(_buffer._data);
 		
@@ -319,11 +333,13 @@ namespace http { namespace impl
 		size_t offset = _writeBegin - buf._data.get();
 		assert(buf._size >= offset);
 
+		boost::system::error_code ec;
+
 		if(buf._size > offset)
 		{
-			if(!_contentFilter->filterPush(buf, offset))
+			if((ec = _contentFilter->filterPush(buf, offset)))
 			{
-				return false;
+				return ec;
 			}
 		}
 
@@ -340,19 +356,21 @@ namespace http { namespace impl
 			_writeBegin = _writePosition;
 		}
 
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::bufferNext()
+	boost::system::error_code OutputMessage::bufferNext()
 	{
-		if(!bufferFlush())
+		boost::system::error_code ec;
+
+		if((ec = bufferFlush()))
 		{
-			return false;
+			return ec;
 		}
 		bufferEnsure();
 
-		return true;
+		return error::make();
 	}
 	//////////////////////////////////////////////////////////////
 	OutputMessage::Iterator OutputMessage::iterator()
@@ -363,26 +381,27 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::writeSystemHeaders()
+	boost::system::error_code OutputMessage::writeSystemHeaders()
 	{
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::setupBodyFilters()
+	boost::system::error_code OutputMessage::setupBodyFilters()
 	{
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::ensureMode(EMode em)
+	boost::system::error_code OutputMessage::ensureMode(EMode em)
 	{
 		assert(_mode <= em);
 		if(_mode == em)
 		{
-			return true;
+			return error::make();
 		}
 
+		boost::system::error_code ec;
 		switch(_mode)
 		{
 		case em_firstLine:
@@ -391,51 +410,51 @@ namespace http { namespace impl
 				{
 				case em_headers:
 					//terminate first line
-					if(!write("\r\n", 2))
+					if((ec = write("\r\n", 2)))
 					{
-						return false;
+						return ec;
 					}
 
 					//now headers
 					_mode = em_headers;
 
-					return true;
+					return error::make();
 				case em_body:
 					//terminate first line
-					if(!write("\r\n", 2))
+					if((ec = write("\r\n", 2)))
 					{
-						return false;
+						return ec;
 					}
 
 					//now headers
 					_mode = em_headers;
 
 					//write common headers(server, date, content-encoding, connection, ...)
-					if(!this->writeSystemHeaders())
+					if((ec = this->writeSystemHeaders()))
 					{
-						return false;
+						return ec;
 					}
 
 					//terminate headers
-					if(!write("\r\n", 2))
+					if((ec = write("\r\n", 2)))
 					{
-						return false;
+						return ec;
 					}
 
-					if(!bufferFlush())
+					if((ec = bufferFlush()))
 					{
-						return false;
+						return ec;
 					}
 					//setup body filters
-					if(!this->setupBodyFilters())
+					if((ec = this->setupBodyFilters()))
 					{
-						return false;
+						return ec;
 					}
 
 					//now body
 					_mode = em_body;
 
-					return true;
+					return error::make();
 				default:
 					assert(!"unknown mode");
 					break;
@@ -448,31 +467,31 @@ namespace http { namespace impl
 				{
 				case em_body:
 					//write common headers
-					if(!this->writeSystemHeaders())
+					if((ec = this->writeSystemHeaders()))
 					{
-						return false;
+						return ec;
 					}
 
 					//terminate headers
-					if(!write("\r\n", 2))
+					if((ec = write("\r\n", 2)))
 					{
-						return false;
+						return ec;
 					}
 
-					if(!bufferFlush())
+					if((ec = bufferFlush()))
 					{
-						return false;
+						return ec;
 					}
 					//setup body filters
-					if(!this->setupBodyFilters())
+					if((ec = this->setupBodyFilters()))
 					{
-						return false;
+						return ec;
 					}
 
 					//now body
 					_mode = em_body;
 
-					return true;
+					return error::make();
 				default:
 					assert(!"unknown mode");
 					break;
@@ -485,23 +504,24 @@ namespace http { namespace impl
 		}
 
 		assert(!"never here");
-		return true;
+		return error::make(error::unexpected);
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool OutputMessage::iteratorIncrement()
+	boost::system::error_code OutputMessage::iteratorIncrement()
 	{
 		assert(_writePosition < _writeEnd);
 		_writePosition++;
 		if(_writePosition == _writeEnd)
 		{
-			if(!bufferNext())
+			boost::system::error_code ec;
+			if((ec = bufferNext()))
 			{
-				return false;
+				return ec;
 			}
 		}
 
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////

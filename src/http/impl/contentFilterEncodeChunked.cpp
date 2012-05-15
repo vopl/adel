@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "http/impl/contentFilterEncodeChunked.hpp"
+#include "http/error.hpp"
 
 #include <boost/spirit/include/karma.hpp>
 #include <boost/spirit/include/karma_string.hpp>
@@ -24,7 +25,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeChunked::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilterEncodeChunked::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(offset < packet._size);
 
@@ -36,20 +37,22 @@ namespace http { namespace impl
 
 		if(_size >= _granula)
 		{
-			if(!push2Upstream(false))
+			boost::system::error_code ec;
+			if((ec = push2Upstream(false)))
 			{
-				return false;
+				return ec;
 			}
 		}
-		return true;
+		return http::error::make();
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeChunked::filterFlush()
+	boost::system::error_code ContentFilterEncodeChunked::filterFlush()
 	{
-		if(!push2Upstream(true))
+		boost::system::error_code ec;
+		if((ec = push2Upstream(true)))
 		{
-			return false;
+			return ec;
 		}
 		return _upstream->filterFlush();
 	}
@@ -71,8 +74,9 @@ namespace http { namespace impl
 		static net::Packet crlfPacket = initPacket("\r\n");
 	}
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeChunked::push2Upstream(bool finish)
+	boost::system::error_code ContentFilterEncodeChunked::push2Upstream(bool finish)
 	{
+		boost::system::error_code ec;
 		if(_size)
 		{
 			net::Packet header(boost::shared_array<char>(new char[34]), 34);
@@ -84,36 +88,36 @@ namespace http { namespace impl
 
 			header._size = iter - header._data.get();
 
-			if(!_upstream->filterPush(header, 0))
+			if((ec = _upstream->filterPush(header, 0)))
 			{
-				return false;
+				return ec;
 			}
 
 			BOOST_FOREACH(SChunk &chunk, _chunks)
 			{
-				if(!_upstream->filterPush(chunk._packet, chunk._offset))
+				if((ec = _upstream->filterPush(chunk._packet, chunk._offset)))
 				{
-					return false;
+					return ec;
 				}
 			}
 			_chunks.clear();
 			_size = 0;
 
-			if(!_upstream->filterPush(crlfPacket, 0))
+			if((ec = _upstream->filterPush(crlfPacket, 0)))
 			{
-				return false;
+				return ec;
 			}
 
 		}
 
 		if(finish)
 		{
-			if(!_upstream->filterPush(lastChunkPacket, 0))
+			if((ec = _upstream->filterPush(lastChunkPacket, 0)))
 			{
-				return false;
+				return ec;
 			}
 		}
 
-		return true;
+		return http::error::make();
 	}
 }}

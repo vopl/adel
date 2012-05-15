@@ -54,11 +54,12 @@ namespace http { namespace server { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	bool Request::readFirstLine()
+	boost::system::error_code Request::readFirstLine()
 	{
-		if(!http::impl::InputMessage::readFirstLine())
+		boost::system::error_code ec;
+		if((ec = http::impl::InputMessage::readFirstLine()))
 		{
-			return false;
+			return ec;
 		}
 
 		using namespace boost::spirit::qi;
@@ -97,10 +98,10 @@ namespace http { namespace server { namespace impl
 
 		if(!parseResult || iter!=end)
 		{
-			return false;
+			return error::make(error::invalid_message);
 		}
 
-		return true;
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////

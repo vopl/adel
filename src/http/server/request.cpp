@@ -22,7 +22,7 @@ namespace http { namespace server
 	}
 
 	//////////////////////////////////////////////////////////////
-	bool Request::readFirstLine()
+	boost::system::error_code Request::readFirstLine()
 	{
 		return _impl->readFirstLine();
 	}

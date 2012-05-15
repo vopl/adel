@@ -176,8 +176,8 @@ namespace http { namespace impl
 	{
 		Request request(requestImpl);
 
-		if(	!request.readFirstLine() ||
-			!request.readHeaders())
+		if(	request.readFirstLine() ||
+			request.readHeaders())
 		{
 			//connection lost? ok
 			return;
@@ -186,14 +186,14 @@ namespace http { namespace impl
 		switch(request.method_())
 		{
 		default:
-			if(!request.readBody()) return;
+			if(request.readBody()) return;
 
 			{
 				Response response = request.response();
 				if(
-					!response.firstLine(esc_405) ||
-					!response.header(http::hn::connection, HeaderValue<Connection>(ec_close)) ||
-					!response.bodyFlush())
+					response.firstLine(esc_405) ||
+					response.header(http::hn::connection, HeaderValue<Connection>(ec_close)) ||
+					response.bodyFlush())
 				{
 					//connection lost? ok
 					return;
@@ -204,9 +204,9 @@ namespace http { namespace impl
 			{
 				Response response = request.response();
 				if(
-					!response.firstLine(esc_405) ||
-					!response.header("Allow: GET", 10) ||
-					!response.bodyFlush())
+					response.firstLine(esc_405) ||
+					response.header("Allow: GET", 10) ||
+					response.bodyFlush())
 				{
 					//connection lost? ok
 					return;

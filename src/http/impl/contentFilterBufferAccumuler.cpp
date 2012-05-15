@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "http/impl/contentFilterBufferAccumuler.hpp"
+#include "http/error.hpp"
 
 namespace http { namespace impl
 {
@@ -18,7 +19,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	bool ContentFilterBufferAccumuler::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilterBufferAccumuler::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size);
 		assert(packet._size>offset);
@@ -43,13 +44,13 @@ namespace http { namespace impl
 
 		_size += packet._size - offset;
 
-		return true;
+		return http::error::make();
 	}
 
 	////////////////////////////////////////////////////////////////
-	bool ContentFilterBufferAccumuler::filterFlush()
+	boost::system::error_code ContentFilterBufferAccumuler::filterFlush()
 	{
-		return true;
+		return error::make();
 	}
 
 	////////////////////////////////////////////////////////////////

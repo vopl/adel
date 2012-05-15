@@ -61,9 +61,9 @@ namespace http
 
 		bool isConnected() const;
 
-		bool readFirstLine();
-		bool readHeaders();
-		bool readBody();
+		boost::system::error_code readFirstLine();
+		boost::system::error_code readHeaders();
+		boost::system::error_code readBody();
 
 
 		//requestLine, responseLine

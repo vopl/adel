@@ -13,8 +13,8 @@ namespace http { namespace impl
 		ContentFilterChannelWriter(const net::Channel &channel, size_t granula);
 		virtual ~ContentFilterChannelWriter();
 		
-		virtual bool filterPush(const net::Packet &packet, size_t offset=0);
-		virtual bool filterFlush();
+		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code filterFlush();
 
 	protected:
 		net::Channel	_channel;

@@ -32,12 +32,12 @@ namespace http { namespace server
 	public:
 		~Response();
 
-		bool firstLine(const Version &version, const EStatusCode &statusCode);
-		bool firstLine(const EStatusCode &statusCode);
+		boost::system::error_code firstLine(const Version &version, const EStatusCode &statusCode);
+		boost::system::error_code firstLine(const EStatusCode &statusCode);
 		void setContentLength(size_t size);
 		void setContentCompress(int level);
 
-		bool bodyFlush();
+		boost::system::error_code bodyFlush();
 	};
 }}
 

@@ -1,6 +1,7 @@
 #include "pch.hpp"
 #include "http/impl/contentFilterEncodeZlib.hpp"
 #include "http/log.hpp"
+#include "http/error.hpp"
 
 namespace http { namespace impl
 {
@@ -104,7 +105,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilterEncodeZlib::filterPush(const net::Packet &packet, size_t offset)
 	{
 		switch(_ece)
 		{
@@ -142,9 +143,12 @@ namespace http { namespace impl
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
 						assert(_output._size);
-						if(!_upstream->filterPush(_output))
 						{
-							return false;
+							boost::system::error_code ec;
+							if((ec = _upstream->filterPush(_output)))
+							{
+								return ec;
+							}
 						}
 						_outputOffset = 0;
 						_output._size = 0;
@@ -152,26 +156,26 @@ namespace http { namespace impl
 						break;
 					default:
 						ELOG("deflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
-						return false;
-					}
+						return http::error::make(http::error::unexpected);
+				}
 				}
 				_z_stream.next_in = NULL;
 				_z_stream.avail_in = NULL;
 			}
-			return true;
+			return http::error::make();
 		case ece_compress:
 			assert(0);
-			break;
+			return http::error::make(http::error::not_implemented);
 		default:
 			assert(!"wtf?");
-			break;
+			return http::error::make(http::error::unexpected);
 		}
 
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterEncodeZlib::filterFlush()
+	boost::system::error_code ContentFilterEncodeZlib::filterFlush()
 	{
 		switch(_ece)
 		{
@@ -204,9 +208,12 @@ namespace http { namespace impl
 					case Z_OK:
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
-						if(!_upstream->filterPush(_output))
 						{
-							return false;
+							boost::system::error_code ec;
+							if((ec = _upstream->filterPush(_output)))
+							{
+								return ec;
+							}
 						}
 						_outputOffset = 0;
 						_output._size = 0;
@@ -214,9 +221,13 @@ namespace http { namespace impl
 						break;
 					case Z_STREAM_END:
 						_output._size = _outputOffset;
-						if(_output._size && !_upstream->filterPush(_output))
+						if(_output._size)
 						{
-							return false;
+							boost::system::error_code ec;
+							if((ec = _upstream->filterPush(_output)))
+							{
+								return ec;
+							}
 						}
 						_outputOffset = 0;
 						_output._size = 0;
@@ -224,17 +235,17 @@ namespace http { namespace impl
 						return _upstream->filterFlush();
 					default:
 						ELOG("deflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
-						return false;
+						return http::error::make(http::error::not_implemented);
 					}
 				}
 			}
 			break;
 		case ece_compress:
 			assert(0);
-			break;
+			return http::error::make(http::error::not_implemented);
 		default:
 			assert(!"wtf?");
-			break;
+			return http::error::make(http::error::unexpected);
 		}
 
 		return _upstream->filterFlush();

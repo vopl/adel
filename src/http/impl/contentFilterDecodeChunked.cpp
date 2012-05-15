@@ -16,14 +16,14 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterDecodeChunked::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilterDecodeChunked::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"not impl");
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterDecodeChunked::filterFlush()
+	boost::system::error_code ContentFilterDecodeChunked::filterFlush()
 	{
 		assert(!"not impl");
 		return _upstream->filterFlush();

@@ -175,12 +175,12 @@ namespace http { namespace server { namespace impl
 		const ExtInfo &extInfo = getExtInfo(originalPath.extension());
 
 		http::server::Response response = r.response();
-		if(!response.firstLine(esc_200)) return;
-		if(!response.header(hn::contentType, extInfo._mimeType)) return;
+		if(response.firstLine(esc_200)) return;
+		if(response.header(hn::contentType, extInfo._mimeType)) return;
 
 		if(_allowETag)
 		{
-			if(!response.header(hn::eTag, etag))
+			if(response.header(hn::eTag, etag))
 			{
 				//connection lost?
 				return;
@@ -188,7 +188,7 @@ namespace http { namespace server { namespace impl
 		}
 		if(_allowLastModified)
 		{
-			if(!response.header(hn::lastModified, HeaderValue<Date>(st.st_mtime)))
+			if(response.header(hn::lastModified, HeaderValue<Date>(st.st_mtime)))
 			{
 				//connection lost?
 				return;
@@ -219,7 +219,7 @@ namespace http { namespace server { namespace impl
 				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
-				if(!iter.bufferInc(bufSize))
+				if(iter.bufferInc(bufSize))
 				{
 					//connection lost?
 					//assert(0);
@@ -238,18 +238,30 @@ namespace http { namespace server { namespace impl
 	void HandlerFs::notFound(http::server::Request &r, const path &uri)
 	{
 		http::server::Response response = r.response();
-		response.firstLine(esc_404);
+		if(response.firstLine(esc_404))
+		{
+			return;
+		}
 		response.setContentLength(0);
-		response.bodyFlush();
+		if(response.bodyFlush())
+		{
+			return;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////
 	void HandlerFs::notModified(http::server::Request &r, const path &uri)
 	{
 		http::server::Response response = r.response();
-		response.firstLine(esc_304);
+		if(response.firstLine(esc_304))
+		{
+			return;
+		}
 		response.setContentLength(0);
-		response.bodyFlush();
+		if(response.bodyFlush())
+		{
+			return;
+		}
 	}
 
 	/////////////////////////////////////////////////////////////////////////

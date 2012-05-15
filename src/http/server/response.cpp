@@ -20,13 +20,13 @@ namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::firstLine(const Version &version, const EStatusCode &statusCode)
+	boost::system::error_code Response::firstLine(const Version &version, const EStatusCode &statusCode)
 	{
 		return _impl->firstLine(version, statusCode);
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::firstLine(const EStatusCode &statusCode)
+	boost::system::error_code Response::firstLine(const EStatusCode &statusCode)
 	{
 		return _impl->firstLine(statusCode);
 	}
@@ -44,7 +44,7 @@ namespace http { namespace server
 	}
 
 	/////////////////////////////////////////////////////////////////////
-	bool Response::bodyFlush()
+	boost::system::error_code Response::bodyFlush()
 	{
 		return _impl->bodyFlush();
 	}

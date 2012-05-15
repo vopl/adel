@@ -29,17 +29,17 @@ namespace http
 			~Iterator();
 
 			char *bufferGet(size_t &size);
-			bool bufferInc(size_t size);
+			boost::system::error_code bufferInc(size_t size);
 
-			bool write(const char *data, size_t size);
-			bool write(const char *dataz);
-			bool write(const std::string &data);
+			boost::system::error_code write(const char *data, size_t size);
+			boost::system::error_code write(const char *dataz);
+			boost::system::error_code write(const std::string &data);
 
 		private:
 			friend class boost::iterator_core_access;
 
 			reference dereference() const;
-			bool increment();
+			boost::system::error_code increment();
 
 		private:
 			friend class impl::OutputMessage;
@@ -59,39 +59,39 @@ namespace http
 
 		///////////////////////////////////////////////
 		Iterator	firstLineIterator();
-		bool		firstLine(const char *data, size_t size);
-		bool		firstLine(const char *dataz);
-		bool		firstLine(const std::string &data);
-		bool		firstLineFlush();
+		boost::system::error_code		firstLine(const char *data, size_t size);
+		boost::system::error_code		firstLine(const char *dataz);
+		boost::system::error_code		firstLine(const std::string &data);
+		boost::system::error_code		firstLineFlush();
 
 		///////////////////////////////////////////////
 		Iterator	headersIterator();
 
-		bool		header(const char *data, size_t size);
-		bool		header(const char *dataz);
-		bool		header(const std::string &data);
+		boost::system::error_code		header(const char *data, size_t size);
+		boost::system::error_code		header(const char *dataz);
+		boost::system::error_code		header(const std::string &data);
 
-		bool		header(const HeaderName &name, const std::string &value);
-		bool		header(const HeaderName &name, const char *value, size_t valueSize);
-		bool		header(const HeaderName &name, const char *valuez);
+		boost::system::error_code		header(const HeaderName &name, const std::string &value);
+		boost::system::error_code		header(const HeaderName &name, const char *value, size_t valueSize);
+		boost::system::error_code		header(const HeaderName &name, const char *valuez);
 
 		template <class HeaderValueTag>
-		bool		header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value);
+		boost::system::error_code		header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
-		bool		header(const char *namez, const HeaderValue<HeaderValueTag> &value);
+		boost::system::error_code		header(const char *namez, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
-		bool		header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
+		boost::system::error_code		header(const std::string &name, const HeaderValue<HeaderValueTag> &value);
 		template <class HeaderValueTag>
-		bool		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
+		boost::system::error_code		header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value);
 
-		bool		headersFlush();
+		boost::system::error_code		headersFlush();
 
 		///////////////////////////////////////////////
 		Iterator	bodyIterator();
-		bool		body(const char *data, size_t size);
-		bool		body(const char *dataz);
-		bool		body(const std::string &data);
-		bool		bodyFlush();
+		boost::system::error_code		body(const char *data, size_t size);
+		boost::system::error_code		body(const char *dataz);
+		boost::system::error_code		body(const std::string &data);
+		boost::system::error_code		bodyFlush();
 	};
 
 
@@ -100,47 +100,48 @@ namespace http
 
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool OutputMessage::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
+	boost::system::error_code OutputMessage::header(const char *name, size_t nameSize, const HeaderValue<HeaderValueTag> &value)
 	{
 		Iterator iter = headersIterator();
 
-		if(!iter.write(name, nameSize))
+		boost::system::error_code ec;
+		if((ec = iter.write(name, nameSize)))
 		{
-			return false;
+			return ec;
 		}
-		if(!iter.write(": ", 2))
+		if((ec = iter.write(": ", 2)))
 		{
-			return false;
+			return ec;
 		}
 		if(!value.generate(iter))
 		{
-			return false;
+			return boost::system::errc::make_error_code(boost::system::errc::invalid_argument);
 		}
-		if(!iter.write("\r\n", 2))
+		if((ec = iter.write("\r\n", 2)))
 		{
-			return false;
+			return ec;
 		}
 
-		return true;
+		return ec;
 	}
 
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool OutputMessage::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
+	boost::system::error_code OutputMessage::header(const char *namez, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(namez, strlen(namez), value);
 	}
 
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool OutputMessage::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
+	boost::system::error_code OutputMessage::header(const std::string &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(name.data(), name.size(), value);
 	}
 
 	///////////////////////////////////////////////////////////////
 	template <class HeaderValueTag>
-	bool OutputMessage::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
+	boost::system::error_code OutputMessage::header(const HeaderName &name, const HeaderValue<HeaderValueTag> &value)
 	{
 		return header(name.csz, name.size, value);
 	}

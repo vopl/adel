@@ -16,14 +16,14 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterDecodeZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentFilterDecodeZlib::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"not impl");
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	bool ContentFilterDecodeZlib::filterFlush()
+	boost::system::error_code ContentFilterDecodeZlib::filterFlush()
 	{
 		assert(!"not impl");
 		return _upstream->filterFlush();

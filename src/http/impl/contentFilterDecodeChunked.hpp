@@ -12,8 +12,8 @@ namespace http { namespace impl
 		ContentFilterDecodeChunked(ContentFilter *upstream);
 		virtual ~ContentFilterDecodeChunked();
 
-		virtual bool filterPush(const net::Packet &packet, size_t offset=0);
-		virtual bool filterFlush();
+		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code filterFlush();
 
 	protected:
 		ContentFilter *_upstream;

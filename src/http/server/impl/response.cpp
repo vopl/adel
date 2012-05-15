@@ -39,11 +39,12 @@ namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::bodyFlush()
+	boost::system::error_code Response::bodyFlush()
 	{
-		if(!http::impl::OutputMessage::bodyFlush())
+		boost::system::error_code ec;
+		if((ec = http::impl::OutputMessage::bodyFlush()))
 		{
-			return false;
+			return ec;
 		}
 
 		if(_keepAlive)
@@ -57,28 +58,35 @@ namespace http { namespace server { namespace impl
 		{
 			_channel.close();
 		}
-		return true;
+		return error::make();
 	}
 
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::firstLine(const Version &version, const EStatusCode &statusCode)
+	boost::system::error_code Response::firstLine(const Version &version, const EStatusCode &statusCode)
 	{
 		_version = version;
 		return firstLine(statusCode);
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::firstLine(const EStatusCode &statusCode)
+	boost::system::error_code Response::firstLine(const EStatusCode &statusCode)
 	{
 		Iterator iter = firstLineIterator();
 		using namespace boost::spirit::karma;
 		namespace karma = boost::spirit::karma;
 		namespace px = boost::phoenix;
 
-		return generate(iter,
+		bool b = generate(iter,
 			"HTTP/"<<uint_[karma::_1 = _version._hi]<<'.'<<uint_[karma::_1 = _version._lo]<<' '<<
 			uint_[karma::_1 = statusCode]<<' '<<reasonPhrase(statusCode));
+
+		if(!b)
+		{
+			return error::make(error::unexpected);
+		}
+
+		return error::make();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -94,7 +102,7 @@ namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::writeSystemHeaders()
+	boost::system::error_code Response::writeSystemHeaders()
 	{
 		//keep alive
 		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
@@ -210,64 +218,65 @@ namespace http { namespace server { namespace impl
 			_chunked = false;
 		}
 
+		boost::system::error_code ec;
 		//писать заголовки
 		if(_unknownContentLength != _contentLength)
 		{
-			if(!header(hn::contentLength, HeaderValue<Unsigned>(_contentLength)))
+			if((ec = header(hn::contentLength, HeaderValue<Unsigned>(_contentLength))))
 			{
-					return false;
+				return ec;
 			}
 		}
 
 		if(_chunked)
 		{
-			if(!header(hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked)))
+			if((ec = header(hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked))))
 			{
-					return false;
+				return ec;
 			}
 		}
 
 		if(_contentEncoding != ece_identity)
 		{
-			if(!header(hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding)))
+			if((ec = header(hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding))))
 			{
-					return false;
+				return ec;
 			}
 		}
 
 		if(_keepAlive)
 		{
-			if(!header(hn::connection, HeaderValue<Connection>(ec_keepAlive)))
+			if((ec = header(hn::connection, HeaderValue<Connection>(ec_keepAlive))))
 			{
-					return false;
+				return ec;
 			}
 		}
 		else
 		{
 			if(hvConnection.isCorrect() || _version>=Version(1,1))
 			{
-				if(!header(hn::connection, HeaderValue<Connection>(ec_close)))
+				if((ec = header(hn::connection, HeaderValue<Connection>(ec_close))))
 				{
-						return false;
+					return ec;
 				}
 			}
 		}
 
-		if(!header(hn::date, HeaderValue<Date>(time(NULL))))
+		if((ec = header(hn::date, HeaderValue<Date>(time(NULL)))))
 		{
-				return false;
+			return ec;
 		}
 
-		if(!header(hn::server, "haws", 4))
+		if((ec = header(hn::server, "haws", 4)))
 		{
-			return false;
+			return ec;
 		}
 
 		return http::impl::OutputMessage::writeSystemHeaders();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	bool Response::setupBodyFilters()
+	boost::system::error_code Response::setupBodyFilters()
 	{
 		if(_chunked)
 		{
