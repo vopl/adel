@@ -93,12 +93,12 @@ namespace net { namespace impl
 		error_code ec;
 		if(_socket)
 		{
-			_socket->lowest_layer().shutdown(asio::socket_base::shutdown_both, ec);
+			//_socket->lowest_layer().shutdown(asio::socket_base::shutdown_both, ec);
 			_socket->lowest_layer().close(ec);
 		}
 		else
 		{
-			_socketSsl->lowest_layer().shutdown(asio::socket_base::shutdown_both, ec);
+			//_socketSsl->lowest_layer().shutdown(asio::socket_base::shutdown_both, ec);
 			_socketSsl->lowest_layer().close(ec);
 
 // 			typedef function<void(const error_code &)> TOnShutdown;
@@ -121,6 +121,43 @@ namespace net { namespace impl
 		socketSsl->lowest_layer().close(ecl);
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	size_t Channel::Sock::getTimeout()
+	{
+		assert(!"not impl");
+		return 0;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Channel::Sock::setTimeout(size_t ms)
+	{
+#if defined _WIN32
+		boost::int32_t timeout = ms;
+#else
+		struct timeval timeout;
+		timeout.tv_sec  = ms/1000;
+		timeout.tv_usec = (ms%1000)*1000;
+#endif
+		int res;
+		if(_socket)
+		{
+			res = setsockopt(_socket->native(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+			assert(!res);
+			(void)res;
+			res = setsockopt(_socket->native(), SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+			assert(!res);
+			(void)res;
+		}
+		else
+		{
+			res = setsockopt(_socketSsl->lowest_layer().native(), SOL_SOCKET, SO_RCVTIMEO, (const char*)&timeout, sizeof(timeout));
+			assert(!res);
+			(void)res;
+			res = setsockopt(_socketSsl->lowest_layer().native(), SOL_SOCKET, SO_SNDTIMEO, (const char*)&timeout, sizeof(timeout));
+			assert(!res);
+			(void)res;
+		}
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, size_t maxSize)
@@ -393,4 +430,17 @@ namespace net { namespace impl
 	{
 		_sock.close();
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	size_t Channel::getTimeout()
+	{
+		return _sock.getTimeout();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Channel::setTimeout(size_t ms)
+	{
+		_sock.setTimeout(ms);
+	}
+
 }}

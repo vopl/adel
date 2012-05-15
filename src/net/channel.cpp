@@ -57,4 +57,17 @@ namespace net
 	{
 		return _impl->close();
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	size_t Channel::getTimeout()
+	{
+		return _impl->getTimeout();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Channel::setTimeout(size_t ms)
+	{
+		return _impl->setTimeout(ms);
+	}
+
 }

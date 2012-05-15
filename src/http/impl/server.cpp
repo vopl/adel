@@ -39,6 +39,10 @@ namespace http { namespace impl
 			po::value<size_t>()->default_value(65536),
 			"buffer size during write response data");
 
+		options->addOption(
+			"timeout",
+			po::value<size_t>()->default_value(10000),
+			"read/write timeout in milliseconds");
 
 /*
 		options->addOption(
@@ -102,6 +106,7 @@ namespace http { namespace impl
 		, _port("8080")
 		, _requestReadGranula(1400)
 		, _responseWriteGranula(1400)
+		, _timeout(10000)
 	{
 	}
 
@@ -122,6 +127,7 @@ namespace http { namespace impl
 		_port = o["port"].as<std::string>();
 		_requestReadGranula = o["request.readGranula"].as<size_t>();
 		_responseWriteGranula = o["response.writeGranula"].as<size_t>();
+		_timeout = o["timeout"].as<size_t>();
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -247,6 +253,8 @@ namespace http { namespace impl
 			ELOG("accept failed: "<<ec);
 			return;
 		}
+
+		channel.setTimeout(_timeout);
 
 		http::server::impl::RequestPtr requestImpl(new http::server::impl::Request(shared_from_this(), channel));
 		onRequest_f(requestImpl);

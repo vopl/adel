@@ -43,6 +43,10 @@ namespace net
 			const std::vector<Packet> &packets4keep);
 
 		void close();
+
+		//millisec
+		size_t getTimeout();
+		void setTimeout(size_t ms);
 	};
 }
 #endif

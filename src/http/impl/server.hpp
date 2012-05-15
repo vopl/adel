@@ -39,6 +39,7 @@ namespace http { namespace impl
 		std::string _port;
 		size_t _requestReadGranula;
 		size_t _responseWriteGranula;
+		size_t _timeout;
 
 		net::Acceptor _acceptor;
 		boost::signals2::connection _connectionOnAccept;

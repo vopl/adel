@@ -50,6 +50,9 @@ namespace net { namespace impl
 
 			void close();
 
+			size_t getTimeout();
+			void setTimeout(size_t ms);
+
 		private:
 			static void onSslShutdown(
 				const boost::system::error_code &ec,
@@ -114,7 +117,7 @@ namespace net { namespace impl
 	public:
 		Channel(TSocketPtr socket);
 		Channel(TSocketSslPtr socket, TSslContextPtr sslContext);
-		~Channel();
+		virtual ~Channel();
 
 		bool isOpen() const;
 
@@ -129,6 +132,9 @@ namespace net { namespace impl
 			const std::vector<Packet> &packets4keep);
 
 		void close();
+
+		size_t getTimeout();
+		void setTimeout(size_t ms);
 	};
 }}
 
