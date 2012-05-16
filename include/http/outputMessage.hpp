@@ -50,6 +50,7 @@ namespace http
 		};
 
 	protected:
+		OutputMessage();
 		OutputMessage(const ImplPtr &impl);
 
 	public:

@@ -27,5 +27,22 @@ namespace http { namespace client { namespace impl
 	{
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code Request::firstLine(EMethod method, const char *path, size_t pathSize, const Version &version)
+	{
+		assert(0);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code Request::firstLine(EMethod method, const char *pathz, const Version &version)
+	{
+		return firstLine(method, pathz, strlen(pathz), version);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code Request::firstLine(EMethod method, const std::string &path, const Version &version)
+	{
+		return firstLine(method, path.data(), path.size(), version);
+	}
 
 }}}

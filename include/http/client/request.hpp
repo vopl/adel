@@ -23,8 +23,17 @@ namespace http { namespace client
 		ImplPtr _impl;
 
 	public:
+		Request();
 		Request(const ImplPtr &impl);
 		~Request();
+
+		boost::system::error_code firstLine(EMethod method, const char *path, size_t pathSize, const Version &version);
+		boost::system::error_code firstLine(EMethod method, const char *pathz, const Version &version);
+		boost::system::error_code firstLine(EMethod method, const std::string &path, const Version &version);
+
+		//keep alive
+		//body size
+		//compress
 	};
 }}
 

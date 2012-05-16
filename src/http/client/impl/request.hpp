@@ -31,6 +31,11 @@ namespace http { namespace client { namespace impl
 	public:
 		Request(const http::impl::ClientPtr &server, const net::Channel &channel);
 		~Request();
+
+		boost::system::error_code firstLine(EMethod method, const char *path, size_t pathSize, const Version &version);
+		boost::system::error_code firstLine(EMethod method, const char *pathz, const Version &version);
+		boost::system::error_code firstLine(EMethod method, const std::string &path, const Version &version);
+
 	};
 }}}
 

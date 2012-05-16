@@ -12,6 +12,8 @@
 #include "http/server/log.hpp"
 #include "http/server.hpp"
 #include "http/server/handlerFs.hpp"
+#include "http/client/log.hpp"
+#include "http/client.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -19,6 +21,38 @@
 using namespace std;
 namespace po = boost::program_options;
 
+
+
+
+void testClient(http::Client c)
+{
+	http::client::Request request;
+	boost::system::error_code ec;
+
+	ec = c.connect(request, "127.0.0.1", "8080", false);
+	if(ec)
+	{
+		std::cout<<"connect: "<<ec<<std::endl;
+		return;
+	}
+
+	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,1));
+	if(ec)
+	{
+		std::cout<<"firstLine: "<<ec<<std::endl;
+		return;
+	}
+
+	ec = request.bodyFlush();
+	if(ec)
+	{
+		std::cout<<"bodyFlush: "<<ec<<std::endl;
+		return;
+	}
+}
+
+
+//////////////////////////////////////////////////////////////////////
 int main(int argc, const char **argv)
 {
 	for(int k=0; k<1; k++)
@@ -26,6 +60,7 @@ int main(int argc, const char **argv)
 		po::options_description desc("general");
 		desc.add_options()
 				("help", "produce help message")
+				("help-log", "produce help message for logging")
 				("run,R", "run")
 				("config", boost::program_options::value<std::string>()->default_value("../etc/global.conf"),
 					"configuration file, filesystem path, relative from working directory of this process or absolute");
@@ -49,26 +84,38 @@ int main(int argc, const char **argv)
 		desc.add(ohttpServer1->desc());
 		utils::OptionsPtr ohttpServer1HandlerFs = http::server::HandlerFs::prepareOptions("httpServer1.handlerFs");
 		desc.add(ohttpServer1HandlerFs->desc());
-
-		//////////////////////////////////////
-		utils::OptionsPtr oasyncLog = async::prepareOptionsLog();
-		desc.add(oasyncLog->desc());
-		utils::OptionsPtr oadelLog = adel::prepareOptionsLog();
-		desc.add(oadelLog->desc());
-		utils::OptionsPtr opgcLog = pgc::prepareOptionsLog();
-		desc.add(opgcLog->desc());
-		utils::OptionsPtr onetLog = net::prepareOptionsLog();
-		desc.add(onetLog->desc());
-		utils::OptionsPtr ohttpServerLog = http::server::prepareOptionsLog();
-		desc.add(ohttpServerLog->desc());
-		utils::OptionsPtr ohttpLog = http::prepareOptionsLog();
-		desc.add(ohttpLog->desc());
+		utils::OptionsPtr ohttpClient1 = http::Client::prepareOptions("httpClient1");
+		desc.add(ohttpClient1->desc());
 
 		if(varsGeneral.count("help"))
 		{
 		    cout << desc << "\n";
 		    break;
 		}
+
+		//////////////////////////////////////
+		po::options_description desc_log("log");
+		utils::OptionsPtr oasyncLog = async::prepareOptionsLog();
+		desc_log.add(oasyncLog->desc());
+		utils::OptionsPtr oadelLog = adel::prepareOptionsLog();
+		desc_log.add(oadelLog->desc());
+		utils::OptionsPtr opgcLog = pgc::prepareOptionsLog();
+		desc_log.add(opgcLog->desc());
+		utils::OptionsPtr onetLog = net::prepareOptionsLog();
+		desc_log.add(onetLog->desc());
+		utils::OptionsPtr ohttpServerLog = http::server::prepareOptionsLog();
+		desc_log.add(ohttpServerLog->desc());
+		utils::OptionsPtr ohttpClientLog = http::client::prepareOptionsLog();
+		desc_log.add(ohttpClientLog->desc());
+		utils::OptionsPtr ohttpLog = http::prepareOptionsLog();
+		desc_log.add(ohttpLog->desc());
+
+		if(varsGeneral.count("help-log"))
+		{
+		    cout << desc_log << "\n";
+		    break;
+		}
+		desc.add(desc_log);
 
 		po::parsed_options parsedOptions1(&desc);
 		po::parsed_options parsedOptions2(&desc);
@@ -100,6 +147,7 @@ int main(int argc, const char **argv)
 
 		ohttpLog->store(&parsedOptions1, &parsedOptions2);
 		ohttpServerLog->store(&parsedOptions1, &parsedOptions2);
+		ohttpClientLog->store(&parsedOptions1, &parsedOptions2);
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
 		oadelLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
@@ -108,6 +156,7 @@ int main(int argc, const char **argv)
 		omanager->store(&parsedOptions1, &parsedOptions2);
 		ohttpServer1->store(&parsedOptions1, &parsedOptions2);
 		ohttpServer1HandlerFs->store(&parsedOptions1, &parsedOptions2);
+		ohttpClient1->store(&parsedOptions1, &parsedOptions2);
 
 		if(varsGeneral.count("run"))
 		{
@@ -117,6 +166,7 @@ int main(int argc, const char **argv)
 			net::initLog(onetLog);
 			http::initLog(ohttpLog);
 			http::server::initLog(ohttpServerLog);
+			http::client::initLog(ohttpClientLog);
 
 
 			adel::Manager manager(omanager);
@@ -126,6 +176,8 @@ int main(int argc, const char **argv)
 				http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
 				httpServer1.onRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
 
+				http::Client httpClient1(manager.asrv(), ohttpClient1);
+				testClient(httpClient1);
 				//adel::HttpClient httpClient(manager, "global");
 				//adel::Postgres postgres(manager, "global");
 				//adel::Memcache memcache(manager, "global");
