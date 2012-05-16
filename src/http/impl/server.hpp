@@ -18,7 +18,7 @@ namespace http { namespace impl
 		Server();
 		~Server();
 
-		void init(async::Service asrv, utils::OptionsPtr options);
+		void init(utils::OptionsPtr options);
 
 		boost::signals2::connection onRequest(const boost::function<void(const http::server::Request &)> &f);
 		void start();
@@ -34,7 +34,6 @@ namespace http { namespace impl
 		void onRequest_f(http::server::impl::RequestPtr requestImpl);
 
 	private:
-		async::Service _asrv;
 		std::string _host;
 		std::string _port;
 		size_t _requestReadGranula;

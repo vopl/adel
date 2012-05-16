@@ -25,7 +25,7 @@ namespace http
 
 		static utils::OptionsPtr prepareOptions(const char *prefix);
 
-		Server(async::Service asrv, utils::OptionsPtr options);
+		Server(utils::OptionsPtr options);
 		~Server();
 
 		boost::signals2::connection onRequest(const boost::function<void(const server::Request &)> &f);

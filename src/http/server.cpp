@@ -12,10 +12,10 @@ namespace http
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	Server::Server(async::Service asrv, utils::OptionsPtr options)
+	Server::Server(utils::OptionsPtr options)
 		: _impl(new http::impl::Server)
 	{
-		_impl->init(asrv, options);
+		_impl->init(options);
 	}
 
 	///////////////////////////////////////////////////////////////////////////

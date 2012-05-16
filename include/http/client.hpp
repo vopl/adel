@@ -25,7 +25,7 @@ namespace http
 
 		static utils::OptionsPtr prepareOptions(const char *prefix);
 
-		Client(async::Service asrv, utils::OptionsPtr options);
+		Client(utils::OptionsPtr options);
 		~Client();
 
 		boost::system::error_code connect(

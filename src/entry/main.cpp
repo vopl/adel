@@ -170,14 +170,17 @@ int main(int argc, const char **argv)
 
 
 			adel::Manager manager(omanager);
+			manager.asrv().setAsGlobal(true);
 			{
-				http::Server httpServer1(manager.asrv(), ohttpServer1);
+				http::Server httpServer1(ohttpServer1);
 
 				http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
 				httpServer1.onRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
 
-				http::Client httpClient1(manager.asrv(), ohttpClient1);
-				testClient(httpClient1);
+				http::Client httpClient1(ohttpClient1);
+
+				manager.asrv().onStart(boost::bind(&testClient, httpClient1));
+
 				//adel::HttpClient httpClient(manager, "global");
 				//adel::Postgres postgres(manager, "global");
 				//adel::Memcache memcache(manager, "global");

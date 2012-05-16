@@ -116,11 +116,11 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	void Server::init(async::Service asrv, utils::OptionsPtr options)
+	void Server::init(utils::OptionsPtr options)
 	{
-		_asrv = asrv;
-		_asrv.onStart(boost::bind(&Server::start, shared_from_this()));
-		_asrv.onStop(boost::bind(&Server::stop, shared_from_this()));
+		async::Service asrv = async::service();
+		asrv.onStart(boost::bind(&Server::start, shared_from_this()));
+		asrv.onStop(boost::bind(&Server::stop, shared_from_this()));
 
 		utils::Options &o = *options;
 		_host = o["host"].as<std::string>();
@@ -174,7 +174,7 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void Server::onRequest(http::server::impl::RequestPtr requestImpl)
 	{
-		_asrv.spawn(boost::bind(&Server::onRequest_f, shared_from_this(), requestImpl));
+		async::spawn(boost::bind(&Server::onRequest_f, shared_from_this(), requestImpl));
 	}
 
 	////////////////////////////////////////////////////////////////////

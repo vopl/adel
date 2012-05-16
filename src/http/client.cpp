@@ -12,10 +12,10 @@ namespace http
 	}
 
 	///////////////////////////////////////////////////////////////////////
-	Client::Client(async::Service asrv, utils::OptionsPtr options)
+	Client::Client(utils::OptionsPtr options)
 		: _impl(new http::impl::Client)
 	{
-		_impl->init(asrv, options);
+		_impl->init(options);
 	}
 
 

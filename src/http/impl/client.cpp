@@ -31,20 +31,26 @@ namespace http { namespace impl
 
 	//////////////////////////////////////////////////////////////////////
 	Client::Client()
+		: _responseReadGranula(1024)
+		, _requestWriteGranula(32768)
+		, _timeout(10000)
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////
 	Client::~Client()
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////
-	void Client::init(async::Service asrv, utils::OptionsPtr options)
+	void Client::init(utils::OptionsPtr options)
 	{
-		assert(0);
+		utils::Options &o = *options;
+
+		_responseReadGranula = o["response.readGranula"].as<size_t>();
+		_requestWriteGranula = o["request.writeGranula"].as<size_t>();
+		_timeout = o["timeout"].as<size_t>();
+
 	}
 
 	//////////////////////////////////////////////////////////////////////
@@ -52,7 +58,17 @@ namespace http { namespace impl
 		client::impl::RequestPtr &request,
 		const char *host, const char *service, bool useSsl)
 	{
-		assert(0);
+		async::Future2<boost::system::error_code, net::Channel> cres =
+			_connector.connect(host, service, useSsl);
+		cres.wait();
+
+		if(cres.data1NoWait())
+		{
+			return cres.data1NoWait();
+		}
+
+		request.reset(new client::impl::Request(shared_from_this(), cres.data2NoWait()));
+		return cres.data1NoWait();
 	}
 
 	//////////////////////////////////////////////////////////////////////

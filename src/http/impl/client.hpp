@@ -3,6 +3,7 @@
 
 #include "utils/options.hpp"
 #include "async/service.hpp"
+#include "net/connector.hpp"
 
 #include "http/client/impl/request.hpp"
 
@@ -10,6 +11,7 @@ namespace http { namespace impl
 {
 	///////////////////////////////////////////////////////
 	class Client
+		: public boost::enable_shared_from_this<Client>
 	{
 	public:
 
@@ -18,7 +20,7 @@ namespace http { namespace impl
 		Client();
 		~Client();
 
-		void init(async::Service asrv, utils::OptionsPtr options);
+		void init(utils::OptionsPtr options);
 
 		boost::system::error_code connect(
 			client::impl::RequestPtr &request,
@@ -27,6 +29,14 @@ namespace http { namespace impl
 		boost::system::error_code connect(
 			client::impl::RequestPtr &request,
 			const char *url);
+
+	private:
+		size_t _responseReadGranula;
+		size_t _requestWriteGranula;
+		size_t _timeout;
+
+		net::Connector _connector;
+
 	};
 }}
 

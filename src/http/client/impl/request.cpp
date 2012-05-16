@@ -17,7 +17,7 @@ namespace http { namespace client { namespace impl
 {
 
 	//////////////////////////////////////////////////////////////////////////
-	Request::Request(const http::impl::ClientPtr &server, const net::Channel &channel)
+	Request::Request(const http::impl::ClientPtr &client, const net::Channel &channel)
 		: http::impl::OutputMessage(channel, 220)
 	{
 	}

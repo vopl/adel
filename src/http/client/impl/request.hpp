@@ -29,7 +29,7 @@ namespace http { namespace client { namespace impl
 		: public http::impl::OutputMessage
 	{
 	public:
-		Request(const http::impl::ClientPtr &server, const net::Channel &channel);
+		Request(const http::impl::ClientPtr &client, const net::Channel &channel);
 		~Request();
 
 		boost::system::error_code firstLine(EMethod method, const char *path, size_t pathSize, const Version &version);
