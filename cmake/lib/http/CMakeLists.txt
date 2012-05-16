@@ -8,7 +8,7 @@ project(${PROJECT})
 
 
 
-set(INCLUDE
+set(INC
 	${PINC}/log.hpp
 	${PINC}/server.hpp
 	${PINC}/client.hpp
@@ -24,12 +24,12 @@ set(INCLUDE
 	${PINC}/headerName.hpp
 	${PINC}/error.hpp
 )
-source_group(include FILES ${INCLUDE})
+source_group(include FILES ${INC})
 
-set(INCLUDE_IMPL
+set(INC_IMPL
 	${PINC}/impl/headerName.hpp
 )
-source_group(include/impl FILES ${INCLUDE_IMPL})
+source_group(include/impl FILES ${INC_IMPL})
 
 set(SRC
 	${PSRC}/server.cpp
@@ -83,13 +83,13 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 
 
 
-set(INCLUDE_SERVER
+set(INC_SERVER
 	${PINC}/server/log.hpp
 	${PINC}/server/request.hpp
 	${PINC}/server/response.hpp
 	${PINC}/server/handlerFs.hpp
 )
-source_group(include/server FILES ${INCLUDE_SERVER})
+source_group(include/server FILES ${INC_SERVER})
 
 set(SRC_SERVER
 	${PSRC}/server/request.cpp
@@ -118,6 +118,42 @@ source_group(src/server/impl FILES ${SRC_SERVER_IMPL_HDR})
 
 
 
+
+
+
+
+
+set(INC_CLIENT
+	${PINC}/client/log.hpp
+	${PINC}/client/request.hpp
+	${PINC}/client/response.hpp
+)
+source_group(include/client FILES ${INC_CLIENT})
+
+set(SRC_CLIENT
+	${PSRC}/client/request.cpp
+	${PSRC}/client/response.cpp
+)
+source_group(src/client FILES ${SRC_CLIENT})
+
+
+
+set(SRC_CLIENT_IMPL
+	${PSRC}/client/impl/request.cpp
+	${PSRC}/client/impl/response.cpp
+)
+source_group(src/client/impl FILES ${SRC_CLIENT_IMPL})
+
+set(SRC_CLIENT_IMPL_HDR
+	${PSRC}/client/impl/request.hpp
+	${PSRC}/client/impl/response.hpp
+)
+source_group(src/client/impl FILES ${SRC_CLIENT_IMPL_HDR})
+
+
+
+
+
 set(SRC_PCH ${PSRC}/pch.cpp)
 source_group(src FILES ${SRC_PCH})
 
@@ -141,17 +177,23 @@ include_directories(${OPENSSL_INCLUDE_DIR})
 include_directories(${PSRC})
 
 add_library(${PROJECT} STATIC
-    ${INCLUDE} 
+    ${INC} 
     ${SRC} 
     ${SRC_HDR} 
     ${SRC_IMPL} 
     ${SRC_IMPL_HDR}
-    ${INCLUDE_IMPL} 
-    ${INCLUDE_SERVER} 
-    ${SRC_SERVER}
+    ${INC_IMPL} 
     ${SRC_IMPL_HDR}
+    
+    ${INC_SERVER} 
+    ${SRC_SERVER}
     ${SRC_SERVER_IMPL} 
     ${SRC_SERVER_IMPL_HDR}
+    
+    ${INC_CLIENT} 
+    ${SRC_CLIENT}
+    ${SRC_CLIENT_IMPL} 
+    ${SRC_CLIENT_IMPL_HDR}
     
     ${SRC_PCH}
     ${SRC_NOPCH} 
@@ -162,8 +204,9 @@ use_pch(${PROJECT} ${PSRC}/pch.hpp
 	${SRC}
 	${SRC_IMPL}
 	${SRC_SERVER}
-	${SRC_IMPL} 
-	${SRC_SERVER_IMPL} 
+	${SRC_SERVER_IMPL}
+	${SRC_CLIENT}
+	${SRC_CLIENT_IMPL} 
 )
 
 target_link_libraries(${PROJECT} utils async net)

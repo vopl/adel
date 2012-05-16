@@ -1,11 +1,10 @@
-/*
 #ifndef _HTTP_CLIENT_HPP_
 #define _HTTP_CLIENT_HPP_
 
 #include "utils/options.hpp"
 #include "async/service.hpp"
 
-//#include "http/client/request.hpp"
+#include "http/client/request.hpp"
 
 namespace http
 {
@@ -40,4 +39,4 @@ namespace http
 }
 
 #endif
-*/
+
