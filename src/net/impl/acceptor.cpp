@@ -273,7 +273,7 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	boost::signals2::connection Acceptor::connectOnAccept(const TOnAccept &f)
+	boost::signals2::connection Acceptor::onAccept(const TOnAccept &f)
 	{
 		return _onAccept.connect(f);
 	}

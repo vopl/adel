@@ -24,9 +24,9 @@ namespace http
 	}
 
 	///////////////////////////////////////////////////////////////////////////
-	boost::signals2::connection Server::connectOnRequest(const boost::function<void(const server::Request &)> &f)
+	boost::signals2::connection Server::onRequest(const boost::function<void(const server::Request &)> &f)
 	{
-		return _impl->connectOnRequest(f);
+		return _impl->onRequest(f);
 	}
 
 	///////////////////////////////////////////////////////////////////////////

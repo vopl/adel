@@ -20,7 +20,7 @@ namespace http { namespace impl
 
 		void init(async::Service asrv, utils::OptionsPtr options);
 
-		boost::signals2::connection connectOnRequest(const boost::function<void(const http::server::Request &)> &f);
+		boost::signals2::connection onRequest(const boost::function<void(const http::server::Request &)> &f);
 		void start();
 		void stop();
 

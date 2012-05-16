@@ -46,7 +46,7 @@ namespace net { namespace impl
 		Acceptor();
 		~Acceptor();
 
-		boost::signals2::connection connectOnAccept(const TOnAccept &f);
+		boost::signals2::connection onAccept(const TOnAccept &f);
 		Future<boost::system::error_code> listen(const char *host, const char *service, bool useSsl);
 		void unlisten();
 

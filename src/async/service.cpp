@@ -22,27 +22,27 @@ namespace async
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::signals2::connection Service::connectOnStart(const boost::function<void()> &f)
+	boost::signals2::connection Service::onStart(const boost::function<void()> &f)
 	{
-		return _impl->connectOnStart(f);
+		return _impl->onStart(f);
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::signals2::connection Service::connectOnStop(const boost::function<void()> &f)
+	boost::signals2::connection Service::onStop(const boost::function<void()> &f)
 	{
-		return _impl->connectOnStop(f);
+		return _impl->onStop(f);
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::signals2::connection Service::connectOnWorkerStart(const boost::function<void()> &f)
+	boost::signals2::connection Service::onWorkerStart(const boost::function<void()> &f)
 	{
-		return _impl->connectOnWorkerStart(f);
+		return _impl->onWorkerStart(f);
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::signals2::connection Service::connectOnWorkerStop(const boost::function<void()> &f)
+	boost::signals2::connection Service::onWorkerStop(const boost::function<void()> &f)
 	{
-		return _impl->connectOnWorkerStop(f);
+		return _impl->onWorkerStop(f);
 	}
 
 	////////////////////////////////////////////////////////////////

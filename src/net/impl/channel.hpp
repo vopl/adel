@@ -121,7 +121,7 @@ namespace net { namespace impl
 
 		bool isOpen() const;
 
-		boost::signals2::connection connectOnReceive(const TOnReceive &f);
+		boost::signals2::connection onReceive(const TOnReceive &f);
 
 		void listen(size_t amount);
 

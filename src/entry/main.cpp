@@ -124,7 +124,7 @@ int main(int argc, const char **argv)
 				http::Server httpServer1(manager.asrv(), ohttpServer1);
 
 				http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
-				httpServer1.connectOnRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
+				httpServer1.onRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
 
 				//adel::HttpClient httpClient(manager, "global");
 				//adel::Postgres postgres(manager, "global");

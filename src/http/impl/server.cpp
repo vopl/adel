@@ -36,7 +36,7 @@ namespace http { namespace impl
 
 		options->addOption(
 			"response.writeGranula",
-			po::value<size_t>()->default_value(65536),
+			po::value<size_t>()->default_value(32768),
 			"buffer size during write response data");
 
 		options->addOption(
@@ -104,8 +104,8 @@ namespace http { namespace impl
 	Server::Server()
 		: _host("localhost")
 		, _port("8080")
-		, _requestReadGranula(1400)
-		, _responseWriteGranula(1400)
+		, _requestReadGranula(1024)
+		, _responseWriteGranula(32768)
 		, _timeout(10000)
 	{
 	}
@@ -119,8 +119,8 @@ namespace http { namespace impl
 	void Server::init(async::Service asrv, utils::OptionsPtr options)
 	{
 		_asrv = asrv;
-		_asrv.connectOnStart(boost::bind(&Server::start, shared_from_this()));
-		_asrv.connectOnStop(boost::bind(&Server::stop, shared_from_this()));
+		_asrv.onStart(boost::bind(&Server::start, shared_from_this()));
+		_asrv.onStop(boost::bind(&Server::stop, shared_from_this()));
 
 		utils::Options &o = *options;
 		_host = o["host"].as<std::string>();
@@ -131,7 +131,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	boost::signals2::connection Server::connectOnRequest(const boost::function<void(const server::Request &)> &f)
+	boost::signals2::connection Server::onRequest(const boost::function<void(const server::Request &)> &f)
 	{
 		return _onRequest.connect(f);
 	}
@@ -139,7 +139,7 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void Server::start()
 	{
-		_connectionOnAccept = _acceptor.connectOnAccept(boost::bind(&Server::onAccept, shared_from_this(), _1, _2));
+		_connectionOnAccept = _acceptor.onAccept(boost::bind(&Server::onAccept, shared_from_this(), _1, _2));
 		async::Future<boost::system::error_code> ret = _acceptor.listen(_host.c_str(), _port.c_str(), false);
 
 		if(ret.data())

@@ -16,9 +16,9 @@ namespace net
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	boost::signals2::connection Acceptor::connectOnAccept(const TOnAccept &f)
+	boost::signals2::connection Acceptor::onAccept(const TOnAccept &f)
 	{
-		return _impl->connectOnAccept(f);
+		return _impl->onAccept(f);
 	}
 
 	//////////////////////////////////////////////////////////////////////////

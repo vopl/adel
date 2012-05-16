@@ -33,7 +33,7 @@ namespace net
 		bool isOpen() const;
 
 		typedef boost::function<void(boost::system::error_code ec, Packet p)> TOnReceive;
-		boost::signals2::connection connectOnReceive(const TOnReceive &f);
+		boost::signals2::connection onReceive(const TOnReceive &f);
 		void listen(size_t amount=(size_t)-1);
 
 		async::Future2<boost::system::error_code, Packet> receive(size_t maxSize=1024);

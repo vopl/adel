@@ -27,10 +27,10 @@ namespace async
 		Service(impl::ServicePtr impl);
 		virtual ~Service();
 
-		boost::signals2::connection connectOnStart(const boost::function<void()> &f);
-		boost::signals2::connection connectOnStop(const boost::function<void()> &f);
-		boost::signals2::connection connectOnWorkerStart(const boost::function<void()> &f);
-		boost::signals2::connection connectOnWorkerStop(const boost::function<void()> &f);
+		boost::signals2::connection onStart(const boost::function<void()> &f);
+		boost::signals2::connection onStop(const boost::function<void()> &f);
+		boost::signals2::connection onWorkerStart(const boost::function<void()> &f);
+		boost::signals2::connection onWorkerStop(const boost::function<void()> &f);
 
 		void setupFibers(size_t stackSize, size_t maxAmount);
 		void start(size_t numThreads);

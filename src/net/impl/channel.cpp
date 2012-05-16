@@ -352,7 +352,7 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	boost::signals2::connection Channel::connectOnReceive(const TOnReceive &f)
+	boost::signals2::connection Channel::onReceive(const TOnReceive &f)
 	{
 		return _onReceive.connect(f);
 	}

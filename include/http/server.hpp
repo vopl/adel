@@ -28,7 +28,7 @@ namespace http
 		Server(async::Service asrv, utils::OptionsPtr options);
 		~Server();
 
-		boost::signals2::connection connectOnRequest(const boost::function<void(const server::Request &)> &f);
+		boost::signals2::connection onRequest(const boost::function<void(const server::Request &)> &f);
 		void start();
 		void stop();
 
