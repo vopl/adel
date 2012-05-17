@@ -160,7 +160,7 @@ namespace http { namespace impl
 				}
 				}
 				_z_stream.next_in = NULL;
-				_z_stream.avail_in = NULL;
+				_z_stream.avail_in = 0;
 			}
 			return http::error::make();
 		case ece_compress:
