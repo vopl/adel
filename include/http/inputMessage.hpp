@@ -39,6 +39,8 @@ namespace http
 			impl::InputMessageBuffer	*buffer() const;
 			const char					*position() const;
 
+			Iterator &normalize();
+
 		private:
 			friend class boost::iterator_core_access;
 

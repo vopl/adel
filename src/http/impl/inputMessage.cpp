@@ -363,7 +363,7 @@ namespace http { namespace impl
 			Segment lseg(segment);
 			if(tf.find(lseg))
 			{
-				segment = Segment(segment.begin(), lseg.begin());
+				segment = Segment(segment.begin().normalize(), lseg.begin());
 				return http::error::make();
 			}
 		}
@@ -382,7 +382,7 @@ namespace http { namespace impl
 			}
 			if(tf.find(lseg))
 			{
-				segment = Segment(segment.begin(), lseg.begin());
+				segment = Segment(segment.begin().normalize(), lseg.begin());
 				return http::error::make();
 			}
 		}
@@ -468,7 +468,7 @@ namespace http { namespace impl
 
 			readed -= p._size;
 		}
-		_body = Segment(_readedPos, _readedPos + readed);
+		_body = Segment(_readedPos.normalize(), _readedPos + readed);
 		_readedPos = _body.end();
 
 		return http::error::make();

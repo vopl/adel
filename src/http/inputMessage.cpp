@@ -56,6 +56,30 @@ namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	InputMessage::Iterator &InputMessage::Iterator::normalize()
+	{
+		if(_buffer)
+		{
+			assert(_buffer);
+			assert(_position >= _buffer->begin());
+			assert(_position <= _buffer->end());
+
+			if(_buffer->end() == _position)
+			{
+				impl::InputMessageBuffer *next = _buffer->next();
+				if(next)
+				{
+					_buffer = next;
+					_position = _buffer->begin();
+					assert(_position >= _buffer->begin());
+					assert(_position < _buffer->end());
+				}
+			}
+		}
+		return *this;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	InputMessage::Iterator::reference InputMessage::Iterator::dereference() const
 	{
 		assert(_buffer);
