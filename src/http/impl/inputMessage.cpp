@@ -180,6 +180,10 @@ namespace http { namespace impl
 			{
 				return http::error::make(http::error::invalid_message);
 			}
+			else
+			{
+				assert(!"post process body (gzip)");
+			}
 			_em = em_done;
 		}
 
