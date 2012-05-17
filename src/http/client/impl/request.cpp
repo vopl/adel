@@ -1,8 +1,8 @@
 #include "pch.hpp"
 #include "http/client/impl/request.hpp"
 #include "http/impl/client.hpp"
-#include "http/impl/contentFilterEncodeChunked.hpp"
-#include "http/impl/contentFilterEncodeZlib.hpp"
+#include "http/impl/contentEncoderChunked.hpp"
+#include "http/impl/contentEncoderZlib.hpp"
 #include "http/headerName.hpp"
 
 #include "http/client/log.hpp"
@@ -278,15 +278,15 @@ namespace http { namespace client { namespace impl
 	{
 		if(_chunked)
 		{
-			http::impl::ContentFilterPtr cf(new http::impl::ContentFilterEncodeChunked(_contentFilter, _client->requestWriteGranula()));
-			_contentFilter = cf;
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderChunked(_contentEncoder, _client->requestWriteGranula()));
+			_contentEncoder = ce;
 		}
 
 		if(_contentEncoding != ece_identity)
 		{
 			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
-			http::impl::ContentFilterPtr cf(new http::impl::ContentFilterEncodeZlib(_contentFilter, _contentEncoding, _contentEncodingCompressLevel, _client->requestWriteGranula()));
-			_contentFilter = cf;
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderZlib(_contentEncoder, _contentEncoding, _contentEncodingCompressLevel, _client->requestWriteGranula()));
+			_contentEncoder = ce;
 		}
 
 		return http::impl::OutputMessage::setupBodyFilters();

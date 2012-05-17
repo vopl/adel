@@ -19,8 +19,8 @@ namespace http { namespace impl
 	InputMessage::InputMessage(const net::Channel &channel, size_t granula)
 		: _channel(channel)
 		, _granula(granula)
-		, _bufferAccumuler(new ContentFilterBufferAccumuler)
-		, _contentFilter(_bufferAccumuler)
+		, _accumuler(new ContentDecoderAccumuler)
+		, _contentDecoder(_accumuler)
 		, _em(em_firstLine)
 	{
 	}
@@ -85,7 +85,7 @@ namespace http { namespace impl
 
 			for(;;)
 			{
-				hdr.second._header_ = Segment(_readedPos, _bufferAccumuler->end());
+				hdr.second._header_ = Segment(_readedPos, _accumuler->end());
 				if((ec = readUntil("\r\n", hdr.second._header_)))
 				{
 					return ec;
@@ -256,8 +256,8 @@ namespace http { namespace impl
 	{
 		_version = Version();
 		_em = em_firstLine;
-		_bufferAccumuler->dropFront(_readedPos);
-		_contentFilter = _bufferAccumuler;
+		_accumuler->dropFront(_readedPos);
+		_contentDecoder = _accumuler;
 		_readedPos = Iterator();
 		_firstLine = Segment();
 		_headers = Segment();
@@ -268,7 +268,7 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBuffer(Segment *segment)
 	{
-		InputMessageBuffer 	*lastBuffer = _bufferAccumuler->lastBuffer();
+		InputMessageBuffer 	*lastBuffer = _accumuler->lastBuffer();
 
 		boost::system::error_code ec;
 		do
@@ -283,12 +283,12 @@ namespace http { namespace impl
 				return res.data1NoWait();
 			}
 
-			if((ec = _contentFilter->filterPush(res.data2NoWait(), 0)))
+			if((ec = _contentDecoder->filterPush(res.data2NoWait(), 0)))
 			{
 				return ec;
 			}
 		}
-		while(lastBuffer == _bufferAccumuler->lastBuffer());
+		while(lastBuffer == _accumuler->lastBuffer());
 
 		if(lastBuffer)
 		{
@@ -297,7 +297,7 @@ namespace http { namespace impl
 			{
 				*segment = Segment(
 					Iterator(lastBuffer->next(), lastBuffer->next()->begin()),
-					Iterator(_bufferAccumuler->lastBuffer(), _bufferAccumuler->lastBuffer()->end()));
+					Iterator(_accumuler->lastBuffer(), _accumuler->lastBuffer()->end()));
 			}
 		}
 		else
@@ -305,8 +305,8 @@ namespace http { namespace impl
 			if(segment)
 			{
 				*segment = Segment(
-					Iterator(_bufferAccumuler->firstBuffer(), _bufferAccumuler->firstBuffer()->begin()),
-					Iterator(_bufferAccumuler->lastBuffer(), _bufferAccumuler->lastBuffer()->end()));
+					Iterator(_accumuler->firstBuffer(), _accumuler->firstBuffer()->begin()),
+					Iterator(_accumuler->lastBuffer(), _accumuler->lastBuffer()->end()));
 			}
 		}
 
@@ -398,7 +398,7 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBodySized(size_t size)
 	{
-		size_t alreadyReaded = _bufferAccumuler->end() - _readedPos;
+		size_t alreadyReaded = _accumuler->end() - _readedPos;
 		if(alreadyReaded >= size)
 		{
 			_body = Segment(_readedPos, _readedPos + size);
@@ -420,7 +420,7 @@ namespace http { namespace impl
 			}
 
 			net::Packet &p = res.data2NoWait();
-			if((ec = _contentFilter->filterPush(p, 0)))
+			if((ec = _contentDecoder->filterPush(p, 0)))
 			{
 				return ec;
 			}
@@ -451,7 +451,7 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBodyAll()
 	{
-		size_t readed = _bufferAccumuler->end() - _readedPos;
+		size_t readed = _accumuler->end() - _readedPos;
 
 		boost::system::error_code ec;
 		for(;;)
@@ -465,7 +465,7 @@ namespace http { namespace impl
 			}
 
 			net::Packet &p = res.data2NoWait();
-			if((ec = _contentFilter->filterPush(p, 0)))
+			if((ec = _contentDecoder->filterPush(p, 0)))
 			{
 				return ec;
 			}

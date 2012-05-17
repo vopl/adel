@@ -1,5 +1,5 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterEncodeZlib.hpp"
+#include "http/impl/contentEncoderZlib.hpp"
 #include "http/log.hpp"
 #include "http/error.hpp"
 
@@ -17,7 +17,7 @@ namespace http { namespace impl
 		}
 	}
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeZlib::ContentFilterEncodeZlib(ContentFilterPtr upstream, EContentEncoding ece, int level, size_t granula)
+	ContentEncoderZlib::ContentEncoderZlib(ContentEncoderPtr upstream, EContentEncoding ece, int level, size_t granula)
 		: _upstream(upstream)
 		, _ece(ece)
 		, _level(level)
@@ -83,7 +83,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeZlib::~ContentFilterEncodeZlib()
+	ContentEncoderZlib::~ContentEncoderZlib()
 	{
 		switch(_ece)
 		{
@@ -105,7 +105,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterEncodeZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderZlib::filterPush(const net::Packet &packet, size_t offset)
 	{
 		switch(_ece)
 		{
@@ -175,7 +175,7 @@ namespace http { namespace impl
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterEncodeZlib::filterFlush()
+	boost::system::error_code ContentEncoderZlib::filterFlush()
 	{
 		switch(_ece)
 		{

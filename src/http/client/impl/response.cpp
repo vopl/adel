@@ -2,8 +2,8 @@
 #include "http/client/impl/response.hpp"
 #include "http/client/impl/request.hpp"
 #include "http/impl/client.hpp"
-#include "http/impl/contentFilterEncodeChunked.hpp"
-#include "http/impl/contentFilterEncodeZlib.hpp"
+#include "http/impl/contentEncoderChunked.hpp"
+#include "http/impl/contentEncoderZlib.hpp"
 #include "http/headerName.hpp"
 
 #include <boost/spirit/include/karma.hpp>

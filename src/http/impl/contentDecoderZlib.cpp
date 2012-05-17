@@ -1,29 +1,29 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterDecodeZlib.hpp"
+#include "http/impl/contentDecoderZlib.hpp"
 
 
 namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeZlib::ContentFilterDecodeZlib(ContentFilter *upstream)
+	ContentDecoderZlib::ContentDecoderZlib(ContentDecoder *upstream)
 		: _upstream(upstream)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeZlib::~ContentFilterDecodeZlib()
+	ContentDecoderZlib::~ContentDecoderZlib()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterDecodeZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderZlib::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"not impl");
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterDecodeZlib::filterFlush()
+	boost::system::error_code ContentDecoderZlib::filterFlush()
 	{
 		assert(!"not impl");
 		return _upstream->filterFlush();

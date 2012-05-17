@@ -106,7 +106,7 @@ namespace http { namespace impl
 		char &iteratorDereference();
 
 	protected:
-		ContentFilterPtr	_contentFilter;
+		ContentEncoderPtr	_contentEncoder;
 	};
 
 	typedef boost::shared_ptr<OutputMessage> OutputMessagePtr;

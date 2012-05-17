@@ -132,7 +132,7 @@ namespace net { namespace impl
 	void Channel::Sock::setTimeout(size_t ms)
 	{
 #if defined _WIN32
-		boost::int32_t timeout = ms;
+		boost::int32_t timeout = static_cast<boost::int32_t>(ms);
 #else
 		struct timeval timeout;
 		timeout.tv_sec  = ms/1000;

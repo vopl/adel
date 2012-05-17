@@ -1,5 +1,5 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterEncodeChunked.hpp"
+#include "http/impl/contentEncoderChunked.hpp"
 #include "http/error.hpp"
 
 #include <boost/spirit/include/karma.hpp>
@@ -12,7 +12,7 @@
 namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeChunked::ContentFilterEncodeChunked(ContentFilterPtr upstream, size_t granula)
+	ContentEncoderChunked::ContentEncoderChunked(ContentEncoderPtr upstream, size_t granula)
 		: _upstream(upstream)
 		, _granula(granula)
 		, _size(0)
@@ -20,12 +20,12 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterEncodeChunked::~ContentFilterEncodeChunked()
+	ContentEncoderChunked::~ContentEncoderChunked()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterEncodeChunked::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderChunked::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(offset < packet._size);
 
@@ -47,7 +47,7 @@ namespace http { namespace impl
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterEncodeChunked::filterFlush()
+	boost::system::error_code ContentEncoderChunked::filterFlush()
 	{
 		boost::system::error_code ec;
 		if((ec = push2Upstream(true)))
@@ -74,7 +74,7 @@ namespace http { namespace impl
 		static net::Packet crlfPacket = initPacket("\r\n");
 	}
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterEncodeChunked::push2Upstream(bool finish)
+	boost::system::error_code ContentEncoderChunked::push2Upstream(bool finish)
 	{
 		boost::system::error_code ec;
 		if(_size)

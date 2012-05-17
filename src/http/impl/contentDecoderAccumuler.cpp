@@ -1,11 +1,11 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterBufferAccumuler.hpp"
+#include "http/impl/contentDecoderAccumuler.hpp"
 #include "http/error.hpp"
 
 namespace http { namespace impl
 {
 	////////////////////////////////////////////////////////////////
-	ContentFilterBufferAccumuler::ContentFilterBufferAccumuler()
+	ContentDecoderAccumuler::ContentDecoderAccumuler()
 		: _first()
 		, _last(NULL)
 		, _size(0)
@@ -14,12 +14,12 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	ContentFilterBufferAccumuler::~ContentFilterBufferAccumuler()
+	ContentDecoderAccumuler::~ContentDecoderAccumuler()
 	{
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterBufferAccumuler::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderAccumuler::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size);
 		assert(packet._size>offset);
@@ -48,39 +48,39 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterBufferAccumuler::filterFlush()
+	boost::system::error_code ContentDecoderAccumuler::filterFlush()
 	{
 		return error::make();
 	}
 
 	////////////////////////////////////////////////////////////////
-	InputMessageBuffer	*ContentFilterBufferAccumuler::firstBuffer()
+	InputMessageBuffer	*ContentDecoderAccumuler::firstBuffer()
 	{
 		return _first.get();
 	}
 
 	////////////////////////////////////////////////////////////////
-	InputMessageBuffer	*ContentFilterBufferAccumuler::lastBuffer()
+	InputMessageBuffer	*ContentDecoderAccumuler::lastBuffer()
 	{
 		return _last;
 	}
 
 	////////////////////////////////////////////////////////////////
-	http::InputMessage::Iterator ContentFilterBufferAccumuler::begin()
+	http::InputMessage::Iterator ContentDecoderAccumuler::begin()
 	{
 		InputMessageBuffer	*buf = firstBuffer();
 		return http::InputMessage::Iterator(buf, buf->begin());
 	}
 
 	////////////////////////////////////////////////////////////////
-	http::InputMessage::Iterator ContentFilterBufferAccumuler::end()
+	http::InputMessage::Iterator ContentDecoderAccumuler::end()
 	{
 		InputMessageBuffer	*buf = lastBuffer();
 		return http::InputMessage::Iterator(buf, buf->end());
 	}
 
 	////////////////////////////////////////////////////////////////
-	void ContentFilterBufferAccumuler::dropFront(const http::InputMessage::Iterator &pos)
+	void ContentDecoderAccumuler::dropFront(const http::InputMessage::Iterator &pos)
 	{
 		if(!_first)
 		{

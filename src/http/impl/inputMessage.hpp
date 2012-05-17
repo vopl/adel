@@ -4,7 +4,7 @@
 #include "net/channel.hpp"
 #include "http/inputMessage.hpp"
 #include "http/version.hpp"
-#include "http/impl/contentFilterBufferAccumuler.hpp"
+#include "http/impl/contentDecoderAccumuler.hpp"
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/unordered_map.hpp>
 
@@ -62,8 +62,8 @@ namespace http { namespace impl
 
 	protected:
 		boost::system::error_code readBuffer(Segment *segment);
-		ContentFilterBufferAccumulerPtr	_bufferAccumuler;
-		ContentFilterPtr				_contentFilter;
+		ContentDecoderAccumulerPtr	_accumuler;
+		ContentDecoderPtr			_contentDecoder;
 
 		boost::system::error_code readUntil(const char *tokenz, Segment &segment);
 
@@ -72,10 +72,10 @@ namespace http { namespace impl
 		boost::system::error_code readBodyAll();
 
 	protected:
-		Iterator _readedPos;
-		Segment	_firstLine;
-		Segment	_headers;
-		Segment	_body;
+		Iterator	_readedPos;
+		Segment		_firstLine;
+		Segment		_headers;
+		Segment		_body;
 
 
 

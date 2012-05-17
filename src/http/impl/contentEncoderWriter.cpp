@@ -1,12 +1,12 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterChannelWriter.hpp"
+#include "http/impl/contentEncoderWriter.hpp"
 #include "http/error.hpp"
 
 
 namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterChannelWriter::ContentFilterChannelWriter(const net::Channel &channel, size_t granula)
+	ContentEncoderWriter::ContentEncoderWriter(const net::Channel &channel, size_t granula)
 		: _channel(channel)
 		, _granula(granula)
 		, _dataSize(0)
@@ -14,12 +14,12 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterChannelWriter::~ContentFilterChannelWriter()
+	ContentEncoderWriter::~ContentEncoderWriter()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterChannelWriter::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderWriter::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size > offset);
 		size_t bufferSize = packet._size - offset;
@@ -38,7 +38,7 @@ namespace http { namespace impl
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterChannelWriter::filterFlush()
+	boost::system::error_code ContentEncoderWriter::filterFlush()
 	{
 		if(_dataSize)
 		{

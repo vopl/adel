@@ -9,7 +9,7 @@ namespace http { namespace impl
 		: public ContentDecoder
 	{
 	public:
-		ContentDecoderChunked(ContentFilter *upstream);
+		ContentDecoderChunked(ContentDecoder *upstream);
 		virtual ~ContentDecoderChunked();
 
 		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);

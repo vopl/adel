@@ -77,6 +77,7 @@ namespace http { namespace impl
 		const char *url)
 	{
 		assert(0);
+		return boost::system::error_code();
 	}
 
 	//////////////////////////////////////////////////////////////////////

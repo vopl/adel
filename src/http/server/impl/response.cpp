@@ -2,8 +2,8 @@
 #include "http/server/impl/response.hpp"
 #include "http/server/impl/request.hpp"
 #include "http/impl/server.hpp"
-#include "http/impl/contentFilterEncodeChunked.hpp"
-#include "http/impl/contentFilterEncodeZlib.hpp"
+#include "http/impl/contentEncoderChunked.hpp"
+#include "http/impl/contentEncoderZlib.hpp"
 #include "http/headerName.hpp"
 
 #include <boost/spirit/include/karma.hpp>
@@ -286,15 +286,15 @@ namespace http { namespace server { namespace impl
 	{
 		if(_chunked)
 		{
-			http::impl::ContentFilterPtr cf(new http::impl::ContentFilterEncodeChunked(_contentFilter, _server->responseWriteGranula()));
-			_contentFilter = cf;
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderChunked(_contentEncoder, _server->responseWriteGranula()));
+			_contentEncoder = ce;
 		}
 
 		if(_contentEncoding != ece_identity)
 		{
 			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
-			http::impl::ContentFilterPtr cf(new http::impl::ContentFilterEncodeZlib(_contentFilter, _contentEncoding, _contentEncodingCompressLevel, _server->responseWriteGranula()));
-			_contentFilter = cf;
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderZlib(_contentEncoder, _contentEncoding, _contentEncodingCompressLevel, _server->responseWriteGranula()));
+			_contentEncoder = ce;
 		}
 
 		return http::impl::OutputMessage::setupBodyFilters();

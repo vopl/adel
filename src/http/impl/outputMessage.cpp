@@ -1,6 +1,6 @@
 #include "pch.hpp"
 #include "http/impl/outputMessage.hpp"
-#include "http/impl/contentFilterChannelWriter.hpp"
+#include "http/impl/contentEncoderWriter.hpp"
 #include "http/error.hpp"
 
 namespace http { namespace impl
@@ -13,7 +13,7 @@ namespace http { namespace impl
 		, _writeBegin(NULL)
 		, _writePosition(NULL)
 		, _writeEnd(NULL)
-		, _contentFilter(new ContentFilterChannelWriter(channel, granula))
+		, _contentEncoder(new ContentEncoderWriter(channel, granula))
 	{
 		//bufferEnsure();
 	}
@@ -234,7 +234,7 @@ namespace http { namespace impl
 			return ec;
 		}
 
-		if((ec = _contentFilter->filterFlush()))
+		if((ec = _contentEncoder->filterFlush()))
 		{
 			return ec;
 		}
@@ -337,7 +337,7 @@ namespace http { namespace impl
 
 		if(buf._size > offset)
 		{
-			if((ec = _contentFilter->filterPush(buf, offset)))
+			if((ec = _contentEncoder->filterPush(buf, offset)))
 			{
 				return ec;
 			}

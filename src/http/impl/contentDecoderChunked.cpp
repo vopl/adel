@@ -1,29 +1,29 @@
 #include "pch.hpp"
-#include "http/impl/contentFilterDecodeChunked.hpp"
+#include "http/impl/contentDecoderChunked.hpp"
 
 
 namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeChunked::ContentFilterDecodeChunked(ContentFilter *upstream)
+	ContentDecoderChunked::ContentDecoderChunked(ContentDecoder *upstream)
 		: _upstream(upstream)
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	ContentFilterDecodeChunked::~ContentFilterDecodeChunked()
+	ContentDecoderChunked::~ContentDecoderChunked()
 	{
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterDecodeChunked::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderChunked::filterPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"not impl");
 		return _upstream->filterPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentFilterDecodeChunked::filterFlush()
+	boost::system::error_code ContentDecoderChunked::filterFlush()
 	{
 		assert(!"not impl");
 		return _upstream->filterFlush();
