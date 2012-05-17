@@ -47,4 +47,10 @@ namespace http { namespace client
 		return _impl->firstLine(method, path, version);
 	}
 
+	//////////////////////////////////////////////////////////////
+	Response Request::response()
+	{
+		return Response(_impl->response());
+	}
+
 }}

@@ -30,6 +30,10 @@ namespace http { namespace impl
 			client::impl::RequestPtr &request,
 			const char *url);
 
+	public:
+		size_t requestWriteGranula() const;
+		size_t responseReadGranula() const;
+
 	private:
 		size_t _responseReadGranula;
 		size_t _requestWriteGranula;

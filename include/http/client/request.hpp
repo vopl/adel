@@ -34,6 +34,9 @@ namespace http { namespace client
 		//keep alive
 		//body size
 		//compress
+
+	public:
+		Response response();
 	};
 }}
 

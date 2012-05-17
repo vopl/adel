@@ -31,6 +31,8 @@ namespace http
 HTTP_HN_INSTANCE(date, 'D','a','t','e')
 HTTP_HN_INSTANCE(server, 'S','e','r','v','e','r')
 
+HTTP_HN_INSTANCE(host, 'H','o','s','t')
+
 HTTP_HN_INSTANCE(connection, 'C','o','n','n','e','c','t','i','o','n')
 
 HTTP_HN_INSTANCE(transferEncoding, 'T','r','a','n','s','f','e','r','-','E','n','c','o','d','i','n','g')
@@ -48,6 +50,8 @@ HTTP_HN_INSTANCE(ifNoneMatch, 'I','f','-','N','o','n','e','-','M','a','t','c','h
 HTTP_HN_INSTANCE(lastModified, 'L','a','s','t','-','M','o','d','i','f','i','e','d')
 HTTP_HN_INSTANCE(ifModifiedSince, 'I','f','-','M','o','d','i','f','i','e','d','-','S','i','n','c','e')
 HTTP_HN_INSTANCE(ifUnmodifiedSince, 'I','f','-','U','n','m','o','d','i','f','i','e','d','-','S','i','n','c','e')
+
+HTTP_HN_INSTANCE(userAgent, 'U','s','e','r','-','A','g','e','n','t')
 
 namespace http { namespace hn
 {

@@ -9,6 +9,7 @@ endif()
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Release)
 endif()
+set(CMAKE_BUILD_TYPE ${CMAKE_BUILD_TYPE} CACHE STRING "build type")
 
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 

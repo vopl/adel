@@ -68,7 +68,7 @@ namespace http
 		///////////////////////////////////////////////
 		Iterator	headersIterator();
 
-		boost::system::error_code		header(const char *data, size_t size);
+		boost::system::error_code		header(const char *data, size_t dataSize);
 		boost::system::error_code		header(const char *dataz);
 		boost::system::error_code		header(const std::string &data);
 
@@ -146,6 +146,7 @@ namespace http
 	{
 		return header(name.csz, name.size, value);
 	}
+
 
 }
 

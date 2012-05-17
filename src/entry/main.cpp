@@ -14,6 +14,7 @@
 #include "http/server/handlerFs.hpp"
 #include "http/client/log.hpp"
 #include "http/client.hpp"
+#include "http/headerName.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -36,12 +37,16 @@ void testClient(http::Client c)
 		return;
 	}
 
-	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,1));
+	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,0));
 	if(ec)
 	{
 		std::cout<<"firstLine: "<<ec<<std::endl;
 		return;
 	}
+
+	//request.header(http::hn::acceptEncoding, "deflate, gzip", 14);
+	request.header(http::hn::userAgent, "hawc");
+	request.header(http::hn::host, "127.0.0.1:8080");
 
 	ec = request.bodyFlush();
 	if(ec)
@@ -49,6 +54,34 @@ void testClient(http::Client c)
 		std::cout<<"bodyFlush: "<<ec<<std::endl;
 		return;
 	}
+
+	http::client::Response response = request.response();
+
+	ec = response.readFirstLine();
+	if(ec)
+	{
+		std::cout<<"readFirstLine: "<<ec<<std::endl;
+		return;
+	}
+
+	std::cout<<"firstLine: ["<<std::string(response.firstLine().begin(), response.firstLine().end())<<"]"<<std::endl;
+
+	ec = response.readHeaders();
+	if(ec)
+	{
+		std::cout<<"readHeaders: "<<ec<<std::endl;
+		return;
+	}
+	std::cout<<"headers: ["<<std::string(response.headers().begin(), response.headers().end())<<"]"<<std::endl;
+
+	ec = response.readBody();
+	if(ec)
+	{
+		std::cout<<"readBody: "<<ec<<std::endl;
+		return;
+	}
+	std::cout<<"body: ["<<std::string(response.body().begin(), response.body().end())<<"]"<<std::endl;
+
 }
 
 

@@ -18,7 +18,8 @@ namespace http { namespace client { namespace impl
 
 	//////////////////////////////////////////////////////////////////////////
 	Request::Request(const http::impl::ClientPtr &client, const net::Channel &channel)
-		: http::impl::OutputMessage(channel, 220)
+		: http::impl::OutputMessage(channel, client->requestWriteGranula())
+		, _client(client)
 	{
 	}
 
@@ -30,7 +31,68 @@ namespace http { namespace client { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code Request::firstLine(EMethod method, const char *path, size_t pathSize, const Version &version)
 	{
-		assert(0);
+		Iterator iter = firstLineIterator();
+		boost::system::error_code ec;
+
+		switch(method)
+		{
+		default:
+		case em_UNKNOWN:
+			return http::error::make(http::error::wrong_value);
+		case em_OPTIONS:
+			ec = write("OPTIONS ", 8);
+			break;
+		case em_GET:
+			ec = write("GET ", 4);
+			break;
+		case em_POST:
+			ec = write("POST ", 5);
+			break;
+		case em_HEAD:
+			ec = write("HEAD ", 5);
+			break;
+		case em_TRACE:
+			ec = write("TRACE ", 6);
+			break;
+		case em_PUT:
+			ec = write("PUT ", 4);
+			break;
+		case em_DELETE:
+			ec = write("DELETE ", 7);
+			break;
+		case em_CONNECT:
+			ec = write("CONNECT ", 8);
+			break;
+		}
+
+		if(ec)
+		{
+			return ec;
+		}
+
+		if((ec = write(path, pathSize)))
+		{
+			return ec;
+		}
+
+		if((ec = write(" HTTP/", 6)))
+		{
+			return ec;
+		}
+
+		using namespace boost::spirit::karma;
+		namespace karma = boost::spirit::karma;
+		namespace px = boost::phoenix;
+
+		bool b = generate(iter,
+			uint_[karma::_1 = version._hi]<<'.'<<uint_[karma::_1 = version._lo]);
+
+		if(!b)
+		{
+			return error::make(error::unexpected);
+		}
+
+		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -44,5 +106,17 @@ namespace http { namespace client { namespace impl
 	{
 		return firstLine(method, path.data(), path.size(), version);
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	ResponsePtr Request::response()
+	{
+		if(!_response)
+		{
+			_response.reset(new Response(_client, _channel, this));
+		}
+
+		return _response;
+	}
+
 
 }}}

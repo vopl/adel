@@ -78,4 +78,17 @@ namespace http { namespace impl
 	{
 		assert(0);
 	}
+
+	//////////////////////////////////////////////////////////////////////
+	size_t Client::requestWriteGranula() const
+	{
+		return _requestWriteGranula;
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	size_t Client::responseReadGranula() const
+	{
+		return _responseReadGranula;
+	}
+
 }}
