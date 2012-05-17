@@ -3,6 +3,7 @@
 
 #include "net/channel.hpp"
 #include "http/inputMessage.hpp"
+#include "http/version.hpp"
 #include "http/impl/contentFilterBufferAccumuler.hpp"
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/unordered_map.hpp>
@@ -48,6 +49,8 @@ namespace http { namespace impl
 	protected:
 		net::Channel	_channel;
 		size_t			_granula;
+
+		Version			_version;
 
 		enum EMode
 		{

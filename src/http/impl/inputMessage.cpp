@@ -3,6 +3,7 @@
 #include "http/log.hpp"
 #include "http/method.hpp"
 #include "http/headerName.hpp"
+#include "http/headerValue.hpp"
 #include "http/error.hpp"
 
 #include <boost/spirit/include/qi.hpp>
@@ -117,11 +118,6 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBody()
 	{
-		assert(!"not impl");
-
-		//setup filters
-		//read
-
 		boost::system::error_code ec;
 		if(em_body > _em)
 		{
@@ -133,11 +129,48 @@ namespace http { namespace impl
 
 		if(em_body == _em)
 		{
-			assert(!"not impl");
-			/*if(!readUntil("\r\n"))
+			bool readed = false;
+
+			if(!readed)
 			{
-				return false;
-			}*/
+				HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
+				if(hvContentLength.isCorrect())
+				{
+					assert(!"read for size");
+					readed = true;
+				}
+			}
+
+			if(!readed)
+			{
+				HeaderValue<TransferEncoding> hvTransferEncoding(header(http::hn::transferEncoding));
+				if(hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked))
+				{
+					assert(!"read for chunked");
+					readed = true;
+				}
+			}
+
+			if(!readed)
+			{
+				HeaderValue<Connection> hvConnection(header(http::hn::connection));
+
+				if(
+					(hvConnection.isCorrect() && hvConnection.value()==ec_close) ||
+					(!hvConnection.isCorrect() && _version < Version(1,1)))
+				{
+					if(hvConnection.value()==ec_close)
+					{
+						assert(!"read for close");
+						readed = true;
+					}
+				}
+			}
+
+			if(!readed)
+			{
+				return http::error::make(http::error::invalid_message);
+			}
 			_em = em_done;
 		}
 
@@ -202,13 +235,13 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	const InputMessage::Segment &InputMessage::body() const
 	{
-		assert(0);
-		return *(const InputMessage::Segment *)NULL;
+		return _body;
 	}
 	
 	//////////////////////////////////////////////////////////////////////////
 	void InputMessage::reinit()
 	{
+		_version = Version();
 		_em = em_firstLine;
 		_bufferAccumuler->dropFront(_readedPos);
 		_contentFilter = _bufferAccumuler;

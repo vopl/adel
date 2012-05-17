@@ -57,7 +57,7 @@ namespace http { namespace server { namespace impl
 		EMethod	_method_;
 		Segment	_method;
 
-		Version	_version_;
+		//Version	_version_;
 		Segment	_version;
 
 		Segment	_uri;

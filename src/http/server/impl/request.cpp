@@ -22,7 +22,6 @@ namespace http { namespace server { namespace impl
 	Request::Request(const http::impl::ServerPtr &server, const net::Channel &channel)
 		: http::impl::InputMessage(channel, server->requestReadGranula())
 		, _method_(em_UNKNOWN)
-		, _version_(0,0)
 		, _server(server)
 		, _channel(channel)
 	{
@@ -90,9 +89,9 @@ namespace http { namespace server { namespace impl
 				" HTTP/" >>
 
 				raw[
-					digit[px::ref(_version_._hi) = qi::_1-'0'] >>
+					digit[px::ref(http::impl::InputMessage::_version._hi) = qi::_1-'0'] >>
 					'.' >>
-					digit[px::ref(_version_._lo) = qi::_1-'0']
+					digit[px::ref(http::impl::InputMessage::_version._lo) = qi::_1-'0']
 				][px::ref(_version) = qi::_1]
 			);
 
@@ -125,7 +124,7 @@ namespace http { namespace server { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	const Version &Request::version_() const
 	{
-		return _version_;
+		return http::impl::InputMessage::_version;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -169,7 +168,6 @@ namespace http { namespace server { namespace impl
 		_method_ = em_UNKNOWN;
 		_method = Segment();
 
-		_version_ = Version(0,0);
 		_version = Segment();
 
 		_uri = Segment();
