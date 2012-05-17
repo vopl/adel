@@ -2,7 +2,7 @@
 #define _HTTP_IMPL_OUTPUTMESSAGE_HPP_
 
 #include "http/outputMessage.hpp"
-#include "http/impl/contentFilter.hpp"
+#include "http/impl/contentEncoder.hpp"
 #include "http/error.hpp"
 #include "net/channel.hpp"
 #include <boost/enable_shared_from_this.hpp>

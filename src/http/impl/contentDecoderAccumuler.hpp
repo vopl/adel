@@ -1,18 +1,18 @@
-#ifndef _HTTP_IMPL_CONTENTFILTERBUFFERACCUMULER_HPP_
-#define _HTTP_IMPL_CONTENTFILTERBUFFERACCUMULER_HPP_
+#ifndef _HTTP_IMPL_CONTENTDECODERACCUMULER_HPP_
+#define _HTTP_IMPL_CONTENTDECODERACCUMULER_HPP_
 
-#include "http/impl/contentFilter.hpp"
+#include "http/impl/contentDecoder.hpp"
 #include "http/impl/inputMessageBuffer.hpp"
 #include "http/inputMessage.hpp"
 
 namespace http { namespace impl
 {
-	class ContentFilterBufferAccumuler
-		: public ContentFilter
+	class ContentDecoderAccumuler
+		: public ContentDecoder
 	{
 	public:
-		ContentFilterBufferAccumuler();
-		~ContentFilterBufferAccumuler();
+		ContentDecoderAccumuler();
+		~ContentDecoderAccumuler();
 
 		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
 		virtual boost::system::error_code filterFlush();
@@ -31,7 +31,7 @@ namespace http { namespace impl
 		size_t					_size;
 	};
 
-	typedef boost::shared_ptr<ContentFilterBufferAccumuler> ContentFilterBufferAccumulerPtr;
+	typedef boost::shared_ptr<ContentDecoderAccumuler> ContentDecoderAccumulerPtr;
 }}
 
 

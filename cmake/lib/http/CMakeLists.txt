@@ -50,15 +50,19 @@ source_group(src FILES ${SRC_HDR})
 set(SRC_IMPL
 	${PSRC}/impl/server.cpp
 	${PSRC}/impl/client.cpp
-	${PSRC}/impl/contentFilter.cpp
-	${PSRC}/impl/contentFilterChannelWriter.cpp
-	${PSRC}/impl/contentFilterEncodeZlib.cpp
-	${PSRC}/impl/contentFilterEncodeChunked.cpp
-	${PSRC}/impl/contentFilterDecodeZlib.cpp
-	${PSRC}/impl/contentFilterDecodeChunked.cpp
+	
+	${PSRC}/impl/contentEncoder.cpp
+	${PSRC}/impl/contentEncoderWriter.cpp
+	${PSRC}/impl/contentEncoderZlib.cpp
+	${PSRC}/impl/contentEncoderChunked.cpp
+	
+	${PSRC}/impl/contentDecoder.cpp
+	${PSRC}/impl/contentDecoderZlib.cpp
+	${PSRC}/impl/contentDecoderChunked.cpp
+	${PSRC}/impl/contentDecoderAccumuler.cpp
+	
 	${PSRC}/impl/inputMessage.cpp
 	${PSRC}/impl/inputMessageBuffer.cpp
-	${PSRC}/impl/contentFilterBufferAccumuler.cpp
 	${PSRC}/impl/outputMessage.cpp
 )
 source_group(src/impl FILES ${SRC_IMPL})
@@ -66,15 +70,19 @@ source_group(src/impl FILES ${SRC_IMPL})
 set(SRC_IMPL_HDR
 	${PSRC}/impl/server.hpp
 	${PSRC}/impl/client.hpp
-	${PSRC}/impl/contentFilter.hpp
-	${PSRC}/impl/contentFilterChannelWriter.hpp
-	${PSRC}/impl/contentFilterEncodeZlib.hpp
-	${PSRC}/impl/contentFilterEncodeChunked.hpp
-	${PSRC}/impl/contentFilterDecodeZlib.hpp
-	${PSRC}/impl/contentFilterDecodeChunked.hpp
+	
+	${PSRC}/impl/contentEncoder.hpp
+	${PSRC}/impl/contentEncoderWriter.hpp
+	${PSRC}/impl/contentEncoderZlib.hpp
+	${PSRC}/impl/contentEncoderChunked.hpp
+	
+	${PSRC}/impl/contentDecoder.hpp
+	${PSRC}/impl/contentDecoderZlib.hpp
+	${PSRC}/impl/contentDecoderChunked.hpp
+	${PSRC}/impl/contentDecoderAccumuler.hpp
+	
 	${PSRC}/impl/inputMessage.hpp
 	${PSRC}/impl/inputMessageBuffer.hpp
-	${PSRC}/impl/contentFilterBufferAccumuler.hpp
 	${PSRC}/impl/outputMessage.hpp
 )
 source_group(src/impl FILES ${SRC_IMPL_HDR})
