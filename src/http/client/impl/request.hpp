@@ -39,9 +39,30 @@ namespace http { namespace client { namespace impl
 	public:
 		ResponsePtr response();
 
+		void setContentLength(size_t size);
+		void setContentCompress(int level);
+		void setKeepAlive(bool keepAlive);
+		void setChunked(bool chunked);
+		void setContentEncoding(EContentEncoding contentEncoding);
+
 	private:
 		http::impl::ClientPtr	_client;
 		ResponsePtr				_response;
+
+	private:
+		Version				_version;
+
+		size_t				_contentLength;
+		static const size_t	_unknownContentLength = (size_t)-1;
+		bool				_chunked;
+		bool				_keepAlive;
+		EContentEncoding	_contentEncoding;
+		int					_contentEncodingCompressLevel;
+
+	private:
+		virtual boost::system::error_code writeSystemHeaders();
+		virtual boost::system::error_code setupBodyFilters();
+
 	};
 }}}
 

@@ -37,15 +37,15 @@ void testClient(http::Client c)
 		return;
 	}
 
-	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,0));
+	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,1));
 	if(ec)
 	{
 		std::cout<<"firstLine: "<<ec<<std::endl;
 		return;
 	}
 
-	//request.header(http::hn::acceptEncoding, "deflate, gzip", 14);
-	request.header(http::hn::userAgent, "hawc");
+	request.header(http::hn::te, "chunked");
+	request.header(http::hn::acceptEncoding, "deflate, gzip");
 	request.header(http::hn::host, "127.0.0.1:8080");
 
 	ec = request.bodyFlush();
