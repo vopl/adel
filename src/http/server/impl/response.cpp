@@ -20,6 +20,12 @@ namespace http { namespace server { namespace impl
 {
 
 	////////////////////////////////////////////////////////////////////////////////////////
+	ResponsePtr Response::shared_from_this()
+	{
+		return boost::static_pointer_cast<Response>(http::impl::OutputMessage::shared_from_this());
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const http::impl::ServerPtr &server, const net::Channel &channel, Request *request)
 		: http::impl::OutputMessage(channel, server->responseWriteGranula())
 		, _server(server)
