@@ -136,7 +136,10 @@ namespace http { namespace impl
 				HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
 				if(hvContentLength.isCorrect())
 				{
-					assert(!"read for size");
+					if((ec = readBodySized(hvContentLength.value())))
+					{
+						return ec;
+					}
 					readed = true;
 				}
 			}
@@ -146,7 +149,10 @@ namespace http { namespace impl
 				HeaderValue<TransferEncoding> hvTransferEncoding(header(http::hn::transferEncoding));
 				if(hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked))
 				{
-					assert(!"read for chunked");
+					if((ec = readBodyChunked()))
+					{
+						return ec;
+					}
 					readed = true;
 				}
 			}
@@ -161,7 +167,10 @@ namespace http { namespace impl
 				{
 					if(hvConnection.value()==ec_close)
 					{
-						assert(!"read for close");
+						if((ec = readBodyAll()))
+						{
+							return ec;
+						}
 						readed = true;
 					}
 				}
@@ -380,6 +389,89 @@ namespace http { namespace impl
 
 		assert(!"never here");
 		return http::error::make(http::error::unexpected);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code InputMessage::readBodySized(size_t size)
+	{
+		size_t alreadyReaded = _bufferAccumuler->end() - _readedPos;
+		if(alreadyReaded >= size)
+		{
+			_body = Segment(_readedPos, _readedPos + size);
+			_readedPos = _body.end();
+
+			return http::error::make();
+		}
+		size_t toRead = size - alreadyReaded;
+
+		boost::system::error_code ec;
+		while(toRead)
+		{
+			async::Future2<boost::system::error_code, net::Packet> res =
+				_channel.receive(_granula);
+			res.wait();
+			if(res.data1NoWait())
+			{
+				return res.data1NoWait();
+			}
+
+			net::Packet &p = res.data2NoWait();
+			if((ec = _contentFilter->filterPush(p, 0)))
+			{
+				return ec;
+			}
+
+			if(p._size >= toRead)
+			{
+				toRead = 0;
+				break;
+			}
+			else
+			{
+				toRead -= p._size;
+			}
+		}
+		_body = Segment(_readedPos, _readedPos + size);
+		_readedPos = _body.end();
+
+		return http::error::make();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code InputMessage::readBodyChunked()
+	{
+		assert(!"not impl");
+		return http::error::make();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code InputMessage::readBodyAll()
+	{
+		size_t readed = _bufferAccumuler->end() - _readedPos;
+
+		boost::system::error_code ec;
+		for(;;)
+		{
+			async::Future2<boost::system::error_code, net::Packet> res =
+				_channel.receive(_granula);
+			res.wait();
+			if(res.data1NoWait())
+			{
+				break;
+			}
+
+			net::Packet &p = res.data2NoWait();
+			if((ec = _contentFilter->filterPush(p, 0)))
+			{
+				return ec;
+			}
+
+			readed -= p._size;
+		}
+		_body = Segment(_readedPos, _readedPos + readed);
+		_readedPos = _body.end();
+
+		return http::error::make();
 	}
 
 }}

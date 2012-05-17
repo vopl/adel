@@ -21,7 +21,7 @@ namespace http { namespace client { namespace impl
 
 	////////////////////////////////////////////////////////////////////////////////////////
 	Response::Response(const http::impl::ClientPtr &client, const net::Channel &channel, Request *request)
-		: http::impl::InputMessage(channel, 220)
+		: http::impl::InputMessage(channel, client->responseReadGranula())
 	{
 	}
 

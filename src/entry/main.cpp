@@ -30,7 +30,7 @@ void testClient(http::Client c)
 	http::client::Request request;
 	boost::system::error_code ec;
 
-	ec = c.connect(request, "127.0.0.1", "8080", false);
+	ec = c.connect(request, "127.0.0.1", "8081", false);
 	if(ec)
 	{
 		std::cout<<"connect: "<<ec<<std::endl;
@@ -44,9 +44,9 @@ void testClient(http::Client c)
 		return;
 	}
 
-	request.header(http::hn::te, "chunked");
-	request.header(http::hn::acceptEncoding, "deflate, gzip");
-	request.header(http::hn::host, "127.0.0.1:8080");
+	//request.header(http::hn::te, "chunked");
+	//request.header(http::hn::acceptEncoding, "deflate, gzip");
+	request.header(http::hn::host, "127.0.0.1:8081");
 
 	ec = request.bodyFlush();
 	if(ec)
