@@ -14,8 +14,8 @@ namespace http { namespace impl
 		ContentDecoderAccumuler();
 		~ContentDecoderAccumuler();
 
-		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code filterFlush();
+		virtual boost::system::error_code decoderPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code decoderFlush();
 
 		InputMessageBuffer	*firstBuffer();
 		InputMessageBuffer	*lastBuffer();

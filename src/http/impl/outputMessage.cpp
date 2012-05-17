@@ -234,7 +234,7 @@ namespace http { namespace impl
 			return ec;
 		}
 
-		if((ec = _contentEncoder->filterFlush()))
+		if((ec = _contentEncoder->encoderFlush()))
 		{
 			return ec;
 		}
@@ -337,7 +337,7 @@ namespace http { namespace impl
 
 		if(buf._size > offset)
 		{
-			if((ec = _contentEncoder->filterPush(buf, offset)))
+			if((ec = _contentEncoder->encoderPush(buf, offset)))
 			{
 				return ec;
 			}

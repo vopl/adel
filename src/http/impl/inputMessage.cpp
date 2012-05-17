@@ -182,7 +182,7 @@ namespace http { namespace impl
 			}
 			else
 			{
-				assert(!"post process body (gzip)");
+				//assert(!"post process body (gzip)");
 			}
 			_em = em_done;
 		}
@@ -283,7 +283,7 @@ namespace http { namespace impl
 				return res.data1NoWait();
 			}
 
-			if((ec = _contentDecoder->filterPush(res.data2NoWait(), 0)))
+			if((ec = _contentDecoder->decoderPush(res.data2NoWait(), 0)))
 			{
 				return ec;
 			}
@@ -420,7 +420,7 @@ namespace http { namespace impl
 			}
 
 			net::Packet &p = res.data2NoWait();
-			if((ec = _contentDecoder->filterPush(p, 0)))
+			if((ec = _contentDecoder->decoderPush(p, 0)))
 			{
 				return ec;
 			}
@@ -465,7 +465,7 @@ namespace http { namespace impl
 			}
 
 			net::Packet &p = res.data2NoWait();
-			if((ec = _contentDecoder->filterPush(p, 0)))
+			if((ec = _contentDecoder->decoderPush(p, 0)))
 			{
 				return ec;
 			}

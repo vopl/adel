@@ -19,7 +19,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderWriter::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderWriter::encoderPush(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size > offset);
 		size_t bufferSize = packet._size - offset;
@@ -32,13 +32,13 @@ namespace http { namespace impl
 
 		if(_dataSize >= _granula)
 		{
-			return filterFlush();
+			return encoderFlush();
 		}
 		return http::error::make();
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderWriter::filterFlush()
+	boost::system::error_code ContentEncoderWriter::encoderFlush()
 	{
 		if(_dataSize)
 		{

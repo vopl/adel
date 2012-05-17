@@ -12,8 +12,8 @@ namespace http { namespace impl
 		ContentEncoderChunked(ContentEncoderPtr upstream, size_t granula);
 		virtual ~ContentEncoderChunked();
 
-		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code filterFlush();
+		virtual boost::system::error_code encoderPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code encoderFlush();
 
 	protected:
 		struct SChunk

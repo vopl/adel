@@ -16,17 +16,17 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderZlib::decoderPush(const net::Packet &packet, size_t offset)
 	{
 		assert(!"not impl");
-		return _upstream->filterPush(packet, offset);
+		return _upstream->decoderPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderZlib::filterFlush()
+	boost::system::error_code ContentDecoderZlib::decoderFlush()
 	{
 		assert(!"not impl");
-		return _upstream->filterFlush();
+		return _upstream->decoderFlush();
 	}
 
 }}

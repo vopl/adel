@@ -19,7 +19,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderAccumuler::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderAccumuler::decoderPush(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size);
 		assert(packet._size>offset);
@@ -48,7 +48,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderAccumuler::filterFlush()
+	boost::system::error_code ContentDecoderAccumuler::decoderFlush()
 	{
 		return error::make();
 	}

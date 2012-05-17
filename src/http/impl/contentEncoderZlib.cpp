@@ -105,14 +105,14 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderZlib::filterPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderZlib::encoderPush(const net::Packet &packet, size_t offset)
 	{
 		switch(_ece)
 		{
 		case ece_unknown:
-			return _upstream->filterPush(packet, offset);
+			return _upstream->encoderPush(packet, offset);
 		case ece_identity:
-			return _upstream->filterPush(packet, offset);
+			return _upstream->encoderPush(packet, offset);
 		case ece_deflate:
 		case ece_gzip:
 			{
@@ -145,7 +145,7 @@ namespace http { namespace impl
 						assert(_output._size);
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->filterPush(_output)))
+							if((ec = _upstream->encoderPush(_output)))
 							{
 								return ec;
 							}
@@ -171,18 +171,18 @@ namespace http { namespace impl
 			return http::error::make(http::error::unexpected);
 		}
 
-		return _upstream->filterPush(packet, offset);
+		return _upstream->encoderPush(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderZlib::filterFlush()
+	boost::system::error_code ContentEncoderZlib::encoderFlush()
 	{
 		switch(_ece)
 		{
 		case ece_unknown:
-			return _upstream->filterFlush();
+			return _upstream->encoderFlush();
 		case ece_identity:
-			return _upstream->filterFlush();
+			return _upstream->encoderFlush();
 		case ece_deflate:
 		case ece_gzip:
 			{
@@ -210,7 +210,7 @@ namespace http { namespace impl
 						_output._size = _outputOffset;
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->filterPush(_output)))
+							if((ec = _upstream->encoderPush(_output)))
 							{
 								return ec;
 							}
@@ -224,7 +224,7 @@ namespace http { namespace impl
 						if(_output._size)
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->filterPush(_output)))
+							if((ec = _upstream->encoderPush(_output)))
 							{
 								return ec;
 							}
@@ -232,7 +232,7 @@ namespace http { namespace impl
 						_outputOffset = 0;
 						_output._size = 0;
 						_output._data.reset();
-						return _upstream->filterFlush();
+						return _upstream->encoderFlush();
 					default:
 						ELOG("deflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
 						return http::error::make(http::error::not_implemented);
@@ -248,7 +248,7 @@ namespace http { namespace impl
 			return http::error::make(http::error::unexpected);
 		}
 
-		return _upstream->filterFlush();
+		return _upstream->encoderFlush();
 	}
 
 }}

@@ -12,8 +12,8 @@ namespace http { namespace impl
 		ContentDecoderZlib(ContentDecoder *upstream);
 		virtual ~ContentDecoderZlib();
 
-		virtual boost::system::error_code filterPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code filterFlush();
+		virtual boost::system::error_code decoderPush(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code decoderFlush();
 
 	protected:
 		ContentDecoder *_upstream;
