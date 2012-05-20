@@ -36,8 +36,8 @@ namespace http
 			Iterator &operator=(const Iterator &i);
 			size_type absolutePosition() const;
 
-			impl::InputMessageBuffer	*buffer() const;
-			const char					*position() const;
+			impl::InputMessageBuffer *buffer() const;
+			const char *position() const;
 
 			Iterator &normalize();
 

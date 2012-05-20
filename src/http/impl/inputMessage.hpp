@@ -62,14 +62,15 @@ namespace http { namespace impl
 
 	protected:
 		boost::system::error_code readBuffer(Segment *segment);
-		ContentDecoderAccumulerPtr	_accumuler;
-		ContentDecoderPtr			_contentDecoder;
+		ContentDecoderAccumulerPtr	_accumuler;//весь поток с вырезанным телом (там firstLine, headers, разметка между ними и телом)
+		ContentDecoderAccumulerPtr	_accumulerBody;//только тело
 
 		boost::system::error_code readUntil(const char *tokenz, Segment &segment);
 
-		boost::system::error_code readBodySized(size_t size);
+		boost::system::error_code prepareBodyExtractor(BodyExtractorPtr &result);
+		/*boost::system::error_code readBodySized(size_t size);
 		boost::system::error_code readBodyChunked();
-		boost::system::error_code readBodyAll();
+		boost::system::error_code readBodyAll();*/
 
 	protected:
 		Iterator	_readedPos;

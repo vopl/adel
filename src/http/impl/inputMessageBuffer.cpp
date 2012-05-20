@@ -86,6 +86,15 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
+	net::Packet InputMessageBuffer::asPacket(size_t &offset)
+	{
+		net::Packet res(_data, _end - _data.get());
+		offset = _begin - _data.get();
+
+		return res;
+	}
+
+	////////////////////////////////////////////////////////////////
 	size_t InputMessageBuffer::size() const
 	{
 		return _end - _begin;

@@ -95,7 +95,14 @@ namespace http { namespace server { namespace impl
 		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
 		if(!hvConnection.isCorrect())
 		{
-			_keepAlive = _version >= Version(1,1)?ec_keepAlive:ec_close;
+			if(_version >= Version(1,1))
+			{
+				_keepAlive = ec_keepAlive;
+			}
+			else
+			{
+				//undef -> close
+			}
 		}
 		else
 		{

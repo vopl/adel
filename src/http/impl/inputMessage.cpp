@@ -6,6 +6,8 @@
 #include "http/headerValue.hpp"
 #include "http/error.hpp"
 
+#include "http/impl/contentDecoderChunked.hpp"
+
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_string.hpp>
 #include <boost/spirit/include/qi_char.hpp>
@@ -131,59 +133,41 @@ namespace http { namespace impl
 		{
 			bool readed = false;
 
-			if(!readed)
+			BodyExtractorPtr bodyExtractor;
+			if((ec = prepareBodyExtractor(bodyExtractor)))
 			{
-				HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
-				if(hvContentLength.isCorrect())
-				{
-					if((ec = readBodySized(hvContentLength.value())))
-					{
-						return ec;
-					}
-					readed = true;
-				}
+				return ec;
+			}
+			assert(bodyExtractor);
+
+			///////////////////////////////
+			//сначала пихнуть что уже начитано в _accumuler
+			if((ec = bodyExtractor->read(_accumuler, _readedPos)))
+			{
+				return ec;
 			}
 
-			if(!readed)
+			///////////////////////////////
+			//вырезать это из _accumuler
+			_accumuler->dropTail(_readedPos);
+
+			///////////////////////////////
+			//теперь вычитывать из канала
+			if((ec = bodyExtractor->read(_channel, _granula)))
 			{
-				HeaderValue<TransferEncoding> hvTransferEncoding(header(http::hn::transferEncoding));
-				if(hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked))
-				{
-					if((ec = readBodyChunked()))
-					{
-						return ec;
-					}
-					readed = true;
-				}
+				return ec;
 			}
 
-			if(!readed)
-			{
-				HeaderValue<Connection> hvConnection(header(http::hn::connection));
+			///////////////////////////////
+			//вылить хвост обратно в _accumuler
+			bodyExtractor->flush(_accumuler);
 
-				if(
-					(hvConnection.isCorrect() && hvConnection.value()==ec_close) ||
-					(!hvConnection.isCorrect() && _version < Version(1,1)))
-				{
-					if(hvConnection.value()==ec_close)
-					{
-						if((ec = readBodyAll()))
-						{
-							return ec;
-						}
-						readed = true;
-					}
-				}
-			}
+			///////////////////////////////
+			//нормализовать позицию чтения, ато после нее дыра теперь
+			_readedPos.normalize();
 
-			if(!readed)
-			{
-				return http::error::make(http::error::invalid_message);
-			}
-			else
-			{
-				//assert(!"post process body (gzip)");
-			}
+			_body = Segment(_accumulerBody->begin(), _accumulerBody->end());
+
 			_em = em_done;
 		}
 
@@ -396,6 +380,68 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code InputMessage::prepareBodyExtractor(BodyExtractorPtr &result)
+	{
+		ContentDecoderPtr bodyDecoder = _accumulerBody;
+
+		HeaderValue<ContentEncoding> hvContentEncoding(header(http::hn::contentEncoding));
+		if(hvContentEncoding.isCorrect())
+		{
+			if(hvContentEncoding.value() & ece_deflate)
+			{
+				bodyDecoder.reset(new ContentEncoderZlib(bodyDecoder, ece_deflate));
+			}
+			else if(hvContentEncoding.value() & ece_gzip)
+			{
+				bodyDecoder.reset(new ContentEncoderZlib(bodyDecoder, ece_gzip));
+			}
+			else if(hvContentEncoding.value() == ece_identity)
+			{
+				//nothing
+			}
+			else
+			{
+				return http::error::make(http::error::invalid_message);
+			}
+		}
+		else
+		{
+			//no content encoding
+		}
+
+		HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
+		if(hvContentLength.isCorrect())
+		{
+			result.reset(new BodyExtractorSized(bodyDecoder));
+			return http::error::make();
+		}
+
+		HeaderValue<TransferEncoding> hvTransferEncoding(header(http::hn::transferEncoding));
+		if(hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked))
+		{
+			result.reset(new BodyExtractorChunked(bodyDecoder));
+			return http::error::make();
+		}
+
+
+		HeaderValue<Connection> hvConnection(header(http::hn::connection));
+
+		if(
+			(hvConnection.isCorrect() && hvConnection.value()==ec_close) ||
+			(!hvConnection.isCorrect() && _version < Version(1,1)))
+		{
+			if(hvConnection.value()==ec_close)
+			{
+				result.reset(new BodyExtractorUntilClose(bodyDecoder));
+				return http::error::make();
+			}
+		}
+
+		return http::error::make(http::error::invalid_message);
+	}
+
+	/*
+	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBodySized(size_t size)
 	{
 		size_t alreadyReaded = _accumuler->end() - _readedPos;
@@ -444,7 +490,75 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readBodyChunked()
 	{
-		assert(!"not impl");
+		boost::system::error_code ec;
+		ContentDecoderChunked cdc(_accumuler);
+
+		///////////////////////////////
+		{
+			InputMessageBuffer* buf = _readedPos.buffer();
+			assert(buf);
+
+			const char *pos = _readedPos.position();
+			assert(pos >= buf->begin() && pos <= buf->end());
+
+			if(pos == buf->end())
+			{
+				buf = buf->next();
+				if(buf)
+				{
+					pos = buf->begin();
+				}
+			}
+
+			while(buf)
+			{
+				size_t offset;
+				net::Packet p = buf->asPacket(offset);
+
+				offset += pos - buf->begin();
+				assert(offset < p._size);
+
+				if((ec = cdc.decoderPush(p, offset)))
+				{
+					return ec;
+				}
+
+				buf = buf->next();
+				if(buf)
+				{
+					pos = buf->begin();
+				}
+			}
+		}
+
+		///////////////////////////////
+		{
+			while(!cdc.isDone())
+			{
+				async::Future2<boost::system::error_code, net::Packet> res =
+					_channel.receive(_granula);
+				res.wait();
+				if(res.data1NoWait())
+				{
+					return res.data1NoWait();
+				}
+				if((ec = cdc.decoderPush(res.data2NoWait(), 0)))
+				{
+					return ec;
+				}
+			}
+		}
+
+		_accumuler->dropTail(_readedPos);
+		if((ec = cdc.decoderFlush()))
+		{
+			return ec;
+		}
+
+		_readedPos.normalize();
+		_body = Segment(_readedPos, _readedPos + cdc.contentLength());
+		_readedPos += _body.end();
+
 		return http::error::make();
 	}
 
@@ -476,6 +590,6 @@ namespace http { namespace impl
 		_readedPos = _body.end();
 
 		return http::error::make();
-	}
+	}*/
 
 }}

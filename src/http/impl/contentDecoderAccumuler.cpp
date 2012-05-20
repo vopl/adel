@@ -19,7 +19,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderAccumuler::decoderPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentDecoderAccumuler::push(const net::Packet &packet, size_t offset)
 	{
 		assert(packet._size);
 		assert(packet._size>offset);
@@ -48,9 +48,9 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderAccumuler::decoderFlush()
+	boost::system::error_code ContentDecoderAccumuler::flush()
 	{
-		return error::make();
+		return http::error::make();
 	}
 
 	////////////////////////////////////////////////////////////////
@@ -147,6 +147,39 @@ namespace http { namespace impl
 		}
 
 		assert(offset == _size);
+	}
+
+	////////////////////////////////////////////////////////////////
+	void ContentDecoderAccumuler::dropTail(const http::InputMessage::Iterator &pos)
+	{
+		if(!_first)
+		{
+			assert(0);
+			return;
+		}
+
+		InputMessageBuffer *boundBuffer = pos.buffer();
+		const char *boundPosition = pos.position();
+		assert(boundBuffer);
+		assert(boundPosition);
+
+		boundBuffer->setNext(InputMessageBufferPtr());
+		boundBuffer->setEnd(boundPosition);
+
+		if(!boundBuffer->size())
+		{
+			if(boundBuffer->prev())
+			{
+				boundBuffer = boundBuffer->prev();
+				boundBuffer->setNext(InputMessageBufferPtr());
+			}
+			else
+			{
+				assert(_first.get() == boundBuffer);
+				_first.reset();
+				_last = NULL;
+			}
+		}
 	}
 
 }}

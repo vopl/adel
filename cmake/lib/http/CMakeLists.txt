@@ -58,8 +58,12 @@ set(SRC_IMPL
 	
 	${PSRC}/impl/contentDecoder.cpp
 	${PSRC}/impl/contentDecoderZlib.cpp
-	${PSRC}/impl/contentDecoderChunked.cpp
 	${PSRC}/impl/contentDecoderAccumuler.cpp
+	
+	${PSRC}/impl/bodyExtractor.cpp
+	${PSRC}/impl/bodyExtractorChunked.cpp
+	${PSRC}/impl/bodyExtractorSized.cpp
+	${PSRC}/impl/bodyExtractorUntilClose.cpp
 	
 	${PSRC}/impl/inputMessage.cpp
 	${PSRC}/impl/inputMessageBuffer.cpp
@@ -78,8 +82,12 @@ set(SRC_IMPL_HDR
 	
 	${PSRC}/impl/contentDecoder.hpp
 	${PSRC}/impl/contentDecoderZlib.hpp
-	${PSRC}/impl/contentDecoderChunked.hpp
 	${PSRC}/impl/contentDecoderAccumuler.hpp
+	
+	${PSRC}/impl/bodyExtractor.hpp
+	${PSRC}/impl/bodyExtractorChunked.hpp
+	${PSRC}/impl/bodyExtractorSized.hpp
+	${PSRC}/impl/bodyExtractorUntilClose.hpp
 	
 	${PSRC}/impl/inputMessage.hpp
 	${PSRC}/impl/inputMessageBuffer.hpp

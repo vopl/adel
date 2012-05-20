@@ -44,8 +44,8 @@ void testClient(http::Client c)
 		return;
 	}
 
-	//request.header(http::hn::te, "chunked");
-	//request.header(http::hn::acceptEncoding, "deflate, gzip");
+	request.header(http::hn::te, "chunked");
+	request.header(http::hn::acceptEncoding, "deflate, gzip");
 	request.header(http::hn::host, "127.0.0.1:8080");
 
 	ec = request.bodyFlush();

@@ -1,6 +1,8 @@
 #ifndef _HTTP_IMPL_INPUTMESSAGEBUFFER_HPP_
 #define _HTTP_IMPL_INPUTMESSAGEBUFFER_HPP_
 
+#include "net/packet.hpp"
+
 #include <boost/shared_ptr.hpp>
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/shared_array.hpp>
@@ -37,6 +39,8 @@ namespace http { namespace impl
 		void setBegin(const char *pos);
 		void setEnd(const char *pos);
 		void setOffset(size_t offset);
+
+		net::Packet asPacket(size_t &offset);
 
 	private:
 		size_t						_offset;

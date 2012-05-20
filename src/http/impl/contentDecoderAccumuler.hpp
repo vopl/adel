@@ -14,8 +14,8 @@ namespace http { namespace impl
 		ContentDecoderAccumuler();
 		~ContentDecoderAccumuler();
 
-		virtual boost::system::error_code decoderPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code decoderFlush();
+		virtual boost::system::error_code push(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code flush();
 
 		InputMessageBuffer	*firstBuffer();
 		InputMessageBuffer	*lastBuffer();
@@ -24,6 +24,7 @@ namespace http { namespace impl
 		http::InputMessage::Iterator	end();
 
 		void dropFront(const http::InputMessage::Iterator &pos);
+		void dropTail(const http::InputMessage::Iterator &pos);
 
 	private:
 		InputMessageBufferPtr	_first;
