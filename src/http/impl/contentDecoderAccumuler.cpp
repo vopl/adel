@@ -69,7 +69,12 @@ namespace http { namespace impl
 	http::InputMessage::Iterator ContentDecoderAccumuler::begin()
 	{
 		InputMessageBuffer	*buf = firstBuffer();
-		return http::InputMessage::Iterator(buf, buf->begin());
+		if(buf)
+		{
+			return http::InputMessage::Iterator(buf, buf->begin());
+		}
+
+		return http::InputMessage::Iterator();
 	}
 
 	////////////////////////////////////////////////////////////////

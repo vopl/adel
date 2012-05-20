@@ -37,22 +37,10 @@ namespace http { namespace server { namespace impl
 
 		boost::system::error_code firstLine(const Version &version, const EStatusCode &statusCode);
 		boost::system::error_code firstLine(const EStatusCode &statusCode);
-		void setContentLength(size_t size);
-		void setContentCompress(int level);
 
 	private:
 		http::impl::ServerPtr	_server;
 		Request					*_request;
-
-	private:
-		Version				_version;
-
-		size_t				_contentLength;
-		static const size_t	_unknownContentLength = (size_t)-1;
-		bool				_chunked;
-		bool				_keepAlive;
-		EContentEncoding	_contentEncoding;
-		int					_contentEncodingCompressLevel;
 
 	private:
 		virtual boost::system::error_code writeSystemHeaders();

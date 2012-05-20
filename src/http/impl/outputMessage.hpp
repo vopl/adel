@@ -4,6 +4,7 @@
 #include "http/outputMessage.hpp"
 #include "http/impl/contentEncoder.hpp"
 #include "http/error.hpp"
+#include "http/version.hpp"
 #include "net/channel.hpp"
 #include <boost/enable_shared_from_this.hpp>
 
@@ -68,6 +69,12 @@ namespace http { namespace impl
 		boost::system::error_code write(const char *dataz);
 		boost::system::error_code write(const std::string &data);
 
+		void setContentLength(size_t size);
+		void setContentCompress(int level);
+		void setKeepAlive(bool keepAlive);
+		void setChunked(bool chunked);
+		void setContentEncoding(EContentEncoding contentEncoding);
+
 	protected:
 		void bufferEnsure();
 		boost::system::error_code bufferFlush();
@@ -107,6 +114,18 @@ namespace http { namespace impl
 
 	protected:
 		ContentEncoderPtr	_contentEncoder;
+
+	protected:
+		Version				_version;
+
+		size_t				_contentLength;
+		static const size_t	_unknownContentLength = (size_t)-1;
+		bool				_chunked;
+		EConnection			_keepAlive;
+		EContentEncoding	_contentEncoding;
+		int					_contentEncodingCompressLevel;
+
+
 	};
 
 	typedef boost::shared_ptr<OutputMessage> OutputMessagePtr;

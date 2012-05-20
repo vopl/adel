@@ -1,7 +1,11 @@
 #include "pch.hpp"
 #include "http/impl/outputMessage.hpp"
 #include "http/impl/contentEncoderWriter.hpp"
+#include "http/headerName.hpp"
 #include "http/error.hpp"
+
+#include "http/impl/contentEncoderChunked.hpp"
+#include "http/impl/contentEncoderZlib.hpp"
 
 namespace http { namespace impl
 {
@@ -14,6 +18,12 @@ namespace http { namespace impl
 		, _writePosition(NULL)
 		, _writeEnd(NULL)
 		, _contentEncoder(new ContentEncoderWriter(channel, granula))
+		, _version()
+		, _contentLength(_unknownContentLength)
+		, _chunked(false)
+		, _keepAlive(ec_unknown)
+		, _contentEncoding(ece_identity)
+		, _contentEncodingCompressLevel(0)
 	{
 		//bufferEnsure();
 	}
@@ -304,6 +314,37 @@ namespace http { namespace impl
 		return write(data.data(), data.size());
 	}
 
+	////////////////////////////////////////////////////////////////////////////////////////
+	void OutputMessage::setContentLength(size_t size)
+	{
+		_contentLength = size;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void OutputMessage::setContentCompress(int level)
+	{
+		_contentEncodingCompressLevel = level;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void OutputMessage::setKeepAlive(bool keepAlive)
+	{
+		_keepAlive = keepAlive?ec_keepAlive:ec_close;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void OutputMessage::setChunked(bool chunked)
+	{
+		_chunked = chunked;
+	}
+
+	////////////////////////////////////////////////////////////////////////////////////////
+	void OutputMessage::setContentEncoding(EContentEncoding contentEncoding)
+	{
+		_contentEncoding = contentEncoding;
+	}
+
+
 	//////////////////////////////////////////////////////////////
 	void OutputMessage::bufferEnsure()
 	{
@@ -383,12 +424,119 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////
 	boost::system::error_code OutputMessage::writeSystemHeaders()
 	{
+		//content length
+		if(_unknownContentLength != _contentLength)
+		{
+			//будет тело
+			if(_contentLength)
+			{
+				//логика по сжатию
+				if(_contentEncodingCompressLevel)
+				{
+					//нужен chunked || !keepAlive
+					if(_contentEncoding != ece_identity)
+					{
+						//у пресованного потока пока длина не известна
+						_contentLength = _unknownContentLength;
+
+						if(!_chunked && ec_keepAlive==_keepAlive)
+						{
+							//невозможно определить длину, бросить keepAlive
+							_keepAlive = ec_close;
+						}
+					}
+					else
+					{
+						//без компрессии, клиент не поддерживает
+						if(_contentLength && _chunked)
+						{
+							//chunked или contentLength лишний
+							_chunked = false;
+						}
+					}
+				}
+				else
+				{
+					//без сжатия
+					_contentEncoding = ece_identity;
+				}
+			}
+			else//if(_contentLength)
+			{
+				//нулевое тело, бросить кодирование
+				_contentEncoding = ece_identity;
+				_chunked = false;
+			}
+
+		}
+		else//if(_unknownContentLength != _contentLength)
+		{
+			//неизвестно, будет тело или нет
+			if(!_chunked && ec_keepAlive==_keepAlive)
+			{
+				//невозможно определить длину, бросить keepAlive
+				_keepAlive = ec_close;
+			}
+		}
+
+		if(_chunked && _contentLength!=_unknownContentLength)
+		{
+			_chunked = false;
+		}
+
+		boost::system::error_code ec;
+		//писать заголовки
+		if(_unknownContentLength != _contentLength)
+		{
+			if((ec = header(http::hn::contentLength, HeaderValue<Unsigned>(_contentLength))))
+			{
+				return ec;
+			}
+		}
+
+		if(_chunked)
+		{
+			if((ec = header(http::hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked))))
+			{
+				return ec;
+			}
+		}
+
+		if(_contentEncoding != ece_identity)
+		{
+			if((ec = header(http::hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding))))
+			{
+				return ec;
+			}
+		}
+
+		if(_keepAlive != ec_unknown)
+		{
+			if((ec = header(http::hn::connection, HeaderValue<Connection>(_keepAlive))))
+			{
+				return ec;
+			}
+		}
+
 		return error::make();
 	}
 
 	//////////////////////////////////////////////////////////////
 	boost::system::error_code OutputMessage::setupBodyFilters()
 	{
+		if(_chunked)
+		{
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderChunked(_contentEncoder, _granula));
+			_contentEncoder = ce;
+		}
+
+		if(_contentEncoding != ece_identity)
+		{
+			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
+			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderZlib(_contentEncoder, _contentEncoding, _contentEncodingCompressLevel, _granula));
+			_contentEncoder = ce;
+		}
+
 		return error::make();
 	}
 

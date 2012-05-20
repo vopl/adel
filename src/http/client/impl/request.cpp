@@ -21,13 +21,8 @@ namespace http { namespace client { namespace impl
 	Request::Request(const http::impl::ClientPtr &client, const net::Channel &channel)
 		: http::impl::OutputMessage(channel, client->requestWriteGranula())
 		, _client(client)
-		, _version(1,1)
-		, _contentLength(_unknownContentLength)
-		, _chunked(false)
-		, _keepAlive(false)
-		, _contentEncoding(ece_identity)
-		, _contentEncodingCompressLevel(0)
 	{
+		_version = Version(1,1);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -126,144 +121,10 @@ namespace http { namespace client { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Request::setContentLength(size_t size)
-	{
-		_contentLength = size;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Request::setContentCompress(int level)
-	{
-		_contentEncodingCompressLevel = level;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Request::setKeepAlive(bool keepAlive)
-	{
-		_keepAlive = keepAlive;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Request::setChunked(bool chunked)
-	{
-		_chunked = chunked;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Request::setContentEncoding(EContentEncoding contentEncoding)
-	{
-		_contentEncoding = contentEncoding;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
 	boost::system::error_code Request::writeSystemHeaders()
 	{
-		//content length
-		if(_unknownContentLength != _contentLength)
-		{
-			//будет тело
-			if(_contentLength)
-			{
-				//логика по сжатию
-				if(_contentEncodingCompressLevel)
-				{
-					//нужен chunked || !keepAlive
-					if(_contentEncoding != ece_identity)
-					{
-						//у пресованного потока пока длина не известна
-						_contentLength = _unknownContentLength;
-
-						if(!_chunked && _keepAlive)
-						{
-							//невозможно определить длину, бросить keepAlive
-							_keepAlive = false;
-						}
-					}
-					else
-					{
-						//без компрессии, клиент не поддерживает
-						if(_contentLength && _chunked)
-						{
-							//chunked или contentLength лишний
-							_chunked = false;
-						}
-					}
-				}
-				else
-				{
-					//без сжатия
-					_contentEncoding = ece_identity;
-				}
-			}
-			else//if(_contentLength)
-			{
-				//нулевое тело, бросить кодирование
-				_contentEncoding = ece_identity;
-				_chunked = false;
-			}
-
-		}
-		else//if(_unknownContentLength != _contentLength)
-		{
-			//неизвестно, будет тело или нет
-			if(!_chunked && _keepAlive)
-			{
-				//невозможно определить длину, бросить keepAlive
-				_keepAlive = false;
-			}
-		}
-
-		if(_chunked && _contentLength!=_unknownContentLength)
-		{
-			_chunked = false;
-		}
 
 		boost::system::error_code ec;
-		//писать заголовки
-		if(_unknownContentLength != _contentLength)
-		{
-			if((ec = header(hn::contentLength, HeaderValue<Unsigned>(_contentLength))))
-			{
-				return ec;
-			}
-		}
-
-		if(_chunked)
-		{
-			if((ec = header(hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked))))
-			{
-				return ec;
-			}
-		}
-
-		if(_contentEncoding != ece_identity)
-		{
-			if((ec = header(hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding))))
-			{
-				return ec;
-			}
-		}
-
-		if(_keepAlive)
-		{
-			if(_version<Version(1,1))
-			{
-				if((ec = header(hn::connection, HeaderValue<Connection>(ec_keepAlive))))
-				{
-					return ec;
-				}
-			}
-		}
-		else
-		{
-			if(_version>=Version(1,1))
-			{
-				if((ec = header(hn::connection, HeaderValue<Connection>(ec_close))))
-				{
-					return ec;
-				}
-			}
-		}
 
 		if((ec = header(hn::userAgent, "hawc", 4)))
 		{
@@ -276,19 +137,6 @@ namespace http { namespace client { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	boost::system::error_code Request::setupBodyFilters()
 	{
-		if(_chunked)
-		{
-			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderChunked(_contentEncoder, _client->requestWriteGranula()));
-			_contentEncoder = ce;
-		}
-
-		if(_contentEncoding != ece_identity)
-		{
-			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
-			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderZlib(_contentEncoder, _contentEncoding, _contentEncodingCompressLevel, _client->requestWriteGranula()));
-			_contentEncoder = ce;
-		}
-
 		return http::impl::OutputMessage::setupBodyFilters();
 	}
 

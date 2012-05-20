@@ -6,6 +6,7 @@ namespace http
 
 	enum EConnection
 	{
+		ec_unknown		= 0,
 		ec_keepAlive	= 1,
 		ec_close		= 2,
 	};

@@ -2,8 +2,6 @@
 #include "http/server/impl/response.hpp"
 #include "http/server/impl/request.hpp"
 #include "http/impl/server.hpp"
-#include "http/impl/contentEncoderChunked.hpp"
-#include "http/impl/contentEncoderZlib.hpp"
 #include "http/headerName.hpp"
 
 #include <boost/spirit/include/karma.hpp>
@@ -30,13 +28,8 @@ namespace http { namespace server { namespace impl
 		: http::impl::OutputMessage(channel, server->responseWriteGranula())
 		, _server(server)
 		, _request(request)
-		, _version(request->version_())
-		, _contentLength(_unknownContentLength)
-		, _chunked(false)
-		, _keepAlive(false)
-		, _contentEncoding(ece_unknown)
-		, _contentEncodingCompressLevel(0)
 	{
+		_version = request->version_();
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
@@ -53,7 +46,7 @@ namespace http { namespace server { namespace impl
 			return ec;
 		}
 
-		if(_keepAlive)
+		if(ec_keepAlive == _keepAlive)
 		{
 			RequestPtr r = _request->shared_from_this();
 			_request->reinit();
@@ -96,29 +89,17 @@ namespace http { namespace server { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setContentLength(size_t size)
-	{
-		_contentLength = size;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
-	void Response::setContentCompress(int level)
-	{
-		_contentEncodingCompressLevel = level;
-	}
-
-	////////////////////////////////////////////////////////////////////////////////////////
 	boost::system::error_code Response::writeSystemHeaders()
 	{
 		//keep alive
 		HeaderValue<Connection> hvConnection(_request->header(hn::connection));
 		if(!hvConnection.isCorrect())
 		{
-			_keepAlive = _version >= Version(1,1);
+			_keepAlive = _version >= Version(1,1)?ec_keepAlive:ec_close;
 		}
 		else
 		{
-			_keepAlive = ec_keepAlive == hvConnection.value();
+			_keepAlive = hvConnection.value();
 		}
 
 		//chunked
@@ -164,110 +145,7 @@ namespace http { namespace server { namespace impl
 			_contentEncoding = ece_identity;
 		}
 
-		//content length
-		if(_unknownContentLength != _contentLength)
-		{
-			//будет тело
-			if(_contentLength)
-			{
-				//логика по сжатию
-				if(_contentEncodingCompressLevel)
-				{
-					//нужен chunked || !keepAlive
-					if(_contentEncoding != ece_identity)
-					{
-						//у пресованного потока пока длина не известна
-						_contentLength = _unknownContentLength;
-
-						if(!_chunked && _keepAlive)
-						{
-							//невозможно определить длину, бросить keepAlive
-							_keepAlive = false;
-						}
-					}
-					else
-					{
-						//без компрессии, клиент не поддерживает
-						if(_contentLength && _chunked)
-						{
-							//chunked или contentLength лишний
-							_chunked = false;
-						}
-					}
-				}
-				else
-				{
-					//без сжатия
-					_contentEncoding = ece_identity;
-				}
-			}
-			else//if(_contentLength)
-			{
-				//нулевое тело, бросить кодирование
-				_contentEncoding = ece_identity;
-				_chunked = false;
-			}
-
-		}
-		else//if(_unknownContentLength != _contentLength)
-		{
-			//неизвестно, будет тело или нет
-			if(!_chunked && _keepAlive)
-			{
-				//невозможно определить длину, бросить keepAlive
-				_keepAlive = false;
-			}
-		}
-
-		if(_chunked && _contentLength!=_unknownContentLength)
-		{
-			_chunked = false;
-		}
-
 		boost::system::error_code ec;
-		//писать заголовки
-		if(_unknownContentLength != _contentLength)
-		{
-			if((ec = header(hn::contentLength, HeaderValue<Unsigned>(_contentLength))))
-			{
-				return ec;
-			}
-		}
-
-		if(_chunked)
-		{
-			if((ec = header(hn::transferEncoding, HeaderValue<TransferEncoding>(ete_chunked))))
-			{
-				return ec;
-			}
-		}
-
-		if(_contentEncoding != ece_identity)
-		{
-			if((ec = header(hn::contentEncoding, HeaderValue<ContentEncoding>(_contentEncoding))))
-			{
-				return ec;
-			}
-		}
-
-		if(_keepAlive)
-		{
-			if((ec = header(hn::connection, HeaderValue<Connection>(ec_keepAlive))))
-			{
-				return ec;
-			}
-		}
-		else
-		{
-			if(hvConnection.isCorrect() || _version>=Version(1,1))
-			{
-				if((ec = header(hn::connection, HeaderValue<Connection>(ec_close))))
-				{
-					return ec;
-				}
-			}
-		}
-
 		if((ec = header(hn::date, HeaderValue<Date>(time(NULL)))))
 		{
 			return ec;
@@ -284,19 +162,6 @@ namespace http { namespace server { namespace impl
 	////////////////////////////////////////////////////////////////////////////////////////
 	boost::system::error_code Response::setupBodyFilters()
 	{
-		if(_chunked)
-		{
-			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderChunked(_contentEncoder, _server->responseWriteGranula()));
-			_contentEncoder = ce;
-		}
-
-		if(_contentEncoding != ece_identity)
-		{
-			assert(ece_gzip == _contentEncoding || ece_deflate == _contentEncoding);
-			http::impl::ContentEncoderPtr ce(new http::impl::ContentEncoderZlib(_contentEncoder, _contentEncoding, _contentEncodingCompressLevel, _server->responseWriteGranula()));
-			_contentEncoder = ce;
-		}
-
 		return http::impl::OutputMessage::setupBodyFilters();
 	}
 
