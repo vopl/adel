@@ -6,7 +6,11 @@
 #include "http/headerValue.hpp"
 #include "http/error.hpp"
 
-#include "http/impl/contentDecoderChunked.hpp"
+#include "http/impl/bodyExtractorChunked.hpp"
+#include "http/impl/bodyExtractorSized.hpp"
+#include "http/impl/bodyExtractorUntilClose.hpp"
+
+#include "http/impl/contentDecoderZlib.hpp"
 
 #include <boost/spirit/include/qi.hpp>
 #include <boost/spirit/include/qi_string.hpp>
@@ -22,7 +26,6 @@ namespace http { namespace impl
 		: _channel(channel)
 		, _granula(granula)
 		, _accumuler(new ContentDecoderAccumuler)
-		, _contentDecoder(_accumuler)
 		, _em(em_firstLine)
 	{
 	}
@@ -160,7 +163,10 @@ namespace http { namespace impl
 
 			///////////////////////////////
 			//вылить хвост обратно в _accumuler
-			bodyExtractor->flush(_accumuler);
+			if((ec = bodyExtractor->flush(_accumuler)))
+			{
+				return ec;
+			}
 
 			///////////////////////////////
 			//нормализовать позицию чтения, ато после нее дыра теперь
@@ -241,7 +247,7 @@ namespace http { namespace impl
 		_version = Version();
 		_em = em_firstLine;
 		_accumuler->dropFront(_readedPos);
-		_contentDecoder = _accumuler;
+		_accumulerBody.reset();
 		_readedPos = Iterator();
 		_firstLine = Segment();
 		_headers = Segment();
@@ -255,24 +261,20 @@ namespace http { namespace impl
 		InputMessageBuffer 	*lastBuffer = _accumuler->lastBuffer();
 
 		boost::system::error_code ec;
-		do
+		async::Future2<boost::system::error_code, net::Packet> res =
+			_channel.receive(_granula);
+
+		res.wait();
+
+		if(res.data1NoWait())
 		{
-			async::Future2<boost::system::error_code, net::Packet> res =
-				_channel.receive(_granula);
-
-			res.wait();
-
-			if(res.data1NoWait())
-			{
-				return res.data1NoWait();
-			}
-
-			if((ec = _contentDecoder->decoderPush(res.data2NoWait(), 0)))
-			{
-				return ec;
-			}
+			return res.data1NoWait();
 		}
-		while(lastBuffer == _accumuler->lastBuffer());
+
+		if((ec = _accumuler->push(res.data2NoWait(), 0)))
+		{
+			return ec;
+		}
 
 		if(lastBuffer)
 		{
@@ -389,11 +391,11 @@ namespace http { namespace impl
 		{
 			if(hvContentEncoding.value() & ece_deflate)
 			{
-				bodyDecoder.reset(new ContentEncoderZlib(bodyDecoder, ece_deflate));
+				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_deflate));
 			}
 			else if(hvContentEncoding.value() & ece_gzip)
 			{
-				bodyDecoder.reset(new ContentEncoderZlib(bodyDecoder, ece_gzip));
+				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_gzip));
 			}
 			else if(hvContentEncoding.value() == ece_identity)
 			{
@@ -412,7 +414,7 @@ namespace http { namespace impl
 		HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
 		if(hvContentLength.isCorrect())
 		{
-			result.reset(new BodyExtractorSized(bodyDecoder));
+			result.reset(new BodyExtractorSized(bodyDecoder, hvContentLength.value()));
 			return http::error::make();
 		}
 

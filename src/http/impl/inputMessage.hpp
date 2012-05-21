@@ -5,6 +5,7 @@
 #include "http/inputMessage.hpp"
 #include "http/version.hpp"
 #include "http/impl/contentDecoderAccumuler.hpp"
+#include "http/impl/bodyExtractor.hpp"
 #include <boost/enable_shared_from_this.hpp>
 #include <boost/unordered_map.hpp>
 

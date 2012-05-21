@@ -1,38 +1,23 @@
-#ifndef _HTTP_IMPL_CONTENTDECODERCHUNKED_HPP_
-#define _HTTP_IMPL_CONTENTDECODERCHUNKED_HPP_
+#ifndef _HTTP_IMPL_BODYEXTRACTORCHUNKED_HPP_
+#define _HTTP_IMPL_BODYEXTRACTORCHUNKED_HPP_
 
-#include "http/impl/contentDecoder.hpp"
-#include "http/impl/contentDecoderAccumuler.hpp"
+#include "http/impl/bodyExtractor.hpp"
 
-namespace http { namespace impl
-{
-	class ContentDecoderChunked
-		: public ContentDecoder
+
+namespace http { namespace impl{
+
+	class BodyExtractorChunked
+		: public BodyExtractor
 	{
 	public:
-		ContentDecoderChunked(const ContentDecoderPtr &upstream);
-		virtual ~ContentDecoderChunked();
+		BodyExtractorChunked(const ContentDecoderPtr &bodyDecoder);
+		virtual ~BodyExtractorChunked();
 
-		virtual boost::system::error_code decoderPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code decoderFlush();
-
-		bool isDone() const;
-		size_t contentLength() const;
-
-	protected:
-		ContentDecoderPtr _upstream;
-
-		enum EState
-		{
-			es_header,
-			es_body,
-			es_done,
-		};
-		EState	_es;
-		size_t	_toRead;
-		char	_header[64];
-		size_t	_headerSize;
+		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin);
+		virtual boost::system::error_code read(net::Channel channel, size_t granula);
+		virtual boost::system::error_code flush(ContentDecoderPtr decoder4tail);
 	};
+	typedef boost::shared_ptr<BodyExtractorChunked> BodyExtractorChunkedPtr;
 }}
 
 #endif

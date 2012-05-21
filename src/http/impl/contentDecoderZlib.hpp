@@ -2,6 +2,7 @@
 #define _HTTP_IMPL_CONTENTDECODERZLIB_HPP_
 
 #include "http/impl/contentDecoder.hpp"
+#include "http/contentEncoding.hpp"
 
 namespace http { namespace impl
 {
@@ -9,14 +10,14 @@ namespace http { namespace impl
 		: public ContentDecoder
 	{
 	public:
-		ContentDecoderZlib(ContentDecoder *upstream);
+		ContentDecoderZlib(const ContentDecoderPtr &upstream, EContentEncoding ece);
 		virtual ~ContentDecoderZlib();
 
 		virtual boost::system::error_code push(const net::Packet &packet, size_t offset=0);
 		virtual boost::system::error_code flush();
 
 	protected:
-		ContentDecoder *_upstream;
+		ContentDecoderPtr _upstream;
 	};
 }}
 

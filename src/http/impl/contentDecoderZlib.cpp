@@ -5,7 +5,7 @@
 namespace http { namespace impl
 {
 	//////////////////////////////////////////////////////////////////////////////
-	ContentDecoderZlib::ContentDecoderZlib(ContentDecoder *upstream)
+	ContentDecoderZlib::ContentDecoderZlib(const ContentDecoderPtr &upstream, EContentEncoding ece)
 		: _upstream(upstream)
 	{
 	}

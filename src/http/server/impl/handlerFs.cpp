@@ -165,6 +165,7 @@ namespace http { namespace server { namespace impl
 #ifdef _MSC_VER
 				|O_BINARY
 #endif
+#pragma warning (suppress: 4996)
 				);
 			if(!fd)
 			{
@@ -216,6 +217,7 @@ namespace http { namespace server { namespace impl
 				char *buf = iter.bufferGet(bufSize);
 				assert(buf && bufSize);
 
+#pragma warning (suppress: 4996)
 				int rres = read(fd, buf, (off_t)bufSize);
 				(void)rres;
 
@@ -228,6 +230,7 @@ namespace http { namespace server { namespace impl
 				size -= bufSize;
 			}
 
+#pragma warning (suppress: 4996)
 			close(fd);
 		}
 

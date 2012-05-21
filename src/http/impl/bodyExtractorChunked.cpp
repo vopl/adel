@@ -1,60 +1,34 @@
 #include "pch.hpp"
-#include "http/impl/contentDecoderChunked.hpp"
 
+#include "http/impl/bodyExtractorChunked.hpp"
 
-namespace http { namespace impl
-{
-	//////////////////////////////////////////////////////////////////////////////
-	ContentDecoderChunked::ContentDecoderChunked(const ContentDecoderPtr &upstream)
-		: _upstream(upstream)
-		, _es(es_header)
-		, _toRead(0)
-		, _headerSize(0)
+namespace http { namespace impl{
+
+	BodyExtractorChunked::BodyExtractorChunked(const ContentDecoderPtr &bodyDecoder)
+		: BodyExtractor(bodyDecoder)
 	{
 	}
 
-	//////////////////////////////////////////////////////////////////////////////
-	ContentDecoderChunked::~ContentDecoderChunked()
+	BodyExtractorChunked::~BodyExtractorChunked()
 	{
 	}
 
-	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderChunked::decoderPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code BodyExtractorChunked::read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin)
 	{
-		char *begin = packet._data.get() + offset;
-		char *end = packet._data.get() + packet._size;
-		assert(begin < end);
-
-		switch(_es)
-		{
-		case es_header:
-			break;
-		case es_body:
-			break;
-		default:
-			assert(0);
-			return http::error::make(http::error::unexpected);
-		}
-		return _upstream->decoderPush(packet, offset);
+		assert(0);
+		return boost::system::error_code();
 	}
 
-	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentDecoderChunked::decoderFlush()
+	boost::system::error_code BodyExtractorChunked::read(net::Channel channel, size_t granula)
 	{
-		assert(!"not impl");
+		assert(0);
+		return boost::system::error_code();
 	}
 
-
-	//////////////////////////////////////////////////////////////////////////////
-	bool ContentDecoderChunked::isDone() const
+	boost::system::error_code BodyExtractorChunked::flush(ContentDecoderPtr decoder4tail)
 	{
-		assert(!"not impl");
-	}
-
-	//////////////////////////////////////////////////////////////////////////////
-	size_t ContentDecoderChunked::contentLength() const
-	{
-		assert(!"not impl");
+		assert(0);
+		return boost::system::error_code();
 	}
 
 }}
