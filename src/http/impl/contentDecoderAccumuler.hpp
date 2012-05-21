@@ -23,6 +23,8 @@ namespace http { namespace impl
 		http::InputMessage::Iterator	begin();
 		http::InputMessage::Iterator	end();
 
+		size_t size();
+
 		void dropFront(const http::InputMessage::Iterator &pos);
 		void dropTail(const http::InputMessage::Iterator &pos);
 

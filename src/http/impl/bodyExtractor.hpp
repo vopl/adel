@@ -12,15 +12,16 @@ namespace http { namespace impl{
 	class BodyExtractor
 	{
 	public:
-		BodyExtractor(const ContentDecoderPtr &bodyDecoder);
+		BodyExtractor(const ContentDecoderPtr &bodyDecoder, ContentDecoderPtr tailDecoder);
 		virtual ~BodyExtractor();
 
-		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin) =0;
+		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, const http::InputMessage::Iterator &begin) =0;
 		virtual boost::system::error_code read(net::Channel channel, size_t granula) =0;
-		virtual boost::system::error_code flush(ContentDecoderPtr decoder4tail) =0;
+		virtual boost::system::error_code flush() =0;
 
 	protected:
 		ContentDecoderPtr _bodyDecoder;
+		ContentDecoderPtr _tailDecoder;
 	};
 	typedef boost::shared_ptr<BodyExtractor> BodyExtractorPtr;
 }}

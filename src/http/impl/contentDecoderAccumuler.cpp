@@ -85,6 +85,12 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
+	http::InputMessage::Iterator ContentDecoderAccumuler::size()
+	{
+		return _size;
+	}
+
+	////////////////////////////////////////////////////////////////
 	void ContentDecoderAccumuler::dropFront(const http::InputMessage::Iterator &pos)
 	{
 		if(!_first)
@@ -165,6 +171,8 @@ namespace http { namespace impl
 
 		boundBuffer->setNext(InputMessageBufferPtr());
 		boundBuffer->setEnd(boundPosition);
+
+		_size = boundBuffer->offset() + boundBuffer->size();
 
 		if(!boundBuffer->size())
 		{
