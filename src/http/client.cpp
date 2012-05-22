@@ -40,12 +40,13 @@ namespace http
 	}
 
 	///////////////////////////////////////////////////////////////////////
-	boost::system::error_code Client::connect(
+	boost::system::error_code Client::connectGet(
 		client::Request &request,
-		const char *url)
+		const char *url,
+		const Version &version)
 	{
 		http::client::impl::RequestPtr requestImpl;
-		boost::system::error_code ec = _impl->connect(requestImpl, url);
+		boost::system::error_code ec = _impl->connectGet(requestImpl, url, version);
 		if(requestImpl)
 		{
 			request = client::Request(requestImpl);

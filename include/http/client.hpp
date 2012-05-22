@@ -5,6 +5,7 @@
 #include "async/service.hpp"
 
 #include "http/client/request.hpp"
+#include "http/version.hpp"
 
 namespace http
 {
@@ -32,9 +33,10 @@ namespace http
 			client::Request &request,
 			const char *host, const char *service, bool useSsl=false);
 
-		boost::system::error_code connect(
+		boost::system::error_code connectGet(
 			client::Request &request,
-			const char *url);
+			const char *url,
+			const Version &version = Version(1,1));
 	};
 }
 

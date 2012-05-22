@@ -70,4 +70,16 @@ namespace net
 		return _impl->setTimeout(ms);
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::endpointRemote()
+	{
+		return _impl->endpointRemote();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::endpointLocal()
+	{
+		return _impl->endpointLocal();
+	}
+
 }

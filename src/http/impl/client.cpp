@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "http/impl/client.hpp"
+#include "utils/ntoa.hpp"
 
 namespace http { namespace impl
 {
@@ -67,14 +68,27 @@ namespace http { namespace impl
 			return cres.data1NoWait();
 		}
 
-		request.reset(new client::impl::Request(shared_from_this(), cres.data2NoWait()));
+		std::string headerHost = host;
+
+		unsigned short port = cres.data2NoWait().endpointRemote().port();
+
+		if(port!=80 && !useSsl || port!=443 && useSsl)
+		{
+			char tmp[32];
+			tmp[0] = ':';
+			utils::_ntoa(port, tmp+1);
+			headerHost += tmp;
+		}
+
+		request.reset(new client::impl::Request(shared_from_this(), cres.data2NoWait(), headerHost));
 		return cres.data1NoWait();
 	}
 
 	//////////////////////////////////////////////////////////////////////
-	boost::system::error_code Client::connect(
+	boost::system::error_code Client::connectGet(
 		client::impl::RequestPtr &request,
-		const char *url)
+		const char *url,
+		const Version &version)
 	{
 		assert(0);
 		return boost::system::error_code();

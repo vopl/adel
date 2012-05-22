@@ -30,23 +30,12 @@ void testClient(http::Client c)
 	http::client::Request request;
 	boost::system::error_code ec;
 
-	ec = c.connect(request, "127.0.0.1", "8080", false);
+	ec = c.connectGet(request, "http://127.0.0.1:8080/index.html?a=b");
 	if(ec)
 	{
-		std::cout<<"connect: "<<ec<<std::endl;
+		std::cout<<"get: "<<ec<<std::endl;
 		return;
 	}
-
-	ec = request.firstLine(http::em_GET, "/index.html", http::Version(1,0));
-	if(ec)
-	{
-		std::cout<<"firstLine: "<<ec<<std::endl;
-		return;
-	}
-
-	//request.header(http::hn::te, "chunked");
-	//request.header(http::hn::acceptEncoding, "deflate, gzip");
-	request.header(http::hn::host, "127.0.0.1:8080");
 
 	ec = request.bodyFlush();
 	if(ec)

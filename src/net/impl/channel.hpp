@@ -53,6 +53,9 @@ namespace net { namespace impl
 			size_t getTimeout();
 			void setTimeout(size_t ms);
 
+			boost::asio::ip::tcp::endpoint endpointRemote();
+			boost::asio::ip::tcp::endpoint endpointLocal();
+
 		private:
 			static void onSslShutdown(
 				const boost::system::error_code &ec,
@@ -135,6 +138,9 @@ namespace net { namespace impl
 
 		size_t getTimeout();
 		void setTimeout(size_t ms);
+
+		boost::asio::ip::tcp::endpoint endpointRemote();
+		boost::asio::ip::tcp::endpoint endpointLocal();
 	};
 }}
 

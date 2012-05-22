@@ -160,6 +160,28 @@ namespace net { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::Sock::endpointRemote()
+	{
+		boost::system::error_code ec;
+		if(_socket)
+		{
+			return _socket->remote_endpoint(ec);
+		}
+		return _socketSsl->lowest_layer().remote_endpoint(ec);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::Sock::endpointLocal()
+	{
+		boost::system::error_code ec;
+		if(_socket)
+		{
+			return _socket->local_endpoint(ec);
+		}
+		return _socketSsl->lowest_layer().local_endpoint(ec);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	void Channel::receive_f(async::Future2<boost::system::error_code, Packet> res, size_t maxSize)
 	{
 		Packet				packet;
@@ -441,6 +463,18 @@ namespace net { namespace impl
 	void Channel::setTimeout(size_t ms)
 	{
 		_sock.setTimeout(ms);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::endpointRemote()
+	{
+		return _sock.endpointRemote();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	boost::asio::ip::tcp::endpoint Channel::endpointLocal()
+	{
+		return _sock.endpointLocal();
 	}
 
 }}

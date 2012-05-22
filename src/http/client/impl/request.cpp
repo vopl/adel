@@ -18,9 +18,10 @@ namespace http { namespace client { namespace impl
 {
 
 	//////////////////////////////////////////////////////////////////////////
-	Request::Request(const http::impl::ClientPtr &client, const net::Channel &channel)
+	Request::Request(const http::impl::ClientPtr &client, const net::Channel &channel, const std::string &host)
 		: http::impl::OutputMessage(channel, client->requestWriteGranula())
 		, _client(client)
+		, _host(host)
 	{
 		_version = Version(1,1);
 	}
@@ -125,6 +126,24 @@ namespace http { namespace client { namespace impl
 	{
 
 		boost::system::error_code ec;
+
+		if((ec = header(hn::host, _host)))
+		{
+			return ec;
+		}
+
+		if(_version < Version(1,1))
+		{
+			if((ec = header(http::hn::te, "chunked", 7)))
+			{
+				return ec;
+			}
+		}
+
+		if((ec = header(http::hn::acceptEncoding, "deflate, gzip", 13)))
+		{
+			return ec;
+		}
 
 		if((ec = header(hn::userAgent, "hawc", 4)))
 		{

@@ -47,6 +47,9 @@ namespace net
 		//millisec
 		size_t getTimeout();
 		void setTimeout(size_t ms);
+
+		boost::asio::ip::tcp::endpoint endpointRemote();
+		boost::asio::ip::tcp::endpoint endpointLocal();
 	};
 }
 #endif

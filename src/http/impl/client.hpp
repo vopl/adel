@@ -26,9 +26,10 @@ namespace http { namespace impl
 			client::impl::RequestPtr &request,
 			const char *host, const char *service, bool useSsl=false);
 
-		boost::system::error_code connect(
+		boost::system::error_code connectGet(
 			client::impl::RequestPtr &request,
-			const char *url);
+			const char *url,
+			const Version &version);
 
 	public:
 		size_t requestWriteGranula() const;
