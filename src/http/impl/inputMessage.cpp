@@ -163,7 +163,7 @@ namespace http { namespace impl
 
 			///////////////////////////////
 			//вылить хвост обратно в _accumuler
-			if((ec = bodyExtractor->flush(_accumuler)))
+			if((ec = bodyExtractor->flush()))
 			{
 				return ec;
 			}
@@ -384,6 +384,7 @@ namespace http { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::prepareBodyExtractor(BodyExtractorPtr &result)
 	{
+		_accumulerBody.reset(new ContentDecoderAccumuler());
 		ContentDecoderPtr bodyDecoder = _accumulerBody;
 
 		HeaderValue<ContentEncoding> hvContentEncoding(header(http::hn::contentEncoding));
@@ -414,14 +415,14 @@ namespace http { namespace impl
 		HeaderValue<Unsigned> hvContentLength(header(http::hn::contentLength));
 		if(hvContentLength.isCorrect())
 		{
-			result.reset(new BodyExtractorSized(bodyDecoder, hvContentLength.value()));
+			result.reset(new BodyExtractorSized(bodyDecoder, _accumuler, hvContentLength.value()));
 			return http::error::make();
 		}
 
 		HeaderValue<TransferEncoding> hvTransferEncoding(header(http::hn::transferEncoding));
 		if(hvTransferEncoding.isCorrect() && (hvTransferEncoding.value()&ete_chunked))
 		{
-			result.reset(new BodyExtractorChunked(bodyDecoder));
+			result.reset(new BodyExtractorChunked(bodyDecoder, _accumuler));
 			return http::error::make();
 		}
 
@@ -434,7 +435,7 @@ namespace http { namespace impl
 		{
 			if(hvConnection.value()==ec_close)
 			{
-				result.reset(new BodyExtractorUntilClose(bodyDecoder));
+				result.reset(new BodyExtractorUntilClose(bodyDecoder, _accumuler));
 				return http::error::make();
 			}
 		}

@@ -10,12 +10,12 @@ namespace http { namespace impl{
 		: public BodyExtractor
 	{
 	public:
-		BodyExtractorUntilClose(const ContentDecoderPtr &bodyDecoder);
+		BodyExtractorUntilClose(const ContentDecoderPtr &bodyDecoder, const ContentDecoderPtr &tailDecoder);
 		virtual ~BodyExtractorUntilClose();
 
-		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin);
-		virtual boost::system::error_code read(net::Channel channel, size_t granula);
-		virtual boost::system::error_code flush(ContentDecoderPtr decoder4tail);
+	private:
+		virtual bool isDone();
+		virtual boost::system::error_code push(const net::Packet &p, size_t offset);
 	};
 	typedef boost::shared_ptr<BodyExtractorUntilClose> BodyExtractorUntilClosePtr;
 }}

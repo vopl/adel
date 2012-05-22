@@ -13,16 +13,16 @@ namespace http { namespace impl{
 		BodyExtractorChunked(const ContentDecoderPtr &bodyDecoder, ContentDecoderPtr tailDecoder);
 		virtual ~BodyExtractorChunked();
 
-		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, const http::InputMessage::Iterator &begin);
-		virtual boost::system::error_code read(net::Channel channel, size_t granula);
-		virtual boost::system::error_code flush();
+	private:
+		virtual bool isDone();
+		virtual boost::system::error_code push(const net::Packet &p, size_t offset);
 
 	private:
-		boost::system::error_code push(const net::Packet &p, size_t offset);
 		boost::system::error_code pushCaption(const net::Packet &p, size_t offset);
 		boost::system::error_code pushBody(const net::Packet &p, size_t offset);
-		boost::system::error_code pushHeader(const net::Packet &p, size_t offset);
-		bool isDone();
+		boost::system::error_code pushTrailerHeader(const net::Packet &p, size_t offset);
+
+		boost::system::error_code pushFromAccumuler();
 
 	private:
 
@@ -30,7 +30,7 @@ namespace http { namespace impl{
 		{
 			es_caption,
 			es_body,
-			es_header,
+			es_trailerHeader,
 			es_done,
 			es_error,
 		};

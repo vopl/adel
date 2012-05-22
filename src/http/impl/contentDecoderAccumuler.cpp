@@ -85,7 +85,7 @@ namespace http { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////
-	http::InputMessage::Iterator ContentDecoderAccumuler::size()
+	size_t ContentDecoderAccumuler::size()
 	{
 		return _size;
 	}

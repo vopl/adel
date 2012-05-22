@@ -4,28 +4,26 @@
 
 namespace http { namespace impl{
 
-	BodyExtractorUntilClose::BodyExtractorUntilClose(const ContentDecoderPtr &bodyDecoder)
-		: BodyExtractor(bodyDecoder)
+	//////////////////////////////////////////////////////////////////////////
+	BodyExtractorUntilClose::BodyExtractorUntilClose(const ContentDecoderPtr &bodyDecoder, const ContentDecoderPtr &tailDecoder)
+		: BodyExtractor(bodyDecoder, tailDecoder)
 	{
 	}
 
+	//////////////////////////////////////////////////////////////////////////
 	BodyExtractorUntilClose::~BodyExtractorUntilClose()
 	{
 	}
 
-	boost::system::error_code BodyExtractorUntilClose::read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin)
+	//////////////////////////////////////////////////////////////////////////
+	bool BodyExtractorUntilClose::isDone()
 	{
 		assert(0);
-		return boost::system::error_code();
+		return true;
 	}
-
-	boost::system::error_code BodyExtractorUntilClose::read(net::Channel channel, size_t granula)
-	{
-		assert(0);
-		return boost::system::error_code();
-	}
-
-	boost::system::error_code BodyExtractorUntilClose::flush(ContentDecoderPtr decoder4tail)
+	
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code BodyExtractorUntilClose::push(const net::Packet &p, size_t offset)
 	{
 		assert(0);
 		return boost::system::error_code();

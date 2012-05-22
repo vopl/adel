@@ -16,87 +16,13 @@ namespace http { namespace impl{
 	BodyExtractorChunked::BodyExtractorChunked(const ContentDecoderPtr &bodyDecoder, ContentDecoderPtr tailDecoder)
 		: BodyExtractor(bodyDecoder, tailDecoder)
 		, _es(es_caption)
-		, _chunkSize(_badChunkSize)
-		, _crFound(false)
+		, _bodySize(0)
 	{
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	BodyExtractorChunked::~BodyExtractorChunked()
 	{
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::read(const ContentDecoderAccumulerPtr &from, const http::InputMessage::Iterator &begin)
-	{
-		impl::InputMessageBuffer *buf = begin.buffer();
-		const char *pos = begin.position();
-
-		if(pos == buf->end())
-		{
-			buf = buf->next();
-			if(buf)
-			{
-				pos = buf->begin();
-			}
-		}
-
-		boost::system::error_code ec;
-		if(buf)
-		{
-			size_t offset;
-			net::Packet p = buf->asPacket(offset);
-			if((ec = push(p, offset)))
-			{
-				return ec;
-			}
-
-			buf = buf->next();
-
-			while(buf)
-			{
-				size_t offset;
-				net::Packet p = buf->asPacket(offset);
-
-				if((ec = push(p, offset)))
-				{
-					return ec;
-				}
-
-				buf = buf->next();
-			}
-		}
-
-		return http::error::make();
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::read(net::Channel channel, size_t granula)
-	{
-		boost::system::error_code ec;
-		while(!isDone())
-		{
-			async::Future2<boost::system::error_code, net::Packet> res =
-				channel.receive(granula);
-			res.wait();
-			if(res.data1NoWait())
-			{
-				return res.data1NoWait();
-			}
-			if((ec = push(res.data2NoWait(), 0)))
-			{
-				return ec;
-			}
-		}
-
-		return http::error::make();
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::flush()
-	{
-		assert(0);
-		return boost::system::error_code();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,8 +34,8 @@ namespace http { namespace impl{
 			return pushCaption(p, offset);
 		case es_body:
 			return pushBody(p, offset);
-		case es_header:
-			return pushHeader(p, offset);
+		case es_trailerHeader:
+			return pushTrailerHeader(p, offset);
 		case es_done:
 			return _tailDecoder->push(p, offset);
 		case es_error:
@@ -133,18 +59,23 @@ namespace http { namespace impl{
 			return ec;
 		}
 
+		namespace qi = boost::spirit::qi;
+		using namespace qi;
+		namespace px = boost::phoenix;
 
 		http::InputMessage::Iterator begin = _accumuler.begin();
 		http::InputMessage::Iterator end = _accumuler.end();
 
+		bool error = false;
 		bool res = qi::parse(begin, end,
-			uint_parser<size_t, 16>()[px::ref(_bodySize) = qi::_1] >>
+			-lit("\r\n") >> // <- это терминатор предыдущего тела, в первом чанке его может не быть
+			(uint_parser<size_t, 16>()[px::ref(_bodySize) = qi::_1] || (eps[px::ref(error) = true] >> !eps))>> //надо обязательно цифры в начале чанка
 			*(char_-'\r') >>
-			string_("\r\n"));
+			"\r\n");
 
 		if(!res)
 		{
-			if(_accumuler.size() > 1024)
+			if(error || _accumuler.size() > 1024)
 			{
 				_es = es_error;
 				return http::error::make(http::error::invalid_message);
@@ -155,44 +86,148 @@ namespace http { namespace impl{
 		}
 
 		//начало чанка распознано
-		_es = es_body;
+
 		//_bodySize valid
-
-		_accumuler.dropFront(begin);
-
-		InputMessageBuffer *buf = _accumuler.begin().buffer();
-		while(buf)
+		if(!_bodySize)
 		{
-			size_t offset2;
-			net::Packet p2 = buf->asPacket(offset2);
-			if((ec = pushBody(p2, offset2)))
-			{
-				return ec;
-			}
-			buf = buf->next();
+			_es = es_trailerHeader;
+		}
+		else
+		{
+			_es = es_body;
 		}
 
-		_accumuler = ContentDecoderAccumuler();
-
-		return http::error::make();
+		_accumuler.dropFront(begin);
+		return pushFromAccumuler();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	boost::system::error_code BodyExtractorChunked::pushBody(const net::Packet &p, size_t offset)
 	{
-		assert(0);
+		assert(es_body == _es);
+		assert(offset < p._size);
+		boost::system::error_code ec;
+
+		size_t incomingSize = p._size - offset;
+
+		if(incomingSize <= _bodySize)
+		{
+			if((ec = _bodyDecoder->push(p, offset)))
+			{
+				return ec;
+			}
+
+			_bodySize -= incomingSize;
+			if(!_bodySize)
+			{
+				_es = es_caption;
+			}
+			return http::error::make();
+		}
+
+		//incomingSize > _bodySize
+
+		//сколько осталось тела - вылить в декодер тела, остальное парсить как новый чанк
+		net::Packet p2(p);
+		p2._size -= incomingSize - _bodySize;
+		assert(offset < p2._size);
+		if((ec = _bodyDecoder->push(p2, offset)))
+		{
+			return ec;
+		}
+
+		_es = es_caption;
+		size_t offset2 = offset + _bodySize;
+		return push(p, offset2);
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::pushHeader(const net::Packet &p, size_t offset)
+	boost::system::error_code BodyExtractorChunked::pushTrailerHeader(const net::Packet &p, size_t offset)
 	{
-		assert(0);
+		assert(es_trailerHeader == _es);
+
+		boost::system::error_code ec;
+
+		if((ec = _accumuler.push(p, offset)))
+		{
+			return ec;
+		}
+
+		namespace qi = boost::spirit::qi;
+		using namespace qi;
+		namespace px = boost::phoenix;
+
+		http::InputMessage::Iterator begin = _accumuler.begin();
+		http::InputMessage::Iterator end = _accumuler.end();
+
+		bool headerPresent = false;
+		bool res = qi::parse(begin, end,
+			((+(char_-'\r'))[px::ref(headerPresent)] || eps) >>
+			"\r\n");
+
+		if(!res)
+		{
+			if(_accumuler.size() > 1024)
+			{
+				_es = es_error;
+				return http::error::make(http::error::invalid_message);
+			}
+
+			//не распознано но еще есть шанс, оставляю акумулятор
+			return http::error::make();
+		}
+
+		//распознано
+
+		//_bodySize valid
+		if(headerPresent)
+		{
+			_es = es_trailerHeader;
+		}
+		else
+		{
+			_es = es_done;
+		}
+
+		_accumuler.dropFront(begin);
+		return pushFromAccumuler();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
 	bool BodyExtractorChunked::isDone()
 	{
 		return es_done == _es;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	boost::system::error_code BodyExtractorChunked::pushFromAccumuler()
+	{
+		boost::system::error_code ec;
+		if(_accumuler.size())
+		{
+			InputMessageBufferPtr buf = _accumuler.begin().buffer()->shared_from_this();
+			_accumuler = ContentDecoderAccumuler();
+
+			if(buf)
+			{
+				for(;;)
+				{
+					size_t offset2;
+					net::Packet p2 = buf->asPacket(offset2);
+					if((ec = push(p2, offset2)))
+					{
+						return ec;
+					}
+					if(!buf->next())
+					{
+						break;
+					}
+					buf = buf->next()->shared_from_this();
+				}
+			}
+		}
+
+		return http::error::make();
 	}
 
 }}

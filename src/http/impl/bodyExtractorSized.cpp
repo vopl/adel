@@ -4,29 +4,27 @@
 
 namespace http { namespace impl{
 
-	BodyExtractorSized::BodyExtractorSized(const ContentDecoderPtr &bodyDecoder, size_t targetSize)
-		: BodyExtractor(bodyDecoder)
+	//////////////////////////////////////////////////////////////////////////
+	BodyExtractorSized::BodyExtractorSized(const ContentDecoderPtr &bodyDecoder, const ContentDecoderPtr &tailDecoder, size_t targetSize)
+		: BodyExtractor(bodyDecoder, tailDecoder)
 	{
 		assert(0);
 	}
 
+	//////////////////////////////////////////////////////////////////////////
 	BodyExtractorSized::~BodyExtractorSized()
 	{
 	}
 
-	boost::system::error_code BodyExtractorSized::read(const ContentDecoderAccumulerPtr &from, http::InputMessage::Iterator &begin)
+	//////////////////////////////////////////////////////////////////////////
+	bool BodyExtractorSized::isDone()
 	{
 		assert(0);
-		return boost::system::error_code();
+		return true;
 	}
 
-	boost::system::error_code BodyExtractorSized::read(net::Channel channel, size_t granula)
-	{
-		assert(0);
-		return boost::system::error_code();
-	}
-
-	boost::system::error_code BodyExtractorSized::flush(ContentDecoderPtr decoder4tail)
+	//////////////////////////////////////////////////////////////////////////
+	boost::system::error_code BodyExtractorSized::push(const net::Packet &p, size_t offset)
 	{
 		assert(0);
 		return boost::system::error_code();

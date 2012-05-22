@@ -15,9 +15,13 @@ namespace http { namespace impl{
 		BodyExtractor(const ContentDecoderPtr &bodyDecoder, ContentDecoderPtr tailDecoder);
 		virtual ~BodyExtractor();
 
-		virtual boost::system::error_code read(const ContentDecoderAccumulerPtr &from, const http::InputMessage::Iterator &begin) =0;
-		virtual boost::system::error_code read(net::Channel channel, size_t granula) =0;
-		virtual boost::system::error_code flush() =0;
+		boost::system::error_code read(const ContentDecoderAccumulerPtr &from, const http::InputMessage::Iterator &begin);
+		boost::system::error_code read(net::Channel channel, size_t granula);
+		boost::system::error_code flush();
+
+	protected:
+		virtual bool isDone() = 0;
+		virtual boost::system::error_code push(const net::Packet &p, size_t offset) = 0;
 
 	protected:
 		ContentDecoderPtr _bodyDecoder;
