@@ -1,14 +1,15 @@
 #include "pch.hpp"
 
 #include "http/impl/bodyExtractorSized.hpp"
+#include "http/error.hpp"
 
 namespace http { namespace impl{
 
 	//////////////////////////////////////////////////////////////////////////
 	BodyExtractorSized::BodyExtractorSized(const ContentDecoderPtr &bodyDecoder, const ContentDecoderPtr &tailDecoder, size_t targetSize)
 		: BodyExtractor(bodyDecoder, tailDecoder)
+		, _targetSize(targetSize)
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -19,15 +20,17 @@ namespace http { namespace impl{
 	//////////////////////////////////////////////////////////////////////////
 	bool BodyExtractorSized::isDone()
 	{
-		assert(0);
-		return true;
+		return _targetSize?false:true;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code BodyExtractorSized::process(ContentDecoderAccumuler &data)
 	{
-		assert(0);
-		return boost::system::error_code();
+		if(_targetSize)
+		{
+			return processBody(data, _targetSize);
+		}
+		return processTail(data);
 	}
 
 }}

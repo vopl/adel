@@ -16,6 +16,8 @@ namespace http { namespace impl{
 	private:
 		virtual bool isDone();
 		virtual boost::system::error_code process(ContentDecoderAccumuler &data);
+
+		size_t _targetSize;
 	};
 	typedef boost::shared_ptr<BodyExtractorSized> BodyExtractorSizedPtr;
 }}
