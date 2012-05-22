@@ -90,6 +90,14 @@ namespace http { namespace impl{
 		//
 		assert(!_stream.size());
 
+		if((ec = _bodyDecoder->flush()))
+		{
+			return ec;
+		}
+		if((ec = _tailDecoder->flush()))
+		{
+			return ec;
+		}
 		return http::error::make();
 	}
 

@@ -13,6 +13,8 @@ namespace http { namespace impl{
 		BodyExtractorUntilClose(const ContentDecoderPtr &bodyDecoder, const ContentDecoderPtr &tailDecoder);
 		virtual ~BodyExtractorUntilClose();
 
+		virtual boost::system::error_code read(net::Channel channel, size_t granula);
+
 	private:
 		virtual bool isDone();
 		virtual boost::system::error_code process(ContentDecoderAccumuler &data);
