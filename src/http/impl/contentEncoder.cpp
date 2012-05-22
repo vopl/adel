@@ -16,14 +16,14 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoder::encoderPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoder::push(const net::Packet &packet, size_t offset)
 	{
 		assert(!"must be reimplemented");
 		return http::error::make(http::error::not_implemented);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoder::encoderFlush()
+	boost::system::error_code ContentEncoder::flush()
 	{
 		assert(!"must be reimplemented");
 		return http::error::make(http::error::not_implemented);

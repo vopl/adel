@@ -121,11 +121,15 @@ namespace http { namespace impl{
 #endif
 			ec = this->process(_stream);
 
-			if(http::error::need_more_data == ec)
+			if(ec)
 			{
-				return http::error::make();
-			}
+				if(http::error::need_more_data == ec)
+				{
+					return http::error::make();
+				}
 
+				return ec;
+			}
 			assert(streamSize > _stream.size());
 		}
 

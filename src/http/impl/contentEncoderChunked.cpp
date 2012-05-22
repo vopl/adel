@@ -25,7 +25,7 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderChunked::encoderPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderChunked::push(const net::Packet &packet, size_t offset)
 	{
 		assert(offset < packet._size);
 
@@ -47,14 +47,14 @@ namespace http { namespace impl
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderChunked::encoderFlush()
+	boost::system::error_code ContentEncoderChunked::flush()
 	{
 		boost::system::error_code ec;
 		if((ec = push2Upstream(true)))
 		{
 			return ec;
 		}
-		return _upstream->encoderFlush();
+		return _upstream->flush();
 	}
 
 
@@ -88,14 +88,14 @@ namespace http { namespace impl
 
 			header._size = iter - header._data.get();
 
-			if((ec = _upstream->encoderPush(header, 0)))
+			if((ec = _upstream->push(header, 0)))
 			{
 				return ec;
 			}
 
 			BOOST_FOREACH(SChunk &chunk, _chunks)
 			{
-				if((ec = _upstream->encoderPush(chunk._packet, chunk._offset)))
+				if((ec = _upstream->push(chunk._packet, chunk._offset)))
 				{
 					return ec;
 				}
@@ -103,7 +103,7 @@ namespace http { namespace impl
 			_chunks.clear();
 			_size = 0;
 
-			if((ec = _upstream->encoderPush(crlfPacket, 0)))
+			if((ec = _upstream->push(crlfPacket, 0)))
 			{
 				return ec;
 			}
@@ -112,7 +112,7 @@ namespace http { namespace impl
 
 		if(finish)
 		{
-			if((ec = _upstream->encoderPush(lastChunkPacket, 0)))
+			if((ec = _upstream->push(lastChunkPacket, 0)))
 			{
 				return ec;
 			}

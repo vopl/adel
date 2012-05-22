@@ -15,8 +15,8 @@ namespace http { namespace impl
 		ContentEncoder();
 		virtual ~ContentEncoder();
 		
-		virtual boost::system::error_code encoderPush(const net::Packet &packet, size_t offset=0)=0;
-		virtual boost::system::error_code encoderFlush()=0;
+		virtual boost::system::error_code push(const net::Packet &packet, size_t offset=0)=0;
+		virtual boost::system::error_code flush()=0;
 
 	protected:
 	};

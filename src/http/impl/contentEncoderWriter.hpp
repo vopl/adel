@@ -13,8 +13,8 @@ namespace http { namespace impl
 		ContentEncoderWriter(const net::Channel &channel, size_t granula);
 		virtual ~ContentEncoderWriter();
 		
-		virtual boost::system::error_code encoderPush(const net::Packet &packet, size_t offset=0);
-		virtual boost::system::error_code encoderFlush();
+		virtual boost::system::error_code push(const net::Packet &packet, size_t offset=0);
+		virtual boost::system::error_code flush();
 
 	protected:
 		net::Channel	_channel;

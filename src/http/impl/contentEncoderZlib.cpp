@@ -5,17 +5,17 @@
 
 namespace http { namespace impl
 {
-	namespace
+	/*namespace
 	{
 		voidpf zalloc (voidpf opaque, uInt items, uInt size)
 		{
-			return malloc(items*size);
+			return new char[items*size];
 		}
 		void zfree(voidpf opaque, voidpf address)
 		{
-			return free(address);
+			delete [](char *)address;
 		}
-	}
+	}*/
 	//////////////////////////////////////////////////////////////////////////////
 	ContentEncoderZlib::ContentEncoderZlib(ContentEncoderPtr upstream, EContentEncoding ece, int level, size_t granula)
 		: _upstream(upstream)
@@ -105,14 +105,14 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderZlib::encoderPush(const net::Packet &packet, size_t offset)
+	boost::system::error_code ContentEncoderZlib::push(const net::Packet &packet, size_t offset)
 	{
 		switch(_ece)
 		{
 		case ece_unknown:
-			return _upstream->encoderPush(packet, offset);
+			return _upstream->push(packet, offset);
 		case ece_identity:
-			return _upstream->encoderPush(packet, offset);
+			return _upstream->push(packet, offset);
 		case ece_deflate:
 		case ece_gzip:
 			{
@@ -145,7 +145,7 @@ namespace http { namespace impl
 						assert(_output._size);
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->encoderPush(_output)))
+							if((ec = _upstream->push(_output)))
 							{
 								return ec;
 							}
@@ -171,18 +171,18 @@ namespace http { namespace impl
 			return http::error::make(http::error::unexpected);
 		}
 
-		return _upstream->encoderPush(packet, offset);
+		return _upstream->push(packet, offset);
 	}
 	
 	//////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code ContentEncoderZlib::encoderFlush()
+	boost::system::error_code ContentEncoderZlib::flush()
 	{
 		switch(_ece)
 		{
 		case ece_unknown:
-			return _upstream->encoderFlush();
+			return _upstream->flush();
 		case ece_identity:
-			return _upstream->encoderFlush();
+			return _upstream->flush();
 		case ece_deflate:
 		case ece_gzip:
 			{
@@ -210,7 +210,7 @@ namespace http { namespace impl
 						_output._size = _outputOffset;
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->encoderPush(_output)))
+							if((ec = _upstream->push(_output)))
 							{
 								return ec;
 							}
@@ -224,7 +224,7 @@ namespace http { namespace impl
 						if(_output._size)
 						{
 							boost::system::error_code ec;
-							if((ec = _upstream->encoderPush(_output)))
+							if((ec = _upstream->push(_output)))
 							{
 								return ec;
 							}
@@ -232,7 +232,7 @@ namespace http { namespace impl
 						_outputOffset = 0;
 						_output._size = 0;
 						_output._data.reset();
-						return _upstream->encoderFlush();
+						return _upstream->flush();
 					default:
 						ELOG("deflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
 						return http::error::make(http::error::not_implemented);
@@ -248,7 +248,7 @@ namespace http { namespace impl
 			return http::error::make(http::error::unexpected);
 		}
 
-		return _upstream->encoderFlush();
+		return _upstream->flush();
 	}
 
 }}

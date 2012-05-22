@@ -388,11 +388,11 @@ namespace http { namespace impl
 		{
 			if(hvContentEncoding.value() & ece_deflate)
 			{
-				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_deflate));
+				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_deflate, _granula));
 			}
 			else if(hvContentEncoding.value() & ece_gzip)
 			{
-				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_gzip));
+				bodyDecoder.reset(new ContentDecoderZlib(bodyDecoder, ece_gzip, _granula));
 			}
 			else if(hvContentEncoding.value() == ece_identity)
 			{
