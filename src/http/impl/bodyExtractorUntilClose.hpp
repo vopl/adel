@@ -15,7 +15,7 @@ namespace http { namespace impl{
 
 	private:
 		virtual bool isDone();
-		virtual boost::system::error_code push(const net::Packet &p, size_t offset);
+		virtual boost::system::error_code process(ContentDecoderAccumuler &data);
 	};
 	typedef boost::shared_ptr<BodyExtractorUntilClose> BodyExtractorUntilClosePtr;
 }}

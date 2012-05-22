@@ -21,11 +21,21 @@ namespace http { namespace impl{
 
 	protected:
 		virtual bool isDone() = 0;
-		virtual boost::system::error_code push(const net::Packet &p, size_t offset) = 0;
+		virtual boost::system::error_code process(ContentDecoderAccumuler &data) = 0;
+
 
 	protected:
 		ContentDecoderPtr _bodyDecoder;
 		ContentDecoderPtr _tailDecoder;
+
+	protected:
+		boost::system::error_code processBody(ContentDecoderAccumuler &data, size_t &bodySize);
+		boost::system::error_code processTail(ContentDecoderAccumuler &data);
+
+
+	private:
+		boost::system::error_code process();
+		ContentDecoderAccumuler _stream;
 	};
 	typedef boost::shared_ptr<BodyExtractor> BodyExtractorPtr;
 }}

@@ -144,15 +144,11 @@ namespace http { namespace impl
 			assert(bodyExtractor);
 
 			///////////////////////////////
-			//сначала пихнуть что уже начитано в _accumuler
+			//сначала пихнуть что уже начитано в _accumuler и вырезать оттуда
 			if((ec = bodyExtractor->read(_accumuler, _readedPos)))
 			{
 				return ec;
 			}
-
-			///////////////////////////////
-			//вырезать это из _accumuler
-			_accumuler->dropTail(_readedPos);
 
 			///////////////////////////////
 			//теперь вычитывать из канала
@@ -442,157 +438,5 @@ namespace http { namespace impl
 
 		return http::error::make(http::error::invalid_message);
 	}
-
-	/*
-	//////////////////////////////////////////////////////////////////////////
-	boost::system::error_code InputMessage::readBodySized(size_t size)
-	{
-		size_t alreadyReaded = _accumuler->end() - _readedPos;
-		if(alreadyReaded >= size)
-		{
-			_body = Segment(_readedPos, _readedPos + size);
-			_readedPos = _body.end();
-
-			return http::error::make();
-		}
-		size_t toRead = size - alreadyReaded;
-
-		boost::system::error_code ec;
-		while(toRead)
-		{
-			async::Future2<boost::system::error_code, net::Packet> res =
-				_channel.receive(_granula);
-			res.wait();
-			if(res.data1NoWait())
-			{
-				return res.data1NoWait();
-			}
-
-			net::Packet &p = res.data2NoWait();
-			if((ec = _contentDecoder->decoderPush(p, 0)))
-			{
-				return ec;
-			}
-
-			if(p._size >= toRead)
-			{
-				toRead = 0;
-				break;
-			}
-			else
-			{
-				toRead -= p._size;
-			}
-		}
-		_body = Segment(_readedPos, _readedPos + size);
-		_readedPos = _body.end();
-
-		return http::error::make();
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	boost::system::error_code InputMessage::readBodyChunked()
-	{
-		boost::system::error_code ec;
-		ContentDecoderChunked cdc(_accumuler);
-
-		///////////////////////////////
-		{
-			InputMessageBuffer* buf = _readedPos.buffer();
-			assert(buf);
-
-			const char *pos = _readedPos.position();
-			assert(pos >= buf->begin() && pos <= buf->end());
-
-			if(pos == buf->end())
-			{
-				buf = buf->next();
-				if(buf)
-				{
-					pos = buf->begin();
-				}
-			}
-
-			while(buf)
-			{
-				size_t offset;
-				net::Packet p = buf->asPacket(offset);
-
-				offset += pos - buf->begin();
-				assert(offset < p._size);
-
-				if((ec = cdc.decoderPush(p, offset)))
-				{
-					return ec;
-				}
-
-				buf = buf->next();
-				if(buf)
-				{
-					pos = buf->begin();
-				}
-			}
-		}
-
-		///////////////////////////////
-		{
-			while(!cdc.isDone())
-			{
-				async::Future2<boost::system::error_code, net::Packet> res =
-					_channel.receive(_granula);
-				res.wait();
-				if(res.data1NoWait())
-				{
-					return res.data1NoWait();
-				}
-				if((ec = cdc.decoderPush(res.data2NoWait(), 0)))
-				{
-					return ec;
-				}
-			}
-		}
-
-		_accumuler->dropTail(_readedPos);
-		if((ec = cdc.decoderFlush()))
-		{
-			return ec;
-		}
-
-		_readedPos.normalize();
-		_body = Segment(_readedPos, _readedPos + cdc.contentLength());
-		_readedPos += _body.end();
-
-		return http::error::make();
-	}
-
-	//////////////////////////////////////////////////////////////////////////
-	boost::system::error_code InputMessage::readBodyAll()
-	{
-		size_t readed = _accumuler->end() - _readedPos;
-
-		boost::system::error_code ec;
-		for(;;)
-		{
-			async::Future2<boost::system::error_code, net::Packet> res =
-				_channel.receive(_granula);
-			res.wait();
-			if(res.data1NoWait())
-			{
-				break;
-			}
-
-			net::Packet &p = res.data2NoWait();
-			if((ec = _contentDecoder->decoderPush(p, 0)))
-			{
-				return ec;
-			}
-
-			readed -= p._size;
-		}
-		_body = Segment(_readedPos.normalize(), _readedPos + readed);
-		_readedPos = _body.end();
-
-		return http::error::make();
-	}*/
 
 }}

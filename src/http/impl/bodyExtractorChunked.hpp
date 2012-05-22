@@ -15,14 +15,11 @@ namespace http { namespace impl{
 
 	private:
 		virtual bool isDone();
-		virtual boost::system::error_code push(const net::Packet &p, size_t offset);
+		virtual boost::system::error_code process(ContentDecoderAccumuler &data);
 
 	private:
-		boost::system::error_code pushCaption(const net::Packet &p, size_t offset);
-		boost::system::error_code pushBody(const net::Packet &p, size_t offset);
-		boost::system::error_code pushTrailerHeader(const net::Packet &p, size_t offset);
-
-		boost::system::error_code pushFromAccumuler();
+		boost::system::error_code processCaption(ContentDecoderAccumuler &data);
+		boost::system::error_code processTrailerHeader(ContentDecoderAccumuler &data);
 
 	private:
 
@@ -36,7 +33,6 @@ namespace http { namespace impl{
 		};
 		EState _es;
 
-		ContentDecoderAccumuler	_accumuler;
 		size_t					_bodySize;
 	};
 	typedef boost::shared_ptr<BodyExtractorChunked> BodyExtractorChunkedPtr;

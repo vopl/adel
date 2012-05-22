@@ -24,7 +24,7 @@ namespace http { namespace impl{
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorSized::push(const net::Packet &p, size_t offset)
+	boost::system::error_code BodyExtractorSized::process(ContentDecoderAccumuler &data)
 	{
 		assert(0);
 		return boost::system::error_code();

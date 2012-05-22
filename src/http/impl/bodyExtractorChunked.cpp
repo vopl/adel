@@ -9,6 +9,7 @@
 #include <boost/spirit/include/qi_uint.hpp>
 
 #include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
 
 namespace http { namespace impl{
 
@@ -26,18 +27,35 @@ namespace http { namespace impl{
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::push(const net::Packet &p, size_t offset)
+	bool BodyExtractorChunked::isDone()
+	{
+		return es_done == _es;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////////////////
+	boost::system::error_code BodyExtractorChunked::process(ContentDecoderAccumuler &data)
 	{
 		switch(_es)
 		{
 		case es_caption:
-			return pushCaption(p, offset);
+			return processCaption(data);
 		case es_body:
-			return pushBody(p, offset);
+		{
+			boost::system::error_code ec;
+			if((ec = processBody(data, _bodySize)))
+			{
+				return ec;
+			}
+			if(!_bodySize)
+			{
+				_es = es_caption;
+			}
+			return http::error::make();
+		}
 		case es_trailerHeader:
-			return pushTrailerHeader(p, offset);
+			return processTrailerHeader(data);
 		case es_done:
-			return _tailDecoder->push(p, offset);
+			return processTail(data);
 		case es_error:
 			return http::error::make(http::error::unexpected);
 		default:
@@ -48,41 +66,38 @@ namespace http { namespace impl{
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::pushCaption(const net::Packet &p, size_t offset)
+	boost::system::error_code BodyExtractorChunked::processCaption(ContentDecoderAccumuler &data)
 	{
 		assert(es_caption == _es);
 
 		boost::system::error_code ec;
 
-		if((ec = _accumuler.push(p, offset)))
-		{
-			return ec;
-		}
-
 		namespace qi = boost::spirit::qi;
 		using namespace qi;
 		namespace px = boost::phoenix;
 
-		http::InputMessage::Iterator begin = _accumuler.begin();
-		http::InputMessage::Iterator end = _accumuler.end();
+		http::InputMessage::Iterator begin = data.begin();
+		http::InputMessage::Iterator end = data.end();
 
 		bool error = false;
+
+		qi::uint_parser<size_t, 16> bodySizeParser;
 		bool res = qi::parse(begin, end,
 			-lit("\r\n") >> // <- это терминатор предыдущего тела, в первом чанке его может не быть
-			(uint_parser<size_t, 16>()[px::ref(_bodySize) = qi::_1] || (eps[px::ref(error) = true] >> !eps))>> //надо обязательно цифры в начале чанка
+			((bodySizeParser[px::ref(_bodySize) = qi::_1]) || (qi::eps[px::ref(error) = true] >> !qi::eps))>> //надо обязательно цифры в начале чанка
 			*(char_-'\r') >>
 			"\r\n");
 
 		if(!res)
 		{
-			if(error || _accumuler.size() > 1024)
+			if(error || data.size() > 1024)
 			{
 				_es = es_error;
 				return http::error::make(http::error::invalid_message);
 			}
 
 			//начало чанка не распознано но еще есть шанс, оставляю акумулятор
-			return http::error::make();
+			return http::error::make(http::error::need_more_data);
 		}
 
 		//начало чанка распознано
@@ -97,84 +112,40 @@ namespace http { namespace impl{
 			_es = es_body;
 		}
 
-		_accumuler.dropFront(begin);
-		return pushFromAccumuler();
+		data.dropFront(begin);
+		return http::error::make();
 	}
 
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::pushBody(const net::Packet &p, size_t offset)
-	{
-		assert(es_body == _es);
-		assert(offset < p._size);
-		boost::system::error_code ec;
-
-		size_t incomingSize = p._size - offset;
-
-		if(incomingSize <= _bodySize)
-		{
-			if((ec = _bodyDecoder->push(p, offset)))
-			{
-				return ec;
-			}
-
-			_bodySize -= incomingSize;
-			if(!_bodySize)
-			{
-				_es = es_caption;
-			}
-			return http::error::make();
-		}
-
-		//incomingSize > _bodySize
-
-		//сколько осталось тела - вылить в декодер тела, остальное парсить как новый чанк
-		net::Packet p2(p);
-		p2._size -= incomingSize - _bodySize;
-		assert(offset < p2._size);
-		if((ec = _bodyDecoder->push(p2, offset)))
-		{
-			return ec;
-		}
-
-		_es = es_caption;
-		size_t offset2 = offset + _bodySize;
-		return push(p, offset2);
-	}
 
 	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::pushTrailerHeader(const net::Packet &p, size_t offset)
+	boost::system::error_code BodyExtractorChunked::processTrailerHeader(ContentDecoderAccumuler &data)
 	{
 		assert(es_trailerHeader == _es);
 
 		boost::system::error_code ec;
 
-		if((ec = _accumuler.push(p, offset)))
-		{
-			return ec;
-		}
-
 		namespace qi = boost::spirit::qi;
 		using namespace qi;
 		namespace px = boost::phoenix;
 
-		http::InputMessage::Iterator begin = _accumuler.begin();
-		http::InputMessage::Iterator end = _accumuler.end();
+		http::InputMessage::Iterator begin = data.begin();
+		http::InputMessage::Iterator end = data.end();
 
 		bool headerPresent = false;
 		bool res = qi::parse(begin, end,
-			((+(char_-'\r'))[px::ref(headerPresent)] || eps) >>
+			((+(char_-'\r'))[px::ref(headerPresent)=true] || eps) >>
 			"\r\n");
 
 		if(!res)
 		{
-			if(_accumuler.size() > 1024)
+			if(data.size() > 1024)
 			{
 				_es = es_error;
 				return http::error::make(http::error::invalid_message);
 			}
 
 			//не распознано но еще есть шанс, оставляю акумулятор
-			return http::error::make();
+			return http::error::make(http::error::need_more_data);
 		}
 
 		//распознано
@@ -189,44 +160,7 @@ namespace http { namespace impl{
 			_es = es_done;
 		}
 
-		_accumuler.dropFront(begin);
-		return pushFromAccumuler();
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	bool BodyExtractorChunked::isDone()
-	{
-		return es_done == _es;
-	}
-
-	/////////////////////////////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorChunked::pushFromAccumuler()
-	{
-		boost::system::error_code ec;
-		if(_accumuler.size())
-		{
-			InputMessageBufferPtr buf = _accumuler.begin().buffer()->shared_from_this();
-			_accumuler = ContentDecoderAccumuler();
-
-			if(buf)
-			{
-				for(;;)
-				{
-					size_t offset2;
-					net::Packet p2 = buf->asPacket(offset2);
-					if((ec = push(p2, offset2)))
-					{
-						return ec;
-					}
-					if(!buf->next())
-					{
-						break;
-					}
-					buf = buf->next()->shared_from_this();
-				}
-			}
-		}
-
+		data.dropFront(begin);
 		return http::error::make();
 	}
 

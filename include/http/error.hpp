@@ -12,6 +12,7 @@ namespace http { namespace error
     	wrong_value,
     	unexpected,
     	invalid_message,
+    	need_more_data,
     };
     
     class basic_category : public boost::system::error_category
@@ -35,6 +36,8 @@ namespace http { namespace error
     		  return "unexpected";
     	  case invalid_message:
     		  return "invalid message";
+    	  case need_more_data:
+    		  return "need more data";
     	  }
     	  return "unknown";
       }
@@ -59,6 +62,11 @@ namespace http { namespace error
     {
       return boost::system::error_code(
           static_cast<int>(e), get_basic_category());
+    }
+
+    inline boost::system::error_code make_error_code(basic e)
+    {
+      return make(e);
     }
 
 }}

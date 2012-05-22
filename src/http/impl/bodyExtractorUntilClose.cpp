@@ -23,7 +23,7 @@ namespace http { namespace impl{
 	}
 	
 	//////////////////////////////////////////////////////////////////////////
-	boost::system::error_code BodyExtractorUntilClose::push(const net::Packet &p, size_t offset)
+	boost::system::error_code BodyExtractorUntilClose::process(ContentDecoderAccumuler &data)
 	{
 		assert(0);
 		return boost::system::error_code();
