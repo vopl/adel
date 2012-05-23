@@ -1,6 +1,6 @@
-set(PROJECT adel)
-set(PSRC ${SRCDIR}/adel)
-set(PINC ${INCDIR}/adel)
+set(PROJECT core)
+set(PSRC ${SRCDIR}/core)
+set(PINC ${INCDIR}/core)
 
 project(${PROJECT})
 

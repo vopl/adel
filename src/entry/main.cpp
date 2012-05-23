@@ -1,11 +1,11 @@
 #include "pch.hpp"
 #include <iostream>
 #include <boost/bind.hpp>
-#include "adel/manager.hpp"
+#include "core/manager.hpp"
 
 #include "async/log.hpp"
 #include "pgc/log.hpp"
-#include "adel/log.hpp"
+#include "core/log.hpp"
 #include "net/log.hpp"
 
 #include "http/log.hpp"
@@ -78,7 +78,7 @@ int main(int argc, const char **argv)
 		po::notify(varsGeneral);
 
 		//////////////////////////////////////
-		utils::OptionsPtr omanager = adel::Manager::prepareOptions("manager");
+		utils::OptionsPtr omanager = core::Manager::prepareOptions("manager");
 		desc.add(omanager->desc());
 		utils::OptionsPtr ohttpServer1 = http::Server::prepareOptions("httpServer1");
 		desc.add(ohttpServer1->desc());
@@ -97,8 +97,8 @@ int main(int argc, const char **argv)
 		po::options_description desc_log("log");
 		utils::OptionsPtr oasyncLog = async::prepareOptionsLog();
 		desc_log.add(oasyncLog->desc());
-		utils::OptionsPtr oadelLog = adel::prepareOptionsLog();
-		desc_log.add(oadelLog->desc());
+		utils::OptionsPtr ocoreLog = core::prepareOptionsLog();
+		desc_log.add(ocoreLog->desc());
 		utils::OptionsPtr opgcLog = pgc::prepareOptionsLog();
 		desc_log.add(opgcLog->desc());
 		utils::OptionsPtr onetLog = net::prepareOptionsLog();
@@ -149,7 +149,7 @@ int main(int argc, const char **argv)
 		ohttpServerLog->store(&parsedOptions1, &parsedOptions2);
 		ohttpClientLog->store(&parsedOptions1, &parsedOptions2);
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
-		oadelLog->store(&parsedOptions1, &parsedOptions2);
+		ocoreLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
 		onetLog->store(&parsedOptions1, &parsedOptions2);
 
@@ -161,7 +161,7 @@ int main(int argc, const char **argv)
 		if(varsGeneral.count("run"))
 		{
 			async::initLog(oasyncLog);
-			adel::initLog(oadelLog);
+			core::initLog(ocoreLog);
 			pgc::initLog(opgcLog);
 			net::initLog(onetLog);
 			http::initLog(ohttpLog);
@@ -169,7 +169,7 @@ int main(int argc, const char **argv)
 			http::client::initLog(ohttpClientLog);
 
 
-			adel::Manager manager(omanager);
+			core::Manager manager(omanager);
 			manager.asrv().setAsGlobal(true);
 			{
 				http::Server httpServer1(ohttpServer1);

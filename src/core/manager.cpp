@@ -1,13 +1,13 @@
 #include "pch.hpp"
-#include "adel/manager.hpp"
-#include "adel/log.hpp"
+#include "core/manager.hpp"
+#include "core/log.hpp"
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 #include <boost/asio/signal_set.hpp>
 
 #include <stdio.h>
 
-namespace adel
+namespace core
 {
 	///////////////////////////////////////////////////////////////////
 	utils::OptionsPtr Manager::prepareOptions(const char *prefix)

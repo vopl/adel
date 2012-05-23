@@ -1,18 +1,18 @@
-#ifndef _ADEL_LOG_HPP_
-#define _ADEL_LOG_HPP_
+#ifndef _SPIDER_LOG_HPP_
+#define _SPIDER_LOG_HPP_
 
 #include "utils/options.hpp"
 #include "utils/logInitializer.hpp"
 
 #include <log4cplus/logger.h>
 
-namespace adel
+namespace spider
 {
 	#include "utils/logTemplate.hpp"
 
 	inline utils::OptionsPtr prepareOptionsLog()
 	{
-		utils::OptionsPtr options(new utils::Options("adel.log"));
+		utils::OptionsPtr options(new utils::Options("spider.log"));
 		utils::LogInitializer::fillOptions(*options, utils::LogInitializer::_defaultConsole|utils::LogInitializer::_defaultFile);
 		return options;
 	}
