@@ -135,7 +135,7 @@ namespace http { namespace impl
 
 				//path
 				(
-					raw[+(char_ - char_("#"))][px::ref(path) = qi::_1]
+					-(raw[+(char_ - char_("#"))][px::ref(path) = qi::_1])
 				) >>
 
 				//anchor
@@ -163,6 +163,10 @@ namespace http { namespace impl
 				}
 			}
 
+			if(res->path.empty())
+			{
+				res->path = '/';
+			}
 			res->useSsl = schemaHttps || (!schemaHttp && res->service=="443");
 
 			return http::error::make();

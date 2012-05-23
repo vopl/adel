@@ -69,9 +69,6 @@ namespace http { namespace impl
 		boost::system::error_code readUntil(const char *tokenz, Segment &segment);
 
 		boost::system::error_code prepareBodyExtractor(BodyExtractorPtr &result);
-		/*boost::system::error_code readBodySized(size_t size);
-		boost::system::error_code readBodyChunked();
-		boost::system::error_code readBodyAll();*/
 
 	protected:
 		Iterator	_readedPos;

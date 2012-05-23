@@ -30,29 +30,13 @@ void testClient(http::Client c)
 	http::client::Response response;
 	boost::system::error_code ec;
 
-	ec = c.get(response, "http://127.0.0.1:8080/index.html?a=b#anch");
+	ec = c.get(response, "http://127.0.0.1:8080/index.html#anch");
 	if(ec)
 	{
 		std::cout<<"get: "<<ec<<std::endl;
 		return;
 	}
 
-	ec = response.readFirstLine();
-	if(ec)
-	{
-		std::cout<<"readFirstLine: "<<ec<<std::endl;
-		return;
-	}
-
-	std::cout<<"firstLine: ["<<std::string(response.firstLine().begin(), response.firstLine().end())<<"]"<<std::endl;
-
-	ec = response.readHeaders();
-	if(ec)
-	{
-		std::cout<<"readHeaders: "<<ec<<std::endl;
-		return;
-	}
-	std::cout<<"headers: ["<<std::string(response.headers().begin(), response.headers().end())<<"]"<<std::endl;
 
 	ec = response.readBody();
 	if(ec)
@@ -60,6 +44,9 @@ void testClient(http::Client c)
 		std::cout<<"readBody: "<<ec<<std::endl;
 		return;
 	}
+
+	std::cout<<"firstLine: ["<<std::string(response.firstLine().begin(), response.firstLine().end())<<"]"<<std::endl;
+	std::cout<<"headers: ["<<std::string(response.headers().begin(), response.headers().end())<<"]"<<std::endl;
 	std::cout<<"body: ["<<std::string(response.body().begin(), response.body().end())<<"]"<<std::endl;
 
 }
