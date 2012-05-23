@@ -24,7 +24,7 @@ create_pch(entry ${PSRC}/pch.hpp ${SRC_PCH})
 use_pch(entry ${PSRC}/pch.hpp ${SRC})
 
 target_link_libraries(entry 
-    core
+    async
     net
     http
     spider)

@@ -1,20 +1,18 @@
 #include "pch.hpp"
 #include <iostream>
 #include <boost/bind.hpp>
-#include "core/manager.hpp"
+
+#include "async/manager.hpp"
+#include "http/server.hpp"
+#include "http/server/handlerFs.hpp"
+#include "http/client.hpp"
 
 #include "async/log.hpp"
 #include "pgc/log.hpp"
-#include "core/log.hpp"
 #include "net/log.hpp"
-
 #include "http/log.hpp"
 #include "http/server/log.hpp"
-#include "http/server.hpp"
-#include "http/server/handlerFs.hpp"
 #include "http/client/log.hpp"
-#include "http/client.hpp"
-#include "http/headerName.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -78,7 +76,7 @@ int main(int argc, const char **argv)
 		po::notify(varsGeneral);
 
 		//////////////////////////////////////
-		utils::OptionsPtr omanager = core::Manager::prepareOptions("manager");
+		utils::OptionsPtr omanager = async::Manager::prepareOptions("async.manager");
 		desc.add(omanager->desc());
 		utils::OptionsPtr ohttpServer1 = http::Server::prepareOptions("httpServer1");
 		desc.add(ohttpServer1->desc());
@@ -97,8 +95,6 @@ int main(int argc, const char **argv)
 		po::options_description desc_log("log");
 		utils::OptionsPtr oasyncLog = async::prepareOptionsLog();
 		desc_log.add(oasyncLog->desc());
-		utils::OptionsPtr ocoreLog = core::prepareOptionsLog();
-		desc_log.add(ocoreLog->desc());
 		utils::OptionsPtr opgcLog = pgc::prepareOptionsLog();
 		desc_log.add(opgcLog->desc());
 		utils::OptionsPtr onetLog = net::prepareOptionsLog();
@@ -149,7 +145,6 @@ int main(int argc, const char **argv)
 		ohttpServerLog->store(&parsedOptions1, &parsedOptions2);
 		ohttpClientLog->store(&parsedOptions1, &parsedOptions2);
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
-		ocoreLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
 		onetLog->store(&parsedOptions1, &parsedOptions2);
 
@@ -161,7 +156,6 @@ int main(int argc, const char **argv)
 		if(varsGeneral.count("run"))
 		{
 			async::initLog(oasyncLog);
-			core::initLog(ocoreLog);
 			pgc::initLog(opgcLog);
 			net::initLog(onetLog);
 			http::initLog(ohttpLog);
@@ -169,7 +163,7 @@ int main(int argc, const char **argv)
 			http::client::initLog(ohttpClientLog);
 
 
-			core::Manager manager(omanager);
+			async::Manager manager(omanager);
 			manager.asrv().setAsGlobal(true);
 			{
 				http::Server httpServer1(ohttpServer1);

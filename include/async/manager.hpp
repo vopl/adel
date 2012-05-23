@@ -1,11 +1,11 @@
-#ifndef _CORE_MANAGER_HPP_
-#define _CORE_MANAGER_HPP_
+#ifndef _ASYNC_MANAGER_HPP_
+#define _ASYNC_MANAGER_HPP_
 
 #include "utils/options.hpp"
 #include "async/service.hpp"
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 
-namespace core
+namespace async
 {
 	class Manager
 	{

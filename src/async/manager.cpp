@@ -1,13 +1,13 @@
 #include "pch.hpp"
-#include "core/manager.hpp"
-#include "core/log.hpp"
+#include "async/manager.hpp"
+#include "async/log.hpp"
 #include <boost/thread.hpp>
 #include <boost/date_time.hpp>
 #include <boost/asio/signal_set.hpp>
 
 #include <stdio.h>
 
-namespace core
+namespace async
 {
 	///////////////////////////////////////////////////////////////////
 	utils::OptionsPtr Manager::prepareOptions(const char *prefix)

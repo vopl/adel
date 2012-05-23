@@ -19,6 +19,8 @@ set(INC
 	${PINC}/asioBridge.hpp
 	
 	${PINC}/freeFunctions.hpp
+
+	${PINC}/manager.hpp
 )
 source_group(include FILES ${INC})
 
@@ -30,6 +32,8 @@ set(SRC
 	${PSRC}/mutex.cpp
 	
 	${PSRC}/freeFunctions.cpp
+
+	${PSRC}/manager.cpp
 )
 source_group(src FILES ${SRC})
 

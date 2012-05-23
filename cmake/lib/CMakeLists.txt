@@ -1,9 +1,6 @@
 add_subdirectory(utils)
 add_subdirectory(async)
-add_subdirectory(core)
 add_subdirectory(pgc)
 add_subdirectory(net)
 add_subdirectory(http)
-
-
 add_subdirectory(spider)

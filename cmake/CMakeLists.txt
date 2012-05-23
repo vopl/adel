@@ -15,7 +15,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
 cmake_minimum_required(VERSION 2.6)
 
-#project(adel)
+project(adel)
 
 #message(${CMAKE_BUILD_TYPE})
 

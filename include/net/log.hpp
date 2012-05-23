@@ -5,6 +5,7 @@
 #include "utils/logInitializer.hpp"
 
 #include <log4cplus/logger.h>
+#include <boost/system/error_code.hpp>
 
 namespace net
 {
