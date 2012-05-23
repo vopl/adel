@@ -31,6 +31,11 @@ namespace http { namespace impl
 			const char *url,
 			const Version &version);
 
+		boost::system::error_code get(
+			client::impl::ResponsePtr &response,
+			const char *url,
+			const Version &version);
+
 	public:
 		size_t requestWriteGranula() const;
 		size_t responseReadGranula() const;

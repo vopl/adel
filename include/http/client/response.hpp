@@ -24,12 +24,9 @@ namespace http { namespace client
 		typedef impl::ResponsePtr ImplPtr;
 		ImplPtr _impl;
 
-	private:
-		friend class http::client::Request;
-		Response(const ImplPtr &impl);
-		Response();//without impl
-
 	public:
+		Response();
+		Response(const ImplPtr &impl);
 		~Response();
 
 	};

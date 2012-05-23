@@ -54,4 +54,19 @@ namespace http
 		return ec;
 	}
 
+	///////////////////////////////////////////////////////////////////////
+	boost::system::error_code Client::get(
+		client::Response &response,
+		const char *url,
+		const Version &version)
+	{
+		http::client::impl::ResponsePtr responseImpl;
+		boost::system::error_code ec = _impl->get(responseImpl, url, version);
+		if(responseImpl)
+		{
+			response = client::Response(responseImpl);
+		}
+		return ec;
+	}
+
 }

@@ -168,6 +168,7 @@ namespace http { namespace impl
 			return http::error::make();
 		}
 	}
+
 	//////////////////////////////////////////////////////////////////////
 	boost::system::error_code Client::connectGet(
 		client::impl::RequestPtr &request,
@@ -191,6 +192,30 @@ namespace http { namespace impl
 		{
 			return ec;
 		}
+
+		return http::error::make();
+	}
+
+	//////////////////////////////////////////////////////////////////////
+	boost::system::error_code Client::get(
+		client::impl::ResponsePtr &response,
+		const char *url,
+		const Version &version)
+	{
+		client::impl::RequestPtr request;
+		boost::system::error_code ec;;
+
+		if((ec = connectGet(request, url, version)))
+		{
+			return ec;
+		}
+
+		if((ec = request->bodyFlush()))
+		{
+			return ec;
+		}
+
+		response = request->response();
 
 		return http::error::make();
 	}

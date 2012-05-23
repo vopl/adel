@@ -6,6 +6,14 @@ namespace http { namespace client
 {
 
 	/////////////////////////////////////////////////////////////////////
+	Response::Response()
+		: InputMessage()
+		, _impl()
+	{
+
+	}
+
+	/////////////////////////////////////////////////////////////////////
 	Response::Response(const ImplPtr &impl)
 		: InputMessage(impl)
 		, _impl(impl)

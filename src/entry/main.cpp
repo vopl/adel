@@ -27,24 +27,15 @@ namespace po = boost::program_options;
 
 void testClient(http::Client c)
 {
-	http::client::Request request;
+	http::client::Response response;
 	boost::system::error_code ec;
 
-	ec = c.connectGet(request, "http://127.0.0.1:8080/index.html?a=b#anch");
+	ec = c.get(response, "http://127.0.0.1:8080/index.html?a=b#anch");
 	if(ec)
 	{
 		std::cout<<"get: "<<ec<<std::endl;
 		return;
 	}
-
-	ec = request.bodyFlush();
-	if(ec)
-	{
-		std::cout<<"bodyFlush: "<<ec<<std::endl;
-		return;
-	}
-
-	http::client::Response response = request.response();
 
 	ec = response.readFirstLine();
 	if(ec)

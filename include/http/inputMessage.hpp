@@ -58,6 +58,7 @@ namespace http
 		typedef boost::iterator_range<Iterator> Segment;
 
 	public:
+		InputMessage();
 		InputMessage(const ImplPtr &impl);
 		~InputMessage();
 

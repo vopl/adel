@@ -37,6 +37,12 @@ namespace http
 			client::Request &request,
 			const char *url,
 			const Version &version = Version(1,1));
+
+		boost::system::error_code get(
+			client::Response &response,
+			const char *url,
+			const Version &version = Version(1,1));
+
 	};
 }
 
