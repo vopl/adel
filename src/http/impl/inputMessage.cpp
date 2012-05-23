@@ -168,7 +168,14 @@ namespace http { namespace impl
 			//нормализовать позицию чтения, ато после нее дыра теперь
 			_readedPos.normalize();
 
-			_body = Segment(_accumulerBody->begin(), _accumulerBody->end());
+			if(_accumulerBody->size())
+			{
+				_body = Segment(_accumulerBody->begin(), _accumulerBody->end());
+			}
+			else
+			{
+				_body = Segment();
+			}
 
 			_em = em_done;
 		}
