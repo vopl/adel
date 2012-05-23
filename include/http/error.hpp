@@ -13,6 +13,7 @@ namespace http { namespace error
     	unexpected,
     	invalid_message,
     	need_more_data,
+    	bad_url,
     };
     
     class basic_category : public boost::system::error_category
@@ -38,6 +39,8 @@ namespace http { namespace error
     		  return "invalid message";
     	  case need_more_data:
     		  return "need more data";
+    	  case bad_url:
+    		  return "bad url";
     	  }
     	  return "unknown";
       }

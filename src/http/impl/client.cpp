@@ -2,6 +2,13 @@
 #include "http/impl/client.hpp"
 #include "utils/ntoa.hpp"
 
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/qi_string.hpp>
+#include <boost/spirit/include/qi_char.hpp>
+
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+
 namespace http { namespace impl
 {
 	namespace po = boost::program_options;
@@ -72,7 +79,7 @@ namespace http { namespace impl
 
 		unsigned short port = cres.data2NoWait().endpointRemote().port();
 
-		if(port!=80 && !useSsl || port!=443 && useSsl)
+		if((port!=80 && !useSsl) || (port!=443 && useSsl))
 		{
 			char tmp[32];
 			tmp[0] = ':';
@@ -84,14 +91,108 @@ namespace http { namespace impl
 		return cres.data1NoWait();
 	}
 
+	namespace
+	{
+		struct UrlParts
+		{
+			std::string host;
+			std::string service;
+
+			bool		useSsl;
+
+			std::string path;
+		};
+
+		boost::system::error_code parseUrl(const char *url, UrlParts *res)
+		{
+			// [shceme://]host[:port][/path]#anchor
+
+			namespace qi = boost::spirit::qi;
+			using namespace qi;
+			namespace px = boost::phoenix;
+
+			const char *begin = url;
+			const char *end = url + strlen(url);
+
+			bool schemaHttp = false;
+			bool schemaHttps = false;
+
+			boost::iterator_range<const char *> host, service, path;
+
+			bool b = qi::parse(begin, end,
+				//scheme
+				-(lit("http") >> (lit('s')[px::ref(schemaHttps)=true] || eps[px::ref(schemaHttp)=true]) >> "://") >>
+
+				//host
+				(
+					raw[+(char_ - char_(":/?#"))][px::ref(host) = qi::_1]
+				) >>
+
+				//port
+				(
+					-(lit(':') >> raw[+char_("0-9")][px::ref(service) = qi::_1])
+				) >>
+
+				//path
+				(
+					raw[+(char_ - char_("#"))][px::ref(path) = qi::_1]
+				) >>
+
+				//anchor
+				-(lit('#') >> +char_)
+			);
+
+			if(!b)
+			{
+				return http::error::make(http::error::bad_url);
+			}
+
+			res->host.assign(host.begin(), host.end());
+			res->service.assign(service.begin(), service.end());
+			res->path.assign(path.begin(), path.end());
+
+			if(res->service.empty())
+			{
+				if(schemaHttps)
+				{
+					res->service = "443";
+				}
+				else
+				{
+					res->service = "80";
+				}
+			}
+
+			res->useSsl = schemaHttps || (!schemaHttp && res->service=="443");
+
+			return http::error::make();
+		}
+	}
 	//////////////////////////////////////////////////////////////////////
 	boost::system::error_code Client::connectGet(
 		client::impl::RequestPtr &request,
 		const char *url,
 		const Version &version)
 	{
-		assert(0);
-		return boost::system::error_code();
+		boost::system::error_code ec;
+
+		UrlParts urlParts;
+		if((ec = parseUrl(url, &urlParts)))
+		{
+			return ec;
+		}
+
+		if((ec = connect(request, urlParts.host.c_str(), urlParts.service.c_str(), urlParts.useSsl)))
+		{
+			return ec;
+		}
+
+		if((ec = request->firstLine(em_GET, urlParts.path.c_str(), urlParts.path.size(), version)))
+		{
+			return ec;
+		}
+
+		return http::error::make();
 	}
 
 	//////////////////////////////////////////////////////////////////////

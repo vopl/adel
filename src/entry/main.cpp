@@ -30,7 +30,7 @@ void testClient(http::Client c)
 	http::client::Request request;
 	boost::system::error_code ec;
 
-	ec = c.connectGet(request, "http://127.0.0.1:8080/index.html?a=b");
+	ec = c.connectGet(request, "http://127.0.0.1:8080/index.html?a=b#anch");
 	if(ec)
 	{
 		std::cout<<"get: "<<ec<<std::endl;
