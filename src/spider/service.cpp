@@ -109,7 +109,7 @@ namespace spider
 	{
 		for(;;)
 		{
-			//контроль окончания
+			//РєРѕРЅС‚СЂРѕР»СЊ РѕРєРѕРЅС‡Р°РЅРёСЏ
 			{
 				async::Mutex::ScopedLock sl(_mtx);
 				if(_stop)
@@ -120,7 +120,7 @@ namespace spider
 
 			}
 
-			//контроль переполнения пула воркеров
+			//РєРѕРЅС‚СЂРѕР»СЊ РїРµСЂРµРїРѕР»РЅРµРЅРёСЏ РїСѓР»Р° РІРѕСЂРєРµСЂРѕРІ
 			bool needWaitWorker = false;
 			{
 				async::Mutex::ScopedLock sl(_mtxWorkers);
@@ -135,12 +135,12 @@ namespace spider
 				continue;
 			}
 
-			//выбрать хост-урл
+			//РІС‹Р±СЂР°С‚СЊ С…РѕСЃС‚-СѓСЂР»
 			pgc::Connection c = _db.allocConnection();
 
 			c.query("BEGIN");
 
-			//выбрать самый старый хост у которого есть неотработанные страницы
+			//РІС‹Р±СЂР°С‚СЊ СЃР°РјС‹Р№ СЃС‚Р°СЂС‹Р№ С…РѕСЃС‚ Сѓ РєРѕС‚РѕСЂРѕРіРѕ РµСЃС‚СЊ РЅРµРѕС‚СЂР°Р±РѕС‚Р°РЅРЅС‹Рµ СЃС‚СЂР°РЅРёС†С‹
 			pgc::Result res = c.query("SELECT "
 				"h.id "
 				"FROM host AS h LEFT JOIN page AS p ON (h.id=p.host_id) "
@@ -177,7 +177,7 @@ namespace spider
 
 			if(pageUrl.isNull())
 			{
-				//нет хостов, подождать немного
+				//РЅРµС‚ С…РѕСЃС‚РѕРІ, РїРѕРґРѕР¶РґР°С‚СЊ РЅРµРјРЅРѕРіРѕ
 				c.query("ROLLBACK");
 				async::timeout(100).wait();
 				continue;
