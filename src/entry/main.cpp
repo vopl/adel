@@ -6,6 +6,7 @@
 #include "http/server.hpp"
 #include "http/server/handlerFs.hpp"
 #include "http/client.hpp"
+#include "spider/service.hpp"
 
 #include "async/log.hpp"
 #include "pgc/log.hpp"
@@ -13,42 +14,13 @@
 #include "http/log.hpp"
 #include "http/server/log.hpp"
 #include "http/client/log.hpp"
+#include "spider/log.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 
 using namespace std;
 namespace po = boost::program_options;
-
-
-
-
-void testClient(http::Client c)
-{
-	http::client::Response response;
-	boost::system::error_code ec;
-
-	ec = c.get(response, "http://127.0.0.1:8080/index.html#anch");
-	if(ec)
-	{
-		std::cout<<"get: "<<ec<<std::endl;
-		return;
-	}
-
-
-	ec = response.readBody();
-	if(ec)
-	{
-		std::cout<<"readBody: "<<ec<<std::endl;
-		return;
-	}
-
-	std::cout<<"firstLine: ["<<std::string(response.firstLine().begin(), response.firstLine().end())<<"]"<<std::endl;
-	std::cout<<"headers: ["<<std::string(response.headers().begin(), response.headers().end())<<"]"<<std::endl;
-	std::cout<<"body: ["<<std::string(response.body().begin(), response.body().end())<<"]"<<std::endl;
-
-}
-
 
 //////////////////////////////////////////////////////////////////////
 int main(int argc, const char **argv)
@@ -84,6 +56,8 @@ int main(int argc, const char **argv)
 		desc.add(ohttpServer1HandlerFs->desc());
 		utils::OptionsPtr ohttpClient1 = http::Client::prepareOptions("httpClient1");
 		desc.add(ohttpClient1->desc());
+		utils::OptionsPtr ospider = spider::Service::prepareOptions("spider");
+		desc.add(ospider->desc());
 
 		if(varsGeneral.count("help"))
 		{
@@ -105,6 +79,8 @@ int main(int argc, const char **argv)
 		desc_log.add(ohttpClientLog->desc());
 		utils::OptionsPtr ohttpLog = http::prepareOptionsLog();
 		desc_log.add(ohttpLog->desc());
+		utils::OptionsPtr ospiderLog = spider::prepareOptionsLog();
+		desc_log.add(ospiderLog->desc());
 
 		if(varsGeneral.count("help-log"))
 		{
@@ -147,11 +123,13 @@ int main(int argc, const char **argv)
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
 		onetLog->store(&parsedOptions1, &parsedOptions2);
+		ospiderLog->store(&parsedOptions1, &parsedOptions2);
 
 		omanager->store(&parsedOptions1, &parsedOptions2);
 		ohttpServer1->store(&parsedOptions1, &parsedOptions2);
 		ohttpServer1HandlerFs->store(&parsedOptions1, &parsedOptions2);
 		ohttpClient1->store(&parsedOptions1, &parsedOptions2);
+		ospider->store(&parsedOptions1, &parsedOptions2);
 
 		if(varsGeneral.count("run"))
 		{
@@ -161,6 +139,7 @@ int main(int argc, const char **argv)
 			http::initLog(ohttpLog);
 			http::server::initLog(ohttpServerLog);
 			http::client::initLog(ohttpClientLog);
+			spider::initLog(ospiderLog);
 
 
 			async::Manager manager(omanager);
@@ -173,11 +152,9 @@ int main(int argc, const char **argv)
 
 				http::Client httpClient1(ohttpClient1);
 
-				manager.asrv().onStart(boost::bind(&testClient, httpClient1));
-
-				//adel::HttpClient httpClient(manager, "global");
-				//adel::Postgres postgres(manager, "global");
-				//adel::Memcache memcache(manager, "global");
+				spider::Service s(ospider, httpClient1);
+				manager.asrv().onStart(boost::bind(&spider::Service::start, boost::ref(s)));
+				manager.asrv().onStop(boost::bind(&spider::Service::stop, boost::ref(s)));
 
 				//run workspace
 				manager.run();

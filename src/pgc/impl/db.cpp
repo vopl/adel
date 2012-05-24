@@ -345,10 +345,14 @@ namespace pgc { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void Db::reset()
 	{
-		ILOG("deinitialize");
 		std::deque<async::Future<pgc::Connection> > waiters;
 		{
 			mutex::scoped_lock sl(_mtx);
+
+			if(!_maxConnections)
+			{
+				return;
+			}
 
 			if(_timeout)
 			{
@@ -390,6 +394,8 @@ namespace pgc { namespace impl
 
 		function<void (size_t)>().swap(_onConnectionMade);
 		function<void (size_t)>().swap(_onConnectionLost);
+
+		ILOG("deinitialize");
 	}
 
 }}

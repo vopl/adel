@@ -27,4 +27,5 @@ target_link_libraries(entry
     async
     net
     http
+    pgc
     spider)

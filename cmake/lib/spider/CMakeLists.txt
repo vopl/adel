@@ -6,12 +6,12 @@ project(${PROJECT})
 
 set(INC
 	${PINC}/log.hpp
-	${PINC}/manager.hpp
+	${PINC}/service.hpp
 )
 source_group(include FILES ${INC})
 
 set(SRC
-	${PSRC}/manager.cpp
+	${PSRC}/service.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -26,7 +26,7 @@ add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH})
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC})
 
-target_link_libraries(${PROJECT} async http)
+target_link_libraries(${PROJECT} async http pgc utils)
 target_link_libraries(${PROJECT} ${l4cpl})
 
 
