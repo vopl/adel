@@ -1,6 +1,8 @@
 #include "pch.hpp"
 #include "spider/service.hpp"
 #include "spider/log.hpp"
+#include "spider/url.hpp"
+
 #include <boost/bind.hpp>
 
 namespace spider
@@ -212,8 +214,18 @@ namespace spider
 		//TLOG(std::string(resp.firstLine().begin(), resp.firstLine().end()));
 
 		//parse
+		std::vector<std::string> urls;
+		parse(resp.body(), url.as<std::string>(), urls);
 
 		//store urls
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::vector<std::string> &urls)
+	{
+		Url base(baseUrlString);
+
+		//искать <a href="...
 	}
 
 

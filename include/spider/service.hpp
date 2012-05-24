@@ -29,6 +29,7 @@ namespace spider
 		void processLoop();
 		void processOne(utils::Variant id, utils::Variant url);
 
+		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::vector<std::string> &urls);
 
 	private:
 		http::Client _htc;

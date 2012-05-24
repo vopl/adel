@@ -7,11 +7,13 @@ project(${PROJECT})
 set(INC
 	${PINC}/log.hpp
 	${PINC}/service.hpp
+	${PINC}/url.hpp
 )
 source_group(include FILES ${INC})
 
 set(SRC
 	${PSRC}/service.cpp
+	${PSRC}/url.cpp
 )
 source_group(src FILES ${SRC})
 
