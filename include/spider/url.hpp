@@ -92,7 +92,7 @@ namespace spider
 		Iterator iter = begin;
 		bool b = qi::parse(iter, end,
 			//[ [[shceme:]//] [host[:port]] ]
-			-(
+			(
 				// [[shceme:]//]
 				-(
 					//scheme
@@ -115,10 +115,14 @@ namespace spider
 			) >>
 
 			// [?qs]
-			-(lit('?') >> raw[*(char_ - char_("#"))][px::ref(qs)=qi::_1])
+			(
+				-(lit('?') >> raw[*(char_ - char_("#"))][px::ref(qs)=qi::_1])
+			)>>
 
 			// [#anchor]
-			-(lit('#') >> +char_)
+			(
+				-(lit('#') >> +char_)
+			)
 		);
 
 		if(!b)
