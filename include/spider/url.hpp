@@ -37,7 +37,7 @@ namespace spider
 		~Url();
 
 	public:
-		std::string generate();
+		std::string string();
 
 		template <class Iterator>
 		bool parse(const Iterator &begin, const Iterator &end);
@@ -58,6 +58,9 @@ namespace spider
 		std::string	_path;
 		std::string	_file;
 		std::string	_qs;
+
+	private:
+		std::string escapePath(const std::string &s);
 	};
 	typedef boost::shared_ptr<Url> UrlPtr;
 
@@ -77,7 +80,7 @@ namespace spider
 		_file.clear();
 		_qs.clear();
 
-		// [ [[shceme:]//] [host[:port]] ]
+		// [ [shceme:] [//host[:port]] ]
 
 		// [/path/[file] ]
 		// [?qs]
@@ -87,23 +90,29 @@ namespace spider
 		using namespace qi;
 		namespace px = boost::phoenix;
 
-		boost::iterator_range<Iterator> scheme, host, port, path, file, qs;
+		boost::iterator_range<Iterator> 
+			scheme(begin, begin), 
+			host(begin, begin), 
+			port(begin, begin), 
+			path(begin, begin), 
+			file(begin, begin), 
+			qs(begin, begin);
 
 		Iterator iter = begin;
 		bool b = qi::parse(iter, end,
-			//[ [[shceme:]//] [host[:port]] ]
-			(
-				// [[shceme:]//]
+			//[ [shceme:] [//host[:port]] ]
+			-(
+				// [shceme:]
 				-(
 					//scheme
-					-(raw[lit("http") >> -lit('s')][px::ref(scheme)=qi::_1] >> lit(':')) >>
+					raw[+char_("a-z")][px::ref(scheme)=qi::_1] >> lit(':')
 
-					// '//'
-					lit("//")
 				) >>
 
-				// [host[:port]] ]
+
+				// [//host[:port]] ]
 				-(
+					lit("//") >>
 					raw[+(char_ - char_(":/?#"))][px::ref(host)=qi::_1] >>
 					-(lit(':') >> raw[(+char_("0-9"))][px::ref(port)=qi::_1])
 				)

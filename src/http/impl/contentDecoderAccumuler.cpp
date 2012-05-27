@@ -16,6 +16,23 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////
 	ContentDecoderAccumuler::~ContentDecoderAccumuler()
 	{
+		if(_last)
+		{
+			InputMessageBufferPtr nullb;
+			for(;;)
+			{
+				_last = _last->prev();
+				if(_last)
+				{
+					_last->setNext(nullb);
+				}
+				else
+				{
+					break;
+				}
+			}
+		}
+		//_first.reset();
 	}
 
 	////////////////////////////////////////////////////////////////

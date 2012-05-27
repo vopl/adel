@@ -34,7 +34,7 @@ namespace net { namespace impl
 
 			if(useSsl)
 			{
-				ILOG("create ssl context");
+				//ILOG("create ssl context");
 				_sslContext.reset(new TSslContext(async::io(), ssl::context::sslv23));
 
 				error_code ec;

@@ -23,6 +23,7 @@ namespace http { namespace impl
 
 		///////////////////////////////////////////////
 		bool isConnected() const;
+		net::Channel channel();
 
 		///////////////////////////////////////////////
 		Iterator	firstLineIterator();
@@ -149,7 +150,7 @@ namespace http { namespace impl
 		}
 		if(!value.generate(iter))
 		{
-			return http::error::make(http::error::wrong_value);
+			return http::error::make(http::error::bad_value);
 		}
 		if((ec = write("\r\n", 2)))
 		{

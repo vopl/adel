@@ -3,6 +3,7 @@
 
 #include "http/headerName.hpp"
 #include "http/headerValue.hpp"
+#include "net/channel.hpp"
 
 namespace http
 {
@@ -57,6 +58,7 @@ namespace http
 		~OutputMessage();
 
 		bool isConnected() const;
+		net::Channel channel();
 
 		///////////////////////////////////////////////
 		Iterator	firstLineIterator();

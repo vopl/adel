@@ -108,6 +108,12 @@ namespace http
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	net::Channel OutputMessage::channel()
+	{
+		return _impl->channel();
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	OutputMessage::Iterator OutputMessage::firstLineIterator()
 	{
 		return _impl->firstLineIterator();

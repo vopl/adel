@@ -46,7 +46,7 @@ namespace async { namespace impl
 		{
 			boost::mutex::scoped_lock scopeLock(_mtx);
 
-			assert(_owners.size() < 200);
+			//assert(_owners.size() < 2000);
 
 			FiberPtr current = Fiber::current()->shared_from_this();
 			_owners.push_back(current);

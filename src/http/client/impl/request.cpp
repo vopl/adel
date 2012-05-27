@@ -41,7 +41,7 @@ namespace http { namespace client { namespace impl
 		{
 		default:
 		case em_UNKNOWN:
-			return http::error::make(http::error::wrong_value);
+			return http::error::make(http::error::bad_value);
 		case em_OPTIONS:
 			ec = write("OPTIONS ", 8);
 			break;

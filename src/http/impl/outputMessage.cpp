@@ -40,6 +40,12 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////
+	net::Channel OutputMessage::channel()
+	{
+		return _channel;
+	}
+
+	//////////////////////////////////////////////////////////////
 	OutputMessage::Iterator	OutputMessage::firstLineIterator()
 	{
 		boost::system::error_code ec;

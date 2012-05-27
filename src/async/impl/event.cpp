@@ -65,14 +65,14 @@ namespace async { namespace impl
 
 			if(!_waiters.empty())
 			{
-				_isSet = true;
+				FiberPtr f;
+				f.swap(_waiters.front());
+				_waiters.erase(_waiters.begin());
+				Worker::current()->fiberReady(f);
 				return;
 			}
 
-			FiberPtr f;
-			f.swap(_waiters.front());
-			_waiters.erase(_waiters.begin());
-			Worker::current()->fiberReady(f);
+			_isSet = true;
 		}
 	}
 

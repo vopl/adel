@@ -47,7 +47,7 @@ namespace http { namespace impl
 	////////////////////////////////////////////////////////////////
 	InputMessageBuffer *InputMessageBuffer::prev()
 	{
-		assert(_prev);
+		//assert(_prev);
 		return _prev;
 	}
 

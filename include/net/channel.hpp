@@ -1,6 +1,7 @@
 #ifndef _NET_CHANNEL_HPP_
 #define _NET_CHANNEL_HPP_
 
+#include <boost/asio.hpp>
 #include <boost/cstdint.hpp>
 #include <boost/function.hpp>
 #include <boost/system/error_code.hpp>

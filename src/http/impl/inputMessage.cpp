@@ -42,6 +42,12 @@ namespace http { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	net::Channel InputMessage::channel()
+	{
+		return _channel;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	boost::system::error_code InputMessage::readFirstLine()
 	{
 		if(em_firstLine == _em)
@@ -105,7 +111,7 @@ namespace http { namespace impl
 				Iterator piter = hdr.second._header_.begin();
 				if(!parse(piter, hdr.second._header_.end(), parser))
 				{
-					return http::error::make(http::error::invalid_message);
+					return http::error::make(http::error::bad_message);
 				}
 				hdr.second._value_ = Segment(piter, hdr.second._header_.end());
 				hdr.first = http::hn::key(hdr.second._name_);
@@ -407,7 +413,7 @@ namespace http { namespace impl
 			}
 			else
 			{
-				return http::error::make(http::error::invalid_message);
+				return http::error::make(http::error::bad_message);
 			}
 		}
 		else
@@ -443,7 +449,7 @@ namespace http { namespace impl
 			}
 		}
 
-		return http::error::make(http::error::invalid_message);
+		return http::error::make(http::error::bad_message);
 	}
 
 }}

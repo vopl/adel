@@ -84,7 +84,11 @@ namespace http { namespace impl{
 		qi::uint_parser<size_t, 16> bodySizeParser;
 		bool res = qi::parse(begin, end,
 			-lit("\r\n") >> // <- это терминатор предыдущего тела, в первом чанке его может не быть
-			((bodySizeParser[px::ref(_bodySize) = qi::_1]) || (qi::eps[px::ref(error) = true] >> !qi::eps))>> //надо обязательно цифры в начале чанка
+			(
+				bodySizeParser[px::ref(_bodySize) = qi::_1] |
+				eoi |
+				(qi::eps[px::ref(error) = true] >> !qi::eps) //надо обязательно цифры в начале чанка
+			)>> 
 			*(char_-'\r') >>
 			"\r\n");
 
@@ -93,7 +97,7 @@ namespace http { namespace impl{
 			if(error || data.size() > 1024)
 			{
 				_es = es_error;
-				return http::error::make(http::error::invalid_message);
+				return http::error::make(http::error::bad_message);
 			}
 
 			//начало чанка не распознано но еще есть шанс, оставляю акумулятор
@@ -133,7 +137,7 @@ namespace http { namespace impl{
 
 		bool headerPresent = false;
 		bool res = qi::parse(begin, end,
-			((+(char_-'\r'))[px::ref(headerPresent)=true] || eps) >>
+			((+(char_-'\r'))[px::ref(headerPresent)=true] | eps) >>
 			"\r\n");
 
 		if(!res)
@@ -141,7 +145,7 @@ namespace http { namespace impl{
 			if(data.size() > 1024)
 			{
 				_es = es_error;
-				return http::error::make(http::error::invalid_message);
+				return http::error::make(http::error::bad_message);
 			}
 
 			//не распознано но еще есть шанс, оставляю акумулятор

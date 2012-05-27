@@ -97,7 +97,7 @@ namespace http { namespace server { namespace impl
 
 		if(!parseResult || iter!=end)
 		{
-			return error::make(error::invalid_message);
+			return error::make(error::bad_message);
 		}
 
 		return error::make();

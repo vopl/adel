@@ -31,12 +31,12 @@ namespace http { namespace impl
 
 		options->addOption(
 			"request.readGranula",
-			po::value<size_t>()->default_value(1024),
+			po::value<size_t>()->default_value(65536),
 			"buffer size during read request data");
 
 		options->addOption(
 			"response.writeGranula",
-			po::value<size_t>()->default_value(32768),
+			po::value<size_t>()->default_value(65536),
 			"buffer size during write response data");
 
 		options->addOption(

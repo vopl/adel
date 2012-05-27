@@ -30,7 +30,7 @@ namespace net { namespace impl
 
 			if(!_sslContext)
 			{
-				ILOG("create ssl context");
+				//ILOG("create ssl context");
 				sslContext.reset(new TSslContext(async::io(), ssl::context::sslv23));
 
 				error_code ec;
@@ -94,7 +94,7 @@ namespace net { namespace impl
 		if(ec)
 		{
 			//неудача, вернуть ее
-			WLOG("async_resolve failed: "<<ec);
+			//WLOG("async_resolve failed: "<<ec);
 			res(ec, net::Channel());
 			return;
 		}
@@ -136,7 +136,7 @@ namespace net { namespace impl
 				{
 					break;
 				}
-				WLOG("async_connect failed: "<<ec);
+				//WLOG("async_connect failed: "<<ec);
 			}
 
 			if(ec || riter==rend)
@@ -154,7 +154,7 @@ namespace net { namespace impl
 
 				if(ec)
 				{
-					WLOG("handshake failed: "<<ec);
+					//WLOG("handshake failed: "<<ec);
 					continue;
 				}
 				//успех

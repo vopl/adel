@@ -93,7 +93,7 @@ namespace http { namespace impl
 				_z_stream.next_in = (Bytef*)(packet._data.get() + offset);
 				_z_stream.avail_in = (uInt)(packet._size - offset);
 
-				while(_z_stream.avail_in)
+				while(!_streamEnd && _z_stream.avail_in)
 				{
 					if(!_output._data)
 					{
@@ -112,10 +112,12 @@ namespace http { namespace impl
 					switch(i)
 					{
 					case Z_OK:
+						_output._size = _outputOffset;
+						break;
 					case Z_STREAM_END:
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
-						assert(_output._size);
+						if(_output._size)
 						{
 							boost::system::error_code ec;
 							if((ec = _upstream->push(_output)))
@@ -128,8 +130,8 @@ namespace http { namespace impl
 						_output._data.reset();
 						break;
 					default:
-						ELOG("inflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
-						return http::error::make(http::error::unexpected);
+						//ELOG("inflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
+						return http::error::make(http::error::bad_zlib_stream);
 					}
 				}
 				_z_stream.next_in = NULL;
@@ -161,7 +163,6 @@ namespace http { namespace impl
 			{
 				_z_stream.next_in = NULL;
 				_z_stream.avail_in = 0;
-
 				while(!_streamEnd)
 				{
 					if(!_output._data)
@@ -183,12 +184,18 @@ namespace http { namespace impl
 					case Z_OK:
 					case Z_BUF_ERROR:
 						_output._size = _outputOffset;
+						if(_output._size)
 						{
 							boost::system::error_code ec;
 							if((ec = _upstream->push(_output)))
 							{
 								return ec;
 							}
+						}
+						else
+						{
+							//ничего не записан но ошибка - не хватает входа
+							_streamEnd = true;
 						}
 						_outputOffset = 0;
 						_output._size = 0;
@@ -209,8 +216,8 @@ namespace http { namespace impl
 						_output._data.reset();
 						return _upstream->flush();
 					default:
-						ELOG("inflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
-						return http::error::make(http::error::not_implemented);
+						//ELOG("inflate failed: "<<i<<" ("<<(_z_stream.msg?_z_stream.msg:"no message")<<")");
+						return http::error::make(http::error::bad_zlib_stream);
 					}
 				}
 			}

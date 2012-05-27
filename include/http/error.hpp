@@ -8,12 +8,15 @@ namespace http { namespace error
     enum basic
     {
     	ok = 0,
+
+		unexpected,
     	not_implemented,
-    	wrong_value,
-    	unexpected,
-    	invalid_message,
-    	need_more_data,
+		need_more_data,
+
+    	bad_value,
+		bad_message,
     	bad_url,
+		bad_zlib_stream,
     };
     
     class basic_category : public boost::system::error_category
@@ -31,16 +34,18 @@ namespace http { namespace error
     		  return "ok";
     	  case not_implemented:
     		  return "not implemented";
-    	  case wrong_value:
-    		  return "wrong value";
+    	  case bad_value:
+    		  return "bad value";
     	  case unexpected:
     		  return "unexpected";
-    	  case invalid_message:
-    		  return "invalid message";
+    	  case bad_message:
+    		  return "bad message";
     	  case need_more_data:
     		  return "need more data";
     	  case bad_url:
     		  return "bad url";
+		  case bad_zlib_stream:
+			  return "bad zlib stream";
     	  }
     	  return "unknown";
       }

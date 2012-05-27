@@ -9,6 +9,10 @@
 
 #include "http/client.hpp"
 
+#include "spider/url.hpp"
+
+#include <deque>
+
 namespace spider
 {
 	class Service
@@ -27,9 +31,9 @@ namespace spider
 		void onConnectionLost(size_t numConnections);
 
 		void processLoop();
-		void processOne(utils::Variant id, utils::Variant url);
+		void processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant url);
 
-		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::vector<std::string> &urls);
+		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Url> &urls);
 
 	private:
 		http::Client _htc;

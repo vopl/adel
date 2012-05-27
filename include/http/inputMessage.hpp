@@ -2,6 +2,7 @@
 #define _HTTP_INPUTMESSAGE_HPP_
 
 #include "http/headerName.hpp"
+#include "net/channel.hpp"
 
 namespace http
 {
@@ -63,6 +64,7 @@ namespace http
 		~InputMessage();
 
 		bool isConnected() const;
+		net::Channel channel();
 
 		boost::system::error_code readFirstLine();
 		boost::system::error_code readHeaders();

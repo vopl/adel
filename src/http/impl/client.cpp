@@ -20,12 +20,12 @@ namespace http { namespace impl
 		utils::OptionsPtr options(new utils::Options(prefix));
 		options->addOption(
 			"request.writeGranula",
-			po::value<size_t>()->default_value(32768),
+			po::value<size_t>()->default_value(65536),
 			"buffer size during write request data");
 
 		options->addOption(
 			"response.readGranula",
-			po::value<size_t>()->default_value(1024),
+			po::value<size_t>()->default_value(65536),
 			"buffer size during read response data");
 
 		options->addOption(
@@ -121,7 +121,7 @@ namespace http { namespace impl
 
 			bool b = qi::parse(begin, end,
 				//scheme
-				-(lit("http") >> (lit('s')[px::ref(schemaHttps)=true] || eps[px::ref(schemaHttp)=true]) >> "://") >>
+				-(lit("http") >> (lit('s')[px::ref(schemaHttps)=true] | eps[px::ref(schemaHttp)=true]) >> "://") >>
 
 				//host
 				(
