@@ -139,6 +139,6 @@ CREATE INDEX fki_cnstr_from
   (from_id );
 
 ------------------------
-INSERT INTO host (name, new_pages_count) VALUES('127.0.0.1', 1);
+INSERT INTO host (name, new_pages_count, atime) VALUES('127.0.0.1', 1, CURRENT_TIMESTAMP);
 INSERT INTO page (host_id, url) VALUES(1, 'http://127.0.0.1/index.html');
 
