@@ -97,12 +97,12 @@ namespace async
 
 		//_fiber_gc_spare_all(200)
 		d = ops["fiber.gc.spare.all"].as<double>();
-		_fiber_gc_spare_all = boost::int64_t(double(_fiber_maxAmount) * d /100);
+		_fiber_gc_spare_all = size_t(double(_fiber_maxAmount) * d /100);
 		ILOG("_fiber_gc_spare_all: "<<_fiber_gc_spare_all);
 
 		//_fiber_gc_spare_idle(200)
 		d = ops["fiber.gc.spare.idle"].as<double>();
-		_fiber_gc_spare_idle = boost::int64_t(double(_fiber_maxAmount) * d /100);
+		_fiber_gc_spare_idle = size_t(double(_fiber_maxAmount) * d /100);
 		ILOG("_fiber_gc_spare_idle: "<<_fiber_gc_spare_idle);
 
 
