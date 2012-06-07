@@ -6,19 +6,9 @@
 #include <boost/foreach.hpp>
 #include <boost/chrono.hpp>
 
+#include "htmlcxx/html/ParserDom.h"
 
-#include <boost/spirit/include/qi.hpp>
-#include <boost/spirit/include/qi_string.hpp>
-#include <boost/spirit/include/qi_char.hpp>
-#include <boost/spirit/include/qi_symbols.hpp>
-#include <boost/spirit/include/qi_int.hpp>
-#include <boost/spirit/include/qi_uint.hpp>
-#include <boost/spirit/include/qi_omit.hpp>
 
-#include <boost/spirit/include/phoenix_statement.hpp>
-#include <boost/spirit/include/phoenix_operator.hpp>
-#include <boost/spirit/include/phoenix_core.hpp>
-#include <boost/spirit/include/phoenix_container.hpp>
 
 
 namespace spider
@@ -232,19 +222,12 @@ namespace spider
 			return false;
 		}
 
-		namespace qi = boost::spirit::qi;
-		using namespace qi;
-		namespace px = boost::phoenix;
+		std::string ct(seg->begin(), seg->end());
 
-		bool ok = false;
-		bool b = qi::parse(seg->begin(), seg->end(),
-			*(
-				lit("html")[px::ref(ok)=true] | lit("text")[px::ref(ok)=true] | lit("xml")[px::ref(ok)=true] |
-				char_
-			)
-		);
-
-		return ok;
+		return
+			std::string::npos != ct.find("html") ||
+			std::string::npos != ct.find("text") ||
+			std::string::npos != ct.find("xml");
 	}
 
 
@@ -449,47 +432,39 @@ namespace spider
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	namespace 
-	{
-		struct Handler
-		{
-			std::deque<Uri> &_uris;
-
-			Handler(std::deque<Uri> &uris)
-				: _uris(uris)
-			{
-
-			}
-			template <typename F, typename Attribute, typename Context>
-			void operator()(F const& f, Attribute& attr, Context& context) const
-			{
-				_uris.push_back(Uri(std::string(f.begin(), f.end())));
-			}
-		};
-
-	}
-	//////////////////////////////////////////////////////////////////////////
 	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &uris)
 	{
 		//искать <a href="...
-		namespace qi = boost::spirit::qi;
-		using namespace qi;
-		namespace px = boost::phoenix;
-
-		Handler handler(uris);
-
-		bool b = qi::parse(text.begin(), text.end(),
-			*(
-				(lit("<a") >> *(char_ - char_("h>")) >> "href=" >> char_("'\"") >> raw[+(char_ - char_("'\""))][handler]) |
-				char_
-			)
-		);
-
-		//применить базу
 		Uri base(baseUrlString);
-		for(size_t i(0); i<uris.size(); i++)
+		if(!base.isOk())
 		{
-			uris[i] = uris[i].absolute(base);
+			assert(0);
+			return;
+		}
+
+		HTML::ParserDom parser;
+		parser.parse(text.begin(), text.end());
+		const tree<HTML::Node> &tr = parser.getTree();
+
+		tree<HTML::Node>::iterator iter = tr.begin();
+		tree<HTML::Node>::iterator end = tr.end();
+
+		for(; iter!=end; ++iter)
+		{
+			const HTML::Node &n = *iter;
+			if("A" == n.tagName())
+			{
+				std::pair<bool, std::string> p = n.attribute("href");
+				if(p.first)
+				{
+					Uri uri(p.second);
+					if(uri.isOk())
+					{
+						uris.push_back(uri.absolute(base));
+					}
+				}
+			}
+
 		}
 	}
 
