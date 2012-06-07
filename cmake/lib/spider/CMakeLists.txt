@@ -7,13 +7,11 @@ project(${PROJECT})
 set(INC
 	${PINC}/log.hpp
 	${PINC}/service.hpp
-	${PINC}/url.hpp
 )
 source_group(include FILES ${INC})
 
 set(SRC
 	${PSRC}/service.cpp
-	${PSRC}/url.cpp
 )
 source_group(src FILES ${SRC})
 
@@ -38,7 +36,7 @@ add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH})
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC})
 
-target_link_libraries(${PROJECT} async http pgc utils)
+target_link_libraries(${PROJECT} async http pgc utils htmlcxx)
 target_link_libraries(${PROJECT} ${l4cpl})
 target_link_libraries(${PROJECT} ${HUNSPELL_LIBRARY})
 

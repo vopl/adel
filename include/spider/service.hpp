@@ -9,12 +9,14 @@
 
 #include "http/client.hpp"
 
-#include "spider/url.hpp"
+#include "htmlcxx/html/Uri.h"
 
 #include <deque>
 
 namespace spider
 {
+	using namespace htmlcxx;
+
 	class Service
 	{
 	public:
@@ -33,7 +35,7 @@ namespace spider
 		void processLoop();
 		void processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant url);
 
-		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Url> &urls);
+		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &urls);
 
 	private:
 		http::Client _htc;

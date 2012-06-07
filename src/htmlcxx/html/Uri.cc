@@ -1,7 +1,8 @@
 #include "Uri.h"
 
 #include "wincstring.h"
-#include <strstream>
+//#include <strstream>
+#include <sstream>
 #include <cstdlib>
 #include <cassert>
 #include "tld.h"
@@ -109,11 +110,11 @@ static const unsigned char uri_delims[256] = {
 static size_t wwwPrefixOffset(const std::string& hostname);
 
 Uri::Uri()
-: mScheme(), mUser(), mPassword(), mHostname(), mPath(), mQuery(), mFragment(), mExistsQuery(false), mExistsFragment(false), mPort(0)
+: _isOk(false), mScheme(), mUser(), mPassword(), mHostname(), mPath(), mQuery(), mFragment(), mExistsQuery(false), mExistsFragment(false), mPort(0)
 {}
 
 Uri::Uri(const string &uri_str)
-: mScheme(), mUser(), mPassword(), mHostname(), mPath(), mQuery(), mFragment(), mExistsQuery(false), mExistsFragment(false), mPort(0)
+: _isOk(false), mScheme(), mUser(), mPassword(), mHostname(), mPath(), mQuery(), mFragment(), mExistsQuery(false), mExistsFragment(false), mPort(0)
 {
 	init(uri_str);
 }
@@ -233,7 +234,9 @@ deal_with_host:
 			}
 			/* Invalid characters after ':' found */
 			DEBUGP("Throwing invalid url exception\n");
-			throw Exception("Invalid character after ':'");
+			//throw Exception("Invalid character after ':'");
+			_isOk = false;
+			return;
 		}
 		this->mPort = port_of_Scheme(mScheme.c_str());
 		goto deal_with_path;
@@ -256,25 +259,30 @@ deal_with_host:
 Uri::~Uri() {
 }
 
-string Uri::scheme() const { return mScheme; }
+bool Uri::isOk() const
+{
+	return _isOk;
+}
 
-void Uri::scheme(string scheme) {
+const std::string &Uri::scheme() const { return mScheme; }
+
+void Uri::scheme(const std::string &scheme) {
 	mScheme = scheme;
 }
-string Uri::user() const { return mUser; }
-void Uri::user(string user) {
+const std::string &Uri::user() const { return mUser; }
+void Uri::user(const std::string &user) {
 	mUser = user;
 }
-string Uri::password() const { return mPassword; }
-void Uri::password(string password) {
+const std::string &Uri::password() const { return mPassword; }
+void Uri::password(const std::string &password) {
 	mPassword = password;
 }
-string Uri::hostname() const { return mHostname; }
-void Uri::hostname(string hostname) {
+const std::string &Uri::hostname() const { return mHostname; }
+void Uri::hostname(const std::string &hostname) {
 	mHostname = hostname;
 }
-string Uri::path() const { return mPath; }
-void Uri::path(string path) {
+const std::string &Uri::path() const { return mPath; }
+void Uri::path(const std::string &path) {
 	mPath = path;
 }
 bool Uri::existsFragment() const { return mExistsFragment; }
@@ -285,12 +293,12 @@ bool Uri::existsQuery() const { return mExistsQuery; }
 void Uri::existsQuery(bool existsQuery) {
 	mExistsQuery = existsQuery;
 }
-string Uri::query() const { return mQuery; }
-void Uri::query(string query) {
+const std::string &Uri::query() const { return mQuery; }
+void Uri::query(const std::string &query) {
 	mQuery = query;
 }
-string Uri::fragment() const { return mFragment; }
-void Uri::fragment(string fragment) {
+const std::string &Uri::fragment() const { return mFragment; }
+void Uri::fragment(const std::string &fragment) {
 	mFragment = fragment;
 }
 unsigned int Uri::port() const { return mPort; }

@@ -10,12 +10,13 @@ namespace htmlcxx
 	class CharsetConverter
 	{
 		public:
-			class Exception : public std::runtime_error
+			/*class Exception : public std::runtime_error
 			{
 				public:
 					Exception(const std::string &arg)
 						: std::runtime_error(arg) {}
 			};
+			*/
 			
 			CharsetConverter(const std::string &from, const std::string &to);
 			~CharsetConverter();

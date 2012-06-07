@@ -6,6 +6,21 @@
 #include <boost/foreach.hpp>
 #include <boost/chrono.hpp>
 
+
+#include <boost/spirit/include/qi.hpp>
+#include <boost/spirit/include/qi_string.hpp>
+#include <boost/spirit/include/qi_char.hpp>
+#include <boost/spirit/include/qi_symbols.hpp>
+#include <boost/spirit/include/qi_int.hpp>
+#include <boost/spirit/include/qi_uint.hpp>
+#include <boost/spirit/include/qi_omit.hpp>
+
+#include <boost/spirit/include/phoenix_statement.hpp>
+#include <boost/spirit/include/phoenix_operator.hpp>
+#include <boost/spirit/include/phoenix_core.hpp>
+#include <boost/spirit/include/phoenix_container.hpp>
+
+
 namespace spider
 {
 	///////////////////////////////////////////////////////////////////
@@ -234,19 +249,19 @@ namespace spider
 
 
 	//////////////////////////////////////////////////////////////////////////
-	void Service::processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant url)
+	void Service::processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant uri)
 	{
 		boost::chrono::time_point<boost::chrono::system_clock> start = 
 			boost::chrono::system_clock::now();
 
 		http::client::Response resp;
-		boost::system::error_code ec = _htc.get(resp, url.as<std::string>().data());
+		boost::system::error_code ec = _htc.get(resp, uri.as<std::string>().data());
 
 		boost::chrono::milliseconds getTime = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::system_clock::now() - start);
 
 		if(ec)
 		{
-			WLOG("get: "<<ec<<", ["<<url.as<std::string>()<<"]");
+			WLOG("get: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			
 			pgc::Result res = _db.allocConnection().data().query("UPDATE page SET status='get failed' WHERE id=$1", pageId);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
@@ -263,7 +278,7 @@ namespace spider
 		if(ec)
 		{
 
-			WLOG("read headers: "<<ec<<", ["<<url.as<std::string>()<<"]");
+			WLOG("read headers: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Result res = _db.allocConnection().data().query("UPDATE page SET status='read failed' WHERE id=$1", pageId);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
@@ -278,7 +293,7 @@ namespace spider
 		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
 		if(length.isCorrect() && length.value() > 1024*1024)
 		{
-			WLOG("too big: "<<length.value()<<", ["<<url.as<std::string>()<<"]");
+			WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Result res = _db.allocConnection().data().query("UPDATE page SET status='too big' WHERE id=$1", pageId);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
@@ -293,7 +308,7 @@ namespace spider
 		const http::client::Response::Segment *contentType = resp.header(http::hn::contentType);
 		if(!isGoodContentType(contentType))
 		{
-			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<url.as<std::string>()<<"]");
+			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Result res = _db.allocConnection().data().query("UPDATE page SET status='bad ct' WHERE id=$1", pageId);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
@@ -309,7 +324,7 @@ namespace spider
 		if(ec)
 		{
 
-			WLOG("read body: "<<ec<<", ["<<url.as<std::string>()<<"]");
+			WLOG("read body: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Result res = _db.allocConnection().data().query("UPDATE page SET status='read failed' WHERE id=$1", pageId);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
@@ -325,8 +340,8 @@ namespace spider
 		//TLOG(std::string(resp.firstLine().begin(), resp.firstLine().end()));
 
 		//parse
-		std::deque<Url> urls;
-		parse(resp.body(), url.as<std::string>(), urls);
+		std::deque<Uri> uris;
+		parse(resp.body(), uri.as<std::string>(), uris);
 
 		//store urls
 		pgc::Connection c = _db.allocConnection();
@@ -339,47 +354,47 @@ namespace spider
 
 		//c.query("BEGIN").wait();
 
-		BOOST_FOREACH(Url&u, urls)
+		BOOST_FOREACH(Uri&u, uris)
 		{
-			if(!u._isValid || (u._scheme!="http" && u._scheme!="https"))
+			if(u.scheme()!="http" && u.scheme()!="https")
 			{
 				continue;
 			}
 
-			std::string url = u.string();
+			std::string uri = u.unparse(Uri::REMOVE_FRAGMENT);
 
-			res = c.query("SELECT id FROM host WHERE name=$1", u._host);
+			res = c.query("SELECT id FROM host WHERE name=$1", u.hostname());
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 			if(!res.rows())
 			{
-				res = c.query("INSERT INTO host (name, atime) VALUES ($1, CURRENT_TIMESTAMP)", u._host);
-				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<u._host);
+				res = c.query("INSERT INTO host (name, atime) VALUES ($1, CURRENT_TIMESTAMP)", u.hostname());
+				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<u.hostname());
 				if(pgc::ersError == res.status())
 				{
 					continue;
 				}
-				res = c.query("SELECT id FROM host WHERE name=$1", u._host);
+				res = c.query("SELECT id FROM host WHERE name=$1", u.hostname());
 				if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 			}
 			utils::Variant hostId2;
 			res.fetch(hostId2, 0,0);
 
-			res = c.query("SELECT id, count FROM page WHERE url=$1", url);
+			res = c.query("SELECT id, count FROM page WHERE url=$1", uri);
 			if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 			if(!res.rows())
 			{
 				res = c.query("UPDATE host SET new_pages_count=new_pages_count+1 WHERE id=$1", hostId2);
 				if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
-				res = c.query("INSERT INTO page (host_id, url, count) VALUES ($1, $2, 1)", utils::MVA(hostId2, url));
-				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<url);
+				res = c.query("INSERT INTO page (host_id, url, count) VALUES ($1, $2, 1)", utils::MVA(hostId2, uri));
+				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<uri);
 				if(pgc::ersError == res.status())
 				{
 					continue;
 				}
 
 				res = c.query("SELECT currval('page_id_seq'::regclass) AS id");
-				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<url);
+				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<uri);
 				if(pgc::ersError == res.status())
 				{
 					continue;
@@ -388,7 +403,7 @@ namespace spider
 				res.fetch(pageId2, 0,0);
 
 				res = c.query("INSERT INTO reference (from_id, to_id) VALUES ($1, $2)", utils::MVA(pageId, pageId2));
-				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<url);
+				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<uri);
 				if(pgc::ersError == res.status())
 				{
 					continue;
@@ -402,7 +417,7 @@ namespace spider
 				if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
 				res = c.query("INSERT INTO reference (from_id, to_id) VALUES ($1, $2)", utils::MVA(pageId, pageId2));
-				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<url);
+				if(pgc::ersError == res.status()) TLOG(res.errorMsg()<<", "<<uri);
 				if(pgc::ersError == res.status())
 				{
 					continue;
@@ -420,7 +435,7 @@ namespace spider
 				std::string(resp.headers().begin(), resp.headers().end())));
 		if(pgc::ersError == res.status()) TLOG(res.errorMsg());
 
-		TLOG("processed: ("<<_numWorkers<<") "<<url.as<std::string>());
+		TLOG("processed: ("<<_numWorkers<<") "<<uri.as<std::string>());
 
 
 		//res = c.query("COMMIT");
@@ -438,30 +453,30 @@ namespace spider
 	{
 		struct Handler
 		{
-			std::deque<Url> &_urls;
+			std::deque<Uri> &_uris;
 
-			Handler(std::deque<Url> &urls)
-				: _urls(urls)
+			Handler(std::deque<Uri> &uris)
+				: _uris(uris)
 			{
 
 			}
 			template <typename F, typename Attribute, typename Context>
 			void operator()(F const& f, Attribute& attr, Context& context) const
 			{
-				_urls.push_back(Url(f));
+				_uris.push_back(Uri(std::string(f.begin(), f.end())));
 			}
 		};
 
 	}
 	//////////////////////////////////////////////////////////////////////////
-	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Url> &urls)
+	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &uris)
 	{
 		//искать <a href="...
 		namespace qi = boost::spirit::qi;
 		using namespace qi;
 		namespace px = boost::phoenix;
 
-		Handler handler(urls);
+		Handler handler(uris);
 
 		bool b = qi::parse(text.begin(), text.end(),
 			*(
@@ -471,10 +486,10 @@ namespace spider
 		);
 
 		//применить базу
-		Url base(baseUrlString);
-		for(size_t i(0); i<urls.size(); i++)
+		Uri base(baseUrlString);
+		for(size_t i(0); i<uris.size(); i++)
 		{
-			urls[i].combine(base);
+			uris[i] = uris[i].absolute(base);
 		}
 	}
 

@@ -1,7 +1,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cstring>
-#include <strstream>
+#include <sstream>
 #include "Uri.h"
 
 #include "utils.h"
@@ -492,16 +492,17 @@ namespace htmlcxx {
 			}
 
 			Uri uri;
-			try
-			{
+			//try
+			//{
 				Uri rel(url);
+				if(!rel.isOk())
+				{
+					return string();
+				}
 				uri = rel.absolute(root);
 				uri.path(normalize_slashs(uri.path()));
-			}
-			catch (Uri::Exception)
-			{
-				return string();
-			}
+			//}
+			//catch (Uri::Exception)
 
 			return uri.unparse(Uri::REMOVE_FRAGMENT);
 		}
@@ -509,7 +510,7 @@ namespace htmlcxx {
 		string __serialize_gml(const tree<HTML::Node> &tr, tree<HTML::Node>::iterator it, tree<HTML::Node>::iterator end, unsigned int parent_id, unsigned int& label) {
 
 			using namespace std;
-			ostrstream ret;
+			ostringstream ret;
 			tree<HTML::Node>::sibling_iterator sib = tr.begin(it);
 			while(sib != tr.end(it)) {
 				ret << "node [ id " << ++label << "\n label \"" << label << "\"\n]\n";
@@ -518,9 +519,11 @@ namespace htmlcxx {
 				++sib;
 			}	
 			ret << ends;
-			string str = ret.str();
-			ret.freeze(0);
-			return str;
+
+			return ret.str();
+			//string str = ret.str();
+			//ret.freeze(0);
+			//return str;
 		}
 
 

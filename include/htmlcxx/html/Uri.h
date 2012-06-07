@@ -11,12 +11,13 @@ namespace htmlcxx
 	{
 		public:
 
-			class Exception : public std::runtime_error
+			/*class Exception : public std::runtime_error
 			{
 				public:
 					Exception(const std::string &arg)
 						: std::runtime_error(arg) {}
 			};
+			*/
 			
 			Uri();
 			Uri(const std::string &uri);
@@ -58,20 +59,21 @@ namespace htmlcxx
 			const static int REMOVE_DEFAULT_FILENAMES = 64;
 			const static int REMOVE_FRAGMENT = 128;
 
-			std::string scheme() const;
-			void scheme(std::string scheme);
-			std::string user() const;
-			void user(std::string user);
-			std::string password() const;
-			void password(std::string password);
-			std::string hostname() const;
-			void hostname(std::string hostname);
-			std::string path() const;
-			void path(std::string path);
-			std::string query() const;
-			void query(std::string query);
-			std::string fragment() const;
-			void fragment(std::string fragment);
+			bool isOk() const;
+			const std::string &scheme() const;
+			void scheme(const std::string &scheme);
+			const std::string &user() const;
+			void user(const std::string &user);
+			const std::string &password() const;
+			void password(const std::string &password);
+			const std::string &hostname() const;
+			void hostname(const std::string &hostname);
+			const std::string &path() const;
+			void path(const std::string &path);
+			const std::string &query() const;
+			void query(const std::string &query);
+			const std::string &fragment() const;
+			void fragment(const std::string &fragment);
 			unsigned int port() const;
 			void port(unsigned int port);
 			bool existsFragment() const;
@@ -81,6 +83,7 @@ namespace htmlcxx
 		protected:
 			void init(const std::string &uri_str);
 			
+			bool _isOk;
 			std::string mScheme;
 			std::string mUser;
 			std::string mPassword;
