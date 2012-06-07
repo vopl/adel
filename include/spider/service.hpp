@@ -10,7 +10,6 @@
 #include "http/client.hpp"
 
 #include "htmlcxx/html/Uri.h"
-
 #include <deque>
 
 namespace spider
@@ -37,6 +36,13 @@ namespace spider
 
 		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &urls);
 
+		struct Word
+		{
+			static const size_t _meansAmount = 5;
+			boost::uint32_t _means[_meansAmount];
+		};
+		void processWords(const std::string &text, std::deque<Word> &words);
+
 	private:
 		http::Client _htc;
 
@@ -55,6 +61,7 @@ namespace spider
 		size_t			_numWorkers;
 		async::Event	_evtWorkerDone;
 
+		void		*_hunspell;
 	};
 }
 #endif

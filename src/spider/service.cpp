@@ -5,8 +5,11 @@
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/chrono.hpp>
+#include <boost/crc.hpp>
 
 #include "htmlcxx/html/ParserDom.h"
+
+#include "hunspell.hxx"
 
 
 
@@ -38,6 +41,16 @@ namespace spider
 			boost::program_options::value<size_t>()->default_value(1),
 			"delay between requests to one host, seconds");
 
+		options->addOption(
+			"hunspell.affpath",
+			boost::program_options::value<std::string>()->default_value("../spell"),
+			"hunspell aff path");
+
+		options->addOption(
+			"hunspell.dicpath",
+			boost::program_options::value<std::string>()->default_value("../spell"),
+			"hunspell dic path");
+
 		return options;
 
 	}
@@ -47,6 +60,7 @@ namespace spider
 		: _evtWorkerDone(true)
 		, _numWorkers(0)
 		, _htc(htc)
+		, _hunspell(NULL)
 	{
 		utils::Options &o = *optionsPtr;
 		
@@ -54,12 +68,21 @@ namespace spider
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
 		_net_concurrency = o["net.concurrency"].as<size_t>();
 		_net_hostDelay = o["net.hostDelay"].as<size_t>();
+
+		_hunspell = new Hunspell(
+			o["hunspell.affpath"].as<std::string>().c_str(),
+			o["hunspell.dicpath"].as<std::string>().c_str());
 	}
 
 	///////////////////////////////////////////////////////////////////
 	Service::~Service()
 	{
 		_db.reset();
+
+		if(_hunspell)
+		{
+			delete ((Hunspell *)_hunspell);
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -449,23 +472,139 @@ namespace spider
 		tree<HTML::Node>::iterator iter = tr.begin();
 		tree<HTML::Node>::iterator end = tr.end();
 
+		std::deque<Word> words;
 		for(; iter!=end; ++iter)
 		{
 			const HTML::Node &n = *iter;
-			if("A" == n.tagName())
+			if(n.isTag())
 			{
-				std::pair<bool, std::string> p = n.attribute("href");
-				if(p.first)
+				if("A" == n.tagName())
 				{
-					Uri uri(p.second);
-					if(uri.isOk())
+					std::pair<bool, std::string> p = n.attribute("href");
+					if(p.first)
 					{
-						uris.push_back(uri.absolute(base));
+						Uri uri(p.second);
+						if(uri.isOk())
+						{
+							uris.push_back(uri.absolute(base));
+						}
 					}
+				}
+			}
+			else
+			{
+				if(!n.isComment())
+				{
+					processWords(n.text(), words);
 				}
 			}
 
 		}
+	}
+
+	namespace
+	{
+		boost::uint32_t hashWord(const char *src)
+		{
+			boost::crc_32_type  result;
+			for(; *src; src++)
+			{
+				result.process_byte(*src);
+			}
+
+			return result.checksum();
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::processWords(const std::string &text, std::deque<Word> &words)
+	{
+		std::string::size_type pos = text.find_first_of(" \t\v");
+		std::string::size_type prevPos = pos;
+		while(std::string::npos != pos)
+		{
+			if(prevPos < pos)
+			{
+				std::string wordSrc(text.begin()+prevPos, text.begin()+pos);
+				const char *wordSrcp(wordSrc.data());
+				if(_hunspell)
+				{
+					//сформировать набор значений
+
+					std::set<boost::uint32_t> means;
+
+					char ** result, **result2;
+					///////////////////////////////////////////
+					int ns = ((Hunspell *)_hunspell)->suggest(&result, wordSrcp);
+					for(; *result; result++)
+					{
+						means.insert(hashWord(*result));
+					}
+					((Hunspell *)_hunspell)->free_list(&result, ns);
+
+					///////////////////////////////////////////
+					ns = ((Hunspell *)_hunspell)->analyze(&result, wordSrcp);
+					for(; *result; result++)
+					{
+						means.insert(hashWord(*result));
+					}
+
+					///////////////////////////////////////////
+					int ns2 = ((Hunspell *)_hunspell)->stem(&result2, result, ns);
+					for(; *result2; result2++)
+					{
+						means.insert(hashWord(*result2));
+					}
+					((Hunspell *)_hunspell)->free_list(&result, ns);
+					((Hunspell *)_hunspell)->free_list(&result2, ns2);
+
+					if(means.empty())
+					{
+						means.insert(hashWord(wordSrcp));
+					}
+
+					//слить
+					{
+						std::set<boost::uint32_t>::iterator iter = means.begin();
+						std::set<boost::uint32_t>::iterator end = means.end();
+
+						Word w;
+						size_t idx(0);
+						for(; iter!=end; ++iter)
+						{
+							w._means[idx] = *iter;
+							if(idx >= Word::_meansAmount)
+							{
+								break;
+							}
+							idx++;
+						}
+						for(; idx < Word::_meansAmount; ++idx)
+						{
+							w._means[idx] = 0;
+						}
+						words.push_back(w);
+					}
+				}
+				else
+				{
+					Word w;
+					size_t idx(0);
+					w._means[idx] = hashWord(wordSrcp);
+					idx++;
+
+					for(; idx < Word::_meansAmount; ++idx)
+					{
+						w._means[idx] = 0;
+					}
+					words.push_back(w);
+				}
+			}
+
+			prevPos = pos;
+			pos = text.find_first_of(" \t\v", pos);
+		}
+
 	}
 
 
