@@ -457,6 +457,7 @@ namespace spider
 	//////////////////////////////////////////////////////////////////////////
 	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &uris)
 	{
+	
 		//искать <a href="...
 		Uri base(baseUrlString);
 		if(!base.isOk())
@@ -468,9 +469,61 @@ namespace spider
 		HTML::ParserDom parser;
 		parser.parse(text.begin(), text.end());
 		const tree<HTML::Node> &tr = parser.getTree();
+		
+		//выявить кодировку из заголовков, meta html
+		//сформировать конвертор в utf-8 если нужен
 
 		tree<HTML::Node>::iterator iter = tr.begin();
 		tree<HTML::Node>::iterator end = tr.end();
+
+		{
+			TextParser parser;
+			for(; iter!=end; ++iter)
+			{
+				const HTML::Node &n = *iter;
+				if(n.isTag())
+				{
+					if("A" == n.tagName())
+					{
+						std::pair<bool, std::string> p = n.attribute("href");
+						if(p.first)
+						{
+							Uri uri(p.second);
+							if(uri.isOk())
+							{
+								uris.push_back(uri.absolute(base));
+							}
+						}
+					}
+				}
+				else
+				{
+					if(!n.isComment())
+					{
+						//конвертировать в utf-8 если есть конвертор
+						//нормализовать символы (бин, html-entities)
+						parser.push(n.text());
+					}
+				}
+			}
+			
+			PhraseStreamer<1> streamer1(parser.words());
+			Phrase<1> phrase1;
+			while(!streamer1.next(phrase1))
+			{
+				//process phrase1
+				assert(0);
+			}
+			
+			PhraseStreamer<2> streamer2(parser.words());
+			Phrase<2> phrase2;
+			while(!streamer2.next(phrase2))
+			{
+				//process phrase2
+				assert(0);
+			}
+			
+		}
 
 		std::deque<Word> words;
 		for(; iter!=end; ++iter)
