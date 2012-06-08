@@ -589,37 +589,41 @@ namespace spider
 				}
 			}
 			
-			std::cout<<"phrase streamer 1\n\n";
-			PhraseStreamer<1> streamer1(&parser.result());
-			Phrase<1> phrase1;
-			while(streamer1.next(phrase1))
+
+			//////////////////////////////////////////////////////////////////////////
 			{
-				std::cout<<"phrase 1--------------------------------------- \n";
-				const Word *words[1];
-				while(phrase1.nextCombination(words))
+				std::map<Word, double> weights_w;
+
+				std::cout<<"phrase streamer \n";
+				PhraseStreamer<3,1,1> streamer(&parser.result());
+				Phrase<3> phrase;
+				while(streamer.next(phrase))
 				{
-					std::cout<<"combination 1--------------------------------------- \n";
-					std::cout<<words[0]->_text;
+					std::cout<<"phrase --------------------------------------- \n";
+					const Word *words[3];
+					while(phrase.nextCombination(words))
+					{
+						std::cout<<"combination --------------------------------------- \n";
+						std::cout<<words[0]->_text<<", ";
+						std::cout<<words[1]->_text<<", ";
+						std::cout<<words[2]->_text;
+						std::cout<<std::endl;
+
+						weights_w[*words[0]] += 1.0;
+						weights_w[*words[1]] += 1.0;
+						weights_w[*words[2]] += 1.0;
+					}
 					std::cout<<std::endl;
 				}
-				std::cout<<std::endl;
-			}
-			
-			std::cout<<"phrase streamer 2\n\n";
-			PhraseStreamer<2> streamer2(&parser.result());
-			Phrase<2> phrase2;
-			while(streamer2.next(phrase2))
-			{
-				std::cout<<"phrase 2--------------------------------------- \n";
-				const Word *words[2];
-				while(phrase2.nextCombination(words))
+
+				////////////////
+				std::cout<<"weights --------------------------------------- \n";
+				std::map<Word, double>::iterator iter = weights_w.begin();
+				std::map<Word, double>::iterator end = weights_w.end();
+				for(; iter!=end; iter++)
 				{
-					std::cout<<"combination 2--------------------------------------- \n";
-					std::cout<<words[0]->_text<<", ";
-					std::cout<<words[1]->_text;
-					std::cout<<std::endl;
+					std::cout<<iter->second<<"\t"<<iter->first._text<<"\n";
 				}
-				std::cout<<std::endl;
 			}
 			
 		}

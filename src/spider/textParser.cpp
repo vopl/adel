@@ -241,6 +241,7 @@ namespace spider
 			{
 				wb._words.push_back(*iter);
 			}
+			//std::sort(wb._words.begin(), wb._words.end());//уже бали отсортированы когда попали в множество
 			_data.push_back(wb);
 		}
 
