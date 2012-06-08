@@ -26,7 +26,9 @@ namespace spider
 		const std::deque<WordBucket> &result();
 
 	private:
+		void pushWord(const std::vector<boost::int32_t> &word);
 		void pushWord(const std::string &word);
+		std::string stripHunspellTech(const std::string &data);
 
 	private:
 		Hunspell *_hunspell;

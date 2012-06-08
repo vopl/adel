@@ -12,11 +12,15 @@ namespace spider
 		Phrase();
 		~Phrase();
 
-		bool addBucket(const WordBucket *bucket);
-		bool isFull() const;
+		void reset();
+		void setBucket(size_t idx, const WordBucket *bucket);
 
 		size_t getCombinationsAmount() const;
-		bool getCombination(const Word * (&words)[volume], size_t idx) const;
+		bool nextCombination(const Word * (&words)[volume]);
+
+	private:
+		const WordBucket *_buckets[volume];
+		size_t _wordIndices[volume];
     };
 
 
@@ -27,46 +31,68 @@ namespace spider
 	template <size_t volume>
 	Phrase<volume>::Phrase()
 	{
-		assert(0);
+		reset();
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <size_t volume>
 	Phrase<volume>::~Phrase()
 	{
-		assert(0);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <size_t volume>
-	bool Phrase<volume>::addBucket(const WordBucket *bucket)
+	void Phrase<volume>::reset()
 	{
-		assert(0);
-		return false;
+		memset(_buckets, 0, sizeof(_buckets));
+		memset(_wordIndices, 0, sizeof(_wordIndices));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <size_t volume>
-	bool Phrase<volume>::isFull() const
+	void Phrase<volume>::setBucket(size_t idx, const WordBucket *bucket)
 	{
-		assert(0);
-		return false;
+		_buckets[idx] = bucket;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <size_t volume>
 	size_t Phrase<volume>::getCombinationsAmount() const
 	{
-		assert(0);
-		return 0;
+		size_t amount = 0;
+		for(size_t i(0); i<volume, i++)
+		{
+			assert(_buckets[i]);
+			amount += _buckets[i]->_words.size();
+		}
+		return amount;
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <size_t volume>
-	bool Phrase<volume>::getCombination(const Word * (&words)[volume], size_t idx) const
+	bool Phrase<volume>::nextCombination(const Word * (&words)[volume])
 	{
-		assert(0);
-		return false;
+		
+		if(_wordIndices[volume-1] >= _buckets[volume-1]->_words.size())
+		{
+			return false;
+		}
+
+		for(size_t i(0); i<volume; i++)
+		{
+			words[i] = &_buckets[i]->_words[_wordIndices[i]];
+		}
+
+		_wordIndices[0]++;
+		for(size_t i(0); i<volume-1; i++)
+		{
+			if(_wordIndices[i] >= _buckets[i]->_words.size())
+			{
+				_wordIndices[i] = 0;
+				_wordIndices[i+1]++;
+			}
+		}
+		return true;
 	}
 
 }

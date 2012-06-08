@@ -14,6 +14,8 @@
 #include "htmlcxx/html/ParserDom.h"
 #include "htmlcxx/html/CharsetConverter.h"
 
+#include "utils/htmlEntities.hpp"
+
 #ifdef near
 #	undef near
 #endif
@@ -569,181 +571,58 @@ namespace spider
 				{
 					if(!n.isComment())
 					{
-						//конвертировать в utf-8 если есть конвертор
-						//нормализовать символы (бин, html-entities)
 
 						if(!n.text().empty())
 						{
+							//конвертировать в utf-8 если есть конвертор
+							//декодировать html-entities
 							if(cc)
 							{
-								parser.push(cc->convert(n.text()));
+								parser.push(utils::htmlEntitiesDecode(cc->convert(n.text())));
 							}
 							else
 							{
-								parser.push(n.text());
+								parser.push(utils::htmlEntitiesDecode(n.text()));
 							}
 						}
 					}
 				}
 			}
 			
-			const size_t tmpl1[1] = {0};
-			PhraseStreamer<1> streamer1(parser.result(), tmpl1);
+			std::cout<<"phrase streamer 1\n\n";
+			PhraseStreamer<1> streamer1(&parser.result());
 			Phrase<1> phrase1;
-			while(!streamer1.next(phrase1))
+			while(streamer1.next(phrase1))
 			{
-				//process phrase1
-				assert(0);
+				std::cout<<"phrase 1--------------------------------------- \n";
+				const Word *words[1];
+				while(phrase1.nextCombination(words))
+				{
+					std::cout<<"combination 1--------------------------------------- \n";
+					std::cout<<words[0]->_text;
+					std::cout<<std::endl;
+				}
+				std::cout<<std::endl;
 			}
 			
-			const size_t tmpl2[2] = {0,0};
-			PhraseStreamer<2> streamer2(parser.result(), tmpl2);
+			std::cout<<"phrase streamer 2\n\n";
+			PhraseStreamer<2> streamer2(&parser.result());
 			Phrase<2> phrase2;
-			while(!streamer2.next(phrase2))
+			while(streamer2.next(phrase2))
 			{
-				//process phrase2
-				assert(0);
+				std::cout<<"phrase 2--------------------------------------- \n";
+				const Word *words[2];
+				while(phrase2.nextCombination(words))
+				{
+					std::cout<<"combination 2--------------------------------------- \n";
+					std::cout<<words[0]->_text<<", ";
+					std::cout<<words[1]->_text;
+					std::cout<<std::endl;
+				}
+				std::cout<<std::endl;
 			}
 			
 		}
-/*
-		std::deque<Word> words;
-		for(; iter!=end; ++iter)
-		{
-			const HTML::Node &n = *iter;
-			if(n.isTag())
-			{
-				if("A" == n.tagName())
-				{
-					std::pair<bool, std::string> p = n.attribute("href");
-					if(p.first)
-					{
-						Uri uri(p.second);
-						if(uri.isOk())
-						{
-							uris.push_back(uri.absolute(base));
-						}
-					}
-				}
-			}
-			else
-			{
-				if(!n.isComment())
-				{
-					processWords(n.text(), words);
-				}
-			}
-
-		}
-*/
+		exit(0);
 	}
-/*
-	namespace
-	{
-		boost::uint32_t hashWord(const char *src)
-		{
-			boost::crc_32_type  result;
-			for(; *src; src++)
-			{
-				result.process_byte(*src);
-			}
-
-			return result.checksum();
-		}
-	}
-*/
-
-/*
-	//////////////////////////////////////////////////////////////////////////
-	void Service::processWords(const std::string &text, std::deque<Word> &words)
-	{
-		std::string::size_type pos = text.find_first_of(" \t\v");
-		std::string::size_type prevPos = pos;
-		while(std::string::npos != pos)
-		{
-			if(prevPos < pos)
-			{
-				std::string wordSrc(text.begin()+prevPos, text.begin()+pos);
-				const char *wordSrcp(wordSrc.data());
-				if(_hunspell)
-				{
-					//сформировать набор значений
-
-					std::set<boost::uint32_t> means;
-
-					char ** result, **result2;
-					///////////////////////////////////////////
-					int ns = ((Hunspell *)_hunspell)->suggest(&result, wordSrcp);
-					for(; *result; result++)
-					{
-						means.insert(hashWord(*result));
-					}
-					((Hunspell *)_hunspell)->free_list(&result, ns);
-
-					///////////////////////////////////////////
-					ns = ((Hunspell *)_hunspell)->analyze(&result, wordSrcp);
-					for(; *result; result++)
-					{
-						means.insert(hashWord(*result));
-					}
-
-					///////////////////////////////////////////
-					int ns2 = ((Hunspell *)_hunspell)->stem(&result2, result, ns);
-					for(; *result2; result2++)
-					{
-						means.insert(hashWord(*result2));
-					}
-					((Hunspell *)_hunspell)->free_list(&result, ns);
-					((Hunspell *)_hunspell)->free_list(&result2, ns2);
-
-					if(means.empty())
-					{
-						means.insert(hashWord(wordSrcp));
-					}
-
-					//слить
-					{
-						std::set<boost::uint32_t>::iterator iter = means.begin();
-						std::set<boost::uint32_t>::iterator end = means.end();
-
-						Word w;
-						size_t idx(0);
-						for(; iter!=end; ++iter)
-						{
-							w._means[idx] = *iter;
-							if(idx >= Word::_meansAmount)
-							{
-								break;
-							}
-							idx++;
-						}
-						for(; idx < Word::_meansAmount; ++idx)
-						{
-							w._means[idx] = 0;
-						}
-						words.push_back(w);
-					}
-				}
-				else
-				{
-					Word w;
-					size_t idx(0);
-					w._means[idx] = hashWord(wordSrcp);
-					idx++;
-
-					for(; idx < Word::_meansAmount; ++idx)
-					{
-						w._means[idx] = 0;
-					}
-					words.push_back(w);
-				}
-			}
-
-			prevPos = pos;
-			pos = text.find_first_of(" \t\v", pos);
-		}
-
-	}
-*/
-
 }

@@ -3,17 +3,26 @@
 
 #include <boost/cstdint.hpp>
 
+#define WORD_WITH_SOURCE
 namespace spider
 {
     struct Word
     {
-		typedef boost::uint32_t RawType;
-		RawType _value;
+		typedef boost::uint32_t ValueType;
+		typedef float WeightType;
+#ifdef WORD_WITH_SOURCE
+		std::string _text;
+#endif
+		ValueType	_value;
+		WeightType	_weight;
 
-		Word(RawType value)
-			: _value(value)
-		{
-		}
+		Word(const std::string &text);
+		Word(const std::string &text, WeightType weight);
+
+		bool operator<(const Word &w) const;
+
+	private:
+		void evalValue(const std::string &text);
     };
 }
 

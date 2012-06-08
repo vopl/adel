@@ -16,6 +16,7 @@ set(INC
 	${PINC}/aton.hpp
 	${PINC}/xton.hpp
 	${PINC}/variant.hpp
+	${PINC}/htmlEntities.hpp
 )
 source_group(include FILES ${INC})
 
@@ -27,6 +28,7 @@ set(SRC
 	${PSRC}/variant.cpp
 	${PSRC}/variantLoad.cpp
 	${PSRC}/variantLoadScope.cpp
+	${PSRC}/htmlEntities.cpp
 )
 source_group(src FILES ${SRC})
 
