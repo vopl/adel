@@ -34,7 +34,7 @@ string CharsetConverter::convert(const string &input)
 
 	size_t ret;
 	while (1) {
-		ret = iconv(mIconvDescriptor, const_cast<char**>(&inbuf), &inbytesleft, &outbuf, &outbytesleft);
+		ret = iconv(mIconvDescriptor, const_cast<const char**>(&inbuf), &inbytesleft, &outbuf, &outbytesleft);
 		if (ret == 0) break;
 		if (ret == (size_t)-1 && errno == E2BIG) return string();
 

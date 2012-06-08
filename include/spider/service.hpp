@@ -34,14 +34,15 @@ namespace spider
 		void processLoop();
 		void processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant url);
 
-		void parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &urls);
+		void parse(http::client::Response resp, const std::string &baseUrlString, std::deque<Uri> &urls);
 
-		struct Word
+		/*struct Word
 		{
 			static const size_t _meansAmount = 5;
 			boost::uint32_t _means[_meansAmount];
 		};
 		void processWords(const std::string &text, std::deque<Word> &words);
+		*/
 
 	private:
 		http::Client _htc;

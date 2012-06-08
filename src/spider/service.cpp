@@ -2,14 +2,24 @@
 #include "spider/service.hpp"
 #include "spider/log.hpp"
 
+#include "spider/textParser.hpp"
+#include "spider/phraseStreamer.hpp"
+
 #include <boost/bind.hpp>
 #include <boost/foreach.hpp>
 #include <boost/chrono.hpp>
 #include <boost/crc.hpp>
+#include <boost/algorithm/string.hpp>
 
 #include "htmlcxx/html/ParserDom.h"
+#include "htmlcxx/html/CharsetConverter.h"
 
-#include "hunspell.hxx"
+#ifdef near
+#	undef near
+#endif
+#include <hunspell.hxx>
+
+#include <iconv.h>
 
 
 
@@ -43,12 +53,12 @@ namespace spider
 
 		options->addOption(
 			"hunspell.affpath",
-			boost::program_options::value<std::string>()->default_value("../spell"),
+			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.aff"),
 			"hunspell aff path");
 
 		options->addOption(
 			"hunspell.dicpath",
-			boost::program_options::value<std::string>()->default_value("../spell"),
+			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.dic"),
 			"hunspell dic path");
 
 		return options;
@@ -138,6 +148,8 @@ namespace spider
 	//////////////////////////////////////////////////////////////////////////
 	void Service::processLoop()
 	{
+		async::spawn(boost::bind(&Service::processOne, this, 0, 0, "http://127.0.0.1:8080/test.html"));
+		return;
 		for(;;)
 		{
 			//контроль окончания
@@ -347,7 +359,7 @@ namespace spider
 
 		//parse
 		std::deque<Uri> uris;
-		parse(resp.body(), uri.as<std::string>(), uris);
+		parse(resp, uri.as<std::string>(), uris);
 
 		//store urls
 		pgc::Connection c = _db.allocConnection();
@@ -454,8 +466,34 @@ namespace spider
 		_evtWorkerDone.set();
 	}
 
+	namespace
+	{
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentType(const std::string &contentType)
+		{
+			boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+
+			std::string::size_type pos = contentType.find("charset=");
+			if(std::string::npos != pos)
+			{
+				std::string charset(contentType.begin()+pos+8, contentType.end());
+
+				charset = iconv_canonicalize(charset.data());
+
+				cc.reset(new htmlcxx::CharsetConverter(charset, "UTF-8//IGNORE"));
+
+				if(!cc->isOk())
+				{
+					cc.reset();
+				}
+
+				return cc;
+			}
+			return cc;
+		}
+	}
+
 	//////////////////////////////////////////////////////////////////////////
-	void Service::parse(http::InputMessage::Segment text, const std::string &baseUrlString, std::deque<Uri> &uris)
+	void Service::parse(http::client::Response resp, const std::string &baseUrlString, std::deque<Uri> &uris)
 	{
 	
 		//искать <a href="...
@@ -467,17 +505,48 @@ namespace spider
 		}
 
 		HTML::ParserDom parser;
-		parser.parse(text.begin(), text.end());
+		parser.parse(resp.body().begin(), resp.body().end());
 		const tree<HTML::Node> &tr = parser.getTree();
 		
 		//выявить кодировку из заголовков, meta html
 		//сформировать конвертор в utf-8 если нужен
+		boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+		const http::InputMessage::Segment *cts = resp.header(http::hn::contentType);
+		if(cts)
+		{
+			cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
+		}
+
+		if(!cc)
+		{
+			tree<HTML::Node>::iterator iter = tr.begin();
+			tree<HTML::Node>::iterator end = tr.end();
+			for(; iter!=end; ++iter)
+			{
+				HTML::Node &n = *iter;
+				if(n.isTag())
+				{
+					if(boost::algorithm::iequals(n.tagName(), "meta"))
+					{
+						n.parseAttributes();
+						if(boost::algorithm::iequals(n.attribute("http-equiv").second, "Content-Type"))
+						{
+							cc = convertorFromContentType(n.attribute("content").second);
+							if(cc)
+							{
+								break;
+							}
+						}
+					}
+				}
+			}
+		}
 
 		tree<HTML::Node>::iterator iter = tr.begin();
 		tree<HTML::Node>::iterator end = tr.end();
 
 		{
-			TextParser parser;
+			TextParser parser((Hunspell *)_hunspell);
 			for(; iter!=end; ++iter)
 			{
 				const HTML::Node &n = *iter;
@@ -502,12 +571,24 @@ namespace spider
 					{
 						//конвертировать в utf-8 если есть конвертор
 						//нормализовать символы (бин, html-entities)
-						parser.push(n.text());
+
+						if(!n.text().empty())
+						{
+							if(cc)
+							{
+								parser.push(cc->convert(n.text()));
+							}
+							else
+							{
+								parser.push(n.text());
+							}
+						}
 					}
 				}
 			}
 			
-			PhraseStreamer<1> streamer1(parser.words());
+			const size_t tmpl1[1] = {0};
+			PhraseStreamer<1> streamer1(parser.result(), tmpl1);
 			Phrase<1> phrase1;
 			while(!streamer1.next(phrase1))
 			{
@@ -515,7 +596,8 @@ namespace spider
 				assert(0);
 			}
 			
-			PhraseStreamer<2> streamer2(parser.words());
+			const size_t tmpl2[2] = {0,0};
+			PhraseStreamer<2> streamer2(parser.result(), tmpl2);
 			Phrase<2> phrase2;
 			while(!streamer2.next(phrase2))
 			{
@@ -524,7 +606,7 @@ namespace spider
 			}
 			
 		}
-
+/*
 		std::deque<Word> words;
 		for(; iter!=end; ++iter)
 		{
@@ -553,8 +635,9 @@ namespace spider
 			}
 
 		}
+*/
 	}
-
+/*
 	namespace
 	{
 		boost::uint32_t hashWord(const char *src)
@@ -568,7 +651,9 @@ namespace spider
 			return result.checksum();
 		}
 	}
+*/
 
+/*
 	//////////////////////////////////////////////////////////////////////////
 	void Service::processWords(const std::string &text, std::deque<Word> &words)
 	{
@@ -659,6 +744,6 @@ namespace spider
 		}
 
 	}
-
+*/
 
 }

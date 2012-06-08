@@ -7,6 +7,10 @@
 #include <boost/signals2.hpp>
 #include <boost/asio/io_service.hpp>
 #include <boost/function.hpp>
+#include <boost/bind.hpp>
+#include <boost/foreach.hpp>
+#include <boost/chrono.hpp>
+#include <boost/crc.hpp>
 
 #include <iostream>
 #include <string>

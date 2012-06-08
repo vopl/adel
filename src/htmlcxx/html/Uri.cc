@@ -121,6 +121,7 @@ Uri::Uri(const string &uri_str)
 
 void Uri::init(const string &uri_str)
 {
+	_isOk = true;
 	DEBUGP("Parsing uri %s\n", uri_str.c_str());
 
 	if(uri_str.empty()) return;
