@@ -185,13 +185,19 @@ namespace spider
 			pgc::Result res;
 
 #define CHECK_PGR(...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg());return;}}
-			CHECK_PGR(c.query("BEGIN"));
-			CHECK_PGR(c.query("LOCK TABLE site"));
-			CHECK_PGR(c.query("LOCK TABLE page"));
+
+			_stBegin = pgc::Statement("BEGIN");
+			_stCommit = pgc::Statement("COMMIT");
+			_stRollback = pgc::Statement("ROLLBACK");
+			_stLockSite = pgc::Statement("LOCK TABLE site");
+			_stLockPage = pgc::Statement("LOCK TABLE page");
+
+			CHECK_PGR(c.query(_stBegin));
+			CHECK_PGR(c.query(_stLockSite));
+			CHECK_PGR(c.query(_stLockPage));
 
 			//выбрать страницы
-			res = c.query(
-				"SELECT "
+			_stSelectPages4Process = pgc::Statement("SELECT "
 				"	DISTINCT ON(log(s.amount_page_new)*s.priority, s.id)"
 				"	s.id AS site_id, p.id AS page_id, p.uri "
 				"FROM"
@@ -206,32 +212,36 @@ namespace spider
 				"	s.id ASC "
 				"LIMIT"
 				"	10 "
-				" ").data();
+				" ");
+
+			res = c.query(_stSelectPages4Process).data();
 
 			CHECK_PGR(res);
 
 
 			if(res.rows())
 			{
-				utils::Variant hostId;
+				utils::Variant siteId;
 				utils::Variant pageId;
 				utils::Variant pageUrl;
 				for(size_t hrow(0); hrow < res.rows(); hrow++)
 				{
-					res.fetch(hostId, 0, hrow);
+					res.fetch(siteId, 0, hrow);
 					res.fetch(pageId, 1, hrow);
 					res.fetch(pageUrl, 2, hrow);
 
-					CHECK_PGR(c.query("UPDATE site SET atime=CURRENT_TIMESTAMP WHERE id=$1", hostId));
-					CHECK_PGR(c.query("UPDATE page SET atime=CURRENT_TIMESTAMP, status='pend' WHERE id=$1", pageId));
+					_stUpdateSiteTime = pgc::Statement("UPDATE site SET time_access=CURRENT_TIMESTAMP WHERE id=$1::bigint");
+					CHECK_PGR(c.query(_stUpdateSiteTime, siteId));
+					_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
+					CHECK_PGR(c.query(_stUpdatePageStatus, MVA(pageId, "pend")));
 
-					async::spawn(boost::bind(&Service::processOne, this, hostId, pageId, pageUrl));
+					async::spawn(boost::bind(&Service::processOne, this, siteId, pageId, pageUrl));
 				}
-				CHECK_PGR(c.query("COMMIT"));
+				CHECK_PGR(c.query(_stCommit));
 			}
 			else
 			{
-				CHECK_PGR(c.query("ROLLBACK"));
+				CHECK_PGR(c.query(_stRollback));
 				c.reset();
 
 				async::timeout(1000).wait();
@@ -296,10 +306,11 @@ namespace spider
 
 		boost::chrono::milliseconds getTime = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::system_clock::now() - start);
 
+		pgc::Connection c = _db.allocConnection();
 		if(ec)
 		{
 			WLOG("get: "<<ec<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(_db.allocConnection().data().query("UPDATE page SET status='get failed' WHERE id=$1", pageId));
+			CHECK_PGR(c.query("_stUpdatePageStatus", utils::MVA(pageId, "get failed")));
 			return;
 		}
 
@@ -308,17 +319,16 @@ namespace spider
 		{
 
 			WLOG("read headers: "<<ec<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(_db.allocConnection().data().query("UPDATE page SET status='read failed' WHERE id=$1", pageId));
+			CHECK_PGR(c.query("_stUpdatePageStatus", utils::MVA(pageId, "read headers failed")));
 			return;
 		}
 
-		pgc::Connection c = _db.allocConnection();
 
 		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
 		if(length.isCorrect() && length.value() > 1024*1024)
 		{
 			WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(c.query("UPDATE page SET status='too big' WHERE id=$1", pageId));
+			CHECK_PGR(c.query("_stUpdatePageStatus", utils::MVA(pageId, "too big")));
 			return;
 		}
 
@@ -326,7 +336,7 @@ namespace spider
 		if(!isGoodContentType(contentType))
 		{
 			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(c.query("UPDATE page SET status='bad ct' WHERE id=$1", pageId));
+			CHECK_PGR(c.query("_stUpdatePageStatus", utils::MVA(pageId, "bad content type")));
 			return;
 		}
 
@@ -335,7 +345,7 @@ namespace spider
 		{
 
 			WLOG("read body: "<<ec<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(c.query("UPDATE page SET status='read body failed' WHERE id=$1", pageId));
+			CHECK_PGR(c.query("_stUpdatePageStatus", utils::MVA(pageId, "read body failed")));
 			return;
 		}
 
@@ -349,11 +359,12 @@ namespace spider
 
 
 
-		CHECK_PGR(c.query("BEGIN"));
-		CHECK_PGR(c.query("LOCK TABLE site"));
-		CHECK_PGR(c.query("LOCK TABLE page"));
+		CHECK_PGR(c.query(_stBegin));
+		CHECK_PGR(c.query(_stLockSite));
+		CHECK_PGR(c.query(_stLockPage));
 
-		CHECK_PGR(c.query("UPDATE host SET address=$2 WHERE id=$1",
+		_stUpdatePageAddress = pgc::Statement("UPDATE site SET address=$2 WHERE id=$1");
+		CHECK_PGR(c.query(_stUpdatePageAddress,
 			utils::MVA(hostId,
 				resp.channel().endpointRemote().address().to_string(ec))));
 
@@ -374,34 +385,40 @@ namespace spider
 			utils::Variant hostId2;
 			utils::Variant pageId2;
 
-			pgc::Result res = c.query("SELECT id FROM site WHERE name=$1", u.hostname());
+			_stSelectSiteIdWhereName = pgc::Statement("SELECT id FROM site WHERE name=$1");
+			pgc::Result res = c.query(_stSelectSiteIdWhereName, u.hostname());
 			CHECK_PGR(res);
 
 			if(!res.rows())
 			{
-				res = c.query("INSERT INTO site (name, time_access) VALUES ($1, CURRENT_TIMESTAMP)", u.hostname());
+				_stInsertSite = pgc::Statement("INSERT INTO site (name, time_access) VALUES ($1, CURRENT_TIMESTAMP)");
+				res = c.query(_stInsertSite, u.hostname());
 				CHECK_PGR(res);
 
-				res = c.query("SELECT id FROM site WHERE name=$1", u.hostname());
+				res = c.query(_stSelectSiteIdWhereName, u.hostname());
 				CHECK_PGR(res);
 			}
 			res.fetch(hostId2, 0,0);
 
-			res = c.query("SELECT id FROM page WHERE uri=$1", uri);
+			_stSelectPageIdWhereUri = pgc::Statement("SELECT id FROM page WHERE uri=$1");
+			res = c.query(_stSelectPageIdWhereUri, uri);
 			CHECK_PGR(res);
 
 			if(!res.rows())
 			{
-				res = c.query("UPDATE site SET "
+				_stUpdateSite = pgc::Statement("UPDATE site SET "
 					"amount_page_new=amount_page_new+1,"
 					"amount_page_all=amount_page_all+1 "
-					"WHERE id=$1", hostId2);
+					"WHERE id=$1");
+
+				res = c.query(_stUpdateSite, hostId2);
 				CHECK_PGR(res);
 
-				res = c.query("INSERT INTO page (site_id, uri) VALUES ($1, $2)", utils::MVA(hostId2, uri));
+				_stInsertPage = pgc::Statement("INSERT INTO page (site_id, uri) VALUES ($1, $2)");
+				res = c.query(_stInsertPage, utils::MVA(hostId2, uri));
 				CHECK_PGR(res);
 
-				res = c.query("SELECT currval('page_id_seq'::regclass) AS id");
+				res = c.query(_stSelectPageIdWhereUri, uri);
 				CHECK_PGR(res);
 
 				res.fetch(pageId2, 0,0);
@@ -410,12 +427,15 @@ namespace spider
 			{
 				res.fetch(pageId2, 0,0);
 			}
-			res = c.query("INSERT INTO reference (from_id, to_id) VALUES ($1, $2)", utils::MVA(pageId, pageId2));
+			_stInsertReference = pgc::Statement("INSERT INTO reference (from_id, to_id) VALUES ($1, $2)");
+			res = c.query(_stInsertReference, utils::MVA(pageId, pageId2));
 			CHECK_PGR(res);
 		}
 
 		updatePageWords(c, pageId, wordBuckets);
-		pgc::Result res = c.query("UPDATE page SET status=$2, get_time=$3, body_length=$4, headers=$5 WHERE id=$1",
+
+		_stUpdatePage = pgc::Statement("UPDATE page SET status=$2, get_time=$3, body_length=$4, headers=$5 WHERE id=$1");
+		pgc::Result res = c.query(_stUpdatePage,
 			utils::MVA(
 				pageId,
 				std::string(resp.firstLine().begin(), resp.firstLine().end()),
@@ -427,7 +447,7 @@ namespace spider
 		TLOG("processed: ("<<_numWorkers<<") "<<uri.as<std::string>());
 
 
-		CHECK_PGR(c.query("COMMIT"));
+		CHECK_PGR(c.query(_stCommit));
 	}
 
 	namespace
@@ -618,40 +638,46 @@ namespace spider
 	///////////////////////////////////////////////////////////////////////////////////
 	void Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
 	{
-		pgc::Result res = c.query("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3", utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+		_stSelectWord3Id = pgc::Statement("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3");
+		pgc::Result res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
 		CHECK_PGR(res);
 
 		if(!res.rows())
 		{
-			res = c.query("INSERT INTO word3 (word1, word2, word3) VALUES ($1,$2,$3)", utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+			_stInsertWord3 = pgc::Statement("INSERT INTO word3 (word1, word2, word3) VALUES ($1,$2,$3)");
+			res = c.query(_stInsertWord3, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
 			CHECK_PGR(res);
-			res = c.query("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3", utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+			res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
 			CHECK_PGR(res);
 		}
 		utils::Variant word3_id;
 		res.fetch(word3_id, 0, 0);
 
-		res = c.query("INSERT INTO word3_to_page (word3_id, page_id) VALUES ($1,$2)", utils::MVA(word3_id, pageId));
+		_stInsertWord3ToPage = pgc::Statement("INSERT INTO word3_to_page (word3_id, page_id) VALUES ($1,$2)");
+		res = c.query(_stInsertWord3ToPage, utils::MVA(word3_id, pageId));
 		CHECK_PGR(res);
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
 	void Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
 	{
-		pgc::Result res = c.query("SELECT id FROM word2 WHERE word1=$1 AND word2=$2", utils::MVA(words[0]->_value,words[1]->_value));
+		_stSelectWord2Id = pgc::Statement("SELECT id FROM word2 WHERE word1=$1 AND word2=$2");
+		pgc::Result res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
 		CHECK_PGR(res);
 
 		if(!res.rows())
 		{
-			res = c.query("INSERT INTO word2 (word1, word2) VALUES ($1,$2)", utils::MVA(words[0]->_value,words[1]->_value));
+			_stInsertWord2 = pgc::Statement("INSERT INTO word2 (word1, word2) VALUES ($1,$2)");
+			res = c.query(_stInsertWord2, utils::MVA(words[0]->_value,words[1]->_value));
 			CHECK_PGR(res);
-			res = c.query("SELECT id FROM word3 WHERE word1=$1 AND word2=$2", utils::MVA(words[0]->_value,words[1]->_value));
+			res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
 			CHECK_PGR(res);
 		}
 		utils::Variant word2_id;
 		res.fetch(word2_id, 0, 0);
 
-		res = c.query("INSERT INTO word2_to_page (word2_id, page_id) VALUES ($1,$2)", utils::MVA(word2_id, pageId));
+		_stInsertWord2ToPage = pgc::Statement("INSERT INTO word2_to_page (word2_id, page_id) VALUES ($1,$2)");
+		res = c.query(_stInsertWord2ToPage, utils::MVA(word2_id, pageId));
 		CHECK_PGR(res);
 	}
 

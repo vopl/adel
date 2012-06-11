@@ -78,6 +78,37 @@ namespace spider
 		}
 
 	private:
+		pgc::Statement	_stBegin;
+		pgc::Statement	_stCommit;
+		pgc::Statement	_stRollback;
+
+		pgc::Statement	_stLockSite;
+		pgc::Statement	_stLockPage;
+
+		pgc::Statement	_stSelectPages4Process;
+		pgc::Statement	_stUpdateSiteTime;
+		pgc::Statement	_stUpdatePageAddress;
+		pgc::Statement	_stUpdatePageStatus;
+
+		pgc::Statement	_stSelectSiteIdWhereName;
+		pgc::Statement	_stInsertSite;
+		pgc::Statement	_stSelectPageIdWhereUri;
+		pgc::Statement	_stUpdateSite;
+		pgc::Statement	_stInsertPage;
+
+		pgc::Statement	_stInsertReference;
+		pgc::Statement	_stUpdatePage;
+
+		pgc::Statement	_stSelectWord3Id;
+		pgc::Statement	_stInsertWord3;
+		pgc::Statement	_stInsertWord3ToPage;
+
+		pgc::Statement	_stSelectWord2Id;
+		pgc::Statement	_stInsertWord2;
+		pgc::Statement	_stInsertWord2ToPage;
+
+
+	private:
 		http::Client _htc;
 
 		std::string	_pgc_connectionString;
