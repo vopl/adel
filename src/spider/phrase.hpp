@@ -60,7 +60,7 @@ namespace spider
 	size_t Phrase<volume>::getCombinationsAmount() const
 	{
 		size_t amount = 0;
-		for(size_t i(0); i<volume, i++)
+		for(size_t i(0); i<volume; i++)
 		{
 			assert(_buckets[i]);
 			amount += _buckets[i]->_words.size();

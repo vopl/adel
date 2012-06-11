@@ -22,7 +22,7 @@ namespace spider
 	//////////////////////////////////////////////////////////////////////////
 	void TextParser::push(const std::string &text)
 	{
-		//нормализовать, разбить по словам
+		//РЅРѕСЂРјР°Р»РёР·РѕРІР°С‚СЊ, СЂР°Р·Р±РёС‚СЊ РїРѕ СЃР»РѕРІР°Рј
 		size_t bufSize = text.size()*3+16;
 		boost::shared_array<int32_t> buf(new int32_t[bufSize]);
 		bufSize = utf8proc_decompose((const uint8_t *)text.data(), text.length(), buf.get(), bufSize, UTF8PROC_IGNORE|UTF8PROC_STABLE|UTF8PROC_REJECTNA|UTF8PROC_LUMP);
@@ -230,7 +230,7 @@ namespace spider
 
 		means.insert(Word(word.c_str(), 0.7f));
 
-		//слить
+		//СЃР»РёС‚СЊ
 		{
 			std::set<Word>::iterator iter = means.begin();
 			std::set<Word>::iterator end = means.end();
@@ -241,7 +241,7 @@ namespace spider
 			{
 				wb._words.push_back(*iter);
 			}
-			//std::sort(wb._words.begin(), wb._words.end());//уже бали отсортированы когда попали в множество
+			//std::sort(wb._words.begin(), wb._words.end());//СѓР¶Рµ Р±Р°Р»Рё РѕС‚СЃРѕСЂС‚РёСЂРѕРІР°РЅС‹ РєРѕРіРґР° РїРѕРїР°Р»Рё РІ РјРЅРѕР¶РµСЃС‚РІРѕ
 			_data.push_back(wb);
 		}
 

@@ -13,6 +13,7 @@
 
 #include "htmlcxx/html/ParserDom.h"
 #include "htmlcxx/html/CharsetConverter.h"
+#include "htmlcxx/html/utils.h"
 
 #include "utils/htmlEntities.hpp"
 
@@ -492,35 +493,21 @@ namespace spider
 			}
 			return cc;
 		}
-	}
 
-	//////////////////////////////////////////////////////////////////////////
-	void Service::parse(http::client::Response resp, const std::string &baseUrlString, std::deque<Uri> &uris)
-	{
-	
-		//искать <a href="...
-		Uri base(baseUrlString);
-		if(!base.isOk())
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentTypeOrDom(
+			const http::InputMessage::Segment *cts,
+			const tree<HTML::Node> &tr)
 		{
-			assert(0);
-			return;
-		}
+			if(cts)
+			{
+				boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+				cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
+				if(cc && cc->isOk())
+				{
+					return cc;
+				}
+			}
 
-		HTML::ParserDom parser;
-		parser.parse(resp.body().begin(), resp.body().end());
-		const tree<HTML::Node> &tr = parser.getTree();
-		
-		//выявить кодировку из заголовков, meta html
-		//сформировать конвертор в utf-8 если нужен
-		boost::shared_ptr<htmlcxx::CharsetConverter> cc;
-		const http::InputMessage::Segment *cts = resp.header(http::hn::contentType);
-		if(cts)
-		{
-			cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
-		}
-
-		if(!cc)
-		{
 			tree<HTML::Node>::iterator iter = tr.begin();
 			tree<HTML::Node>::iterator end = tr.end();
 			for(; iter!=end; ++iter)
@@ -533,36 +520,85 @@ namespace spider
 						n.parseAttributes();
 						if(boost::algorithm::iequals(n.attribute("http-equiv").second, "Content-Type"))
 						{
+							boost::shared_ptr<htmlcxx::CharsetConverter> cc;
 							cc = convertorFromContentType(n.attribute("content").second);
-							if(cc)
+							if(cc && cc->isOk())
 							{
-								break;
+								return cc;
 							}
 						}
 					}
 				}
 			}
+			return boost::shared_ptr<htmlcxx::CharsetConverter>();
 		}
 
+
+
+		std::map<std::string, bool> init_skipTextInTag()
+		{
+			std::map<std::string, bool> res;
+			res["script"] = true;
+			res["style"] = true;
+			res["meta"] = true;
+
+			return res;
+		}
+		std::map<std::string, bool> map_skipTextInTag = init_skipTextInTag();
+
+		bool skipTextInTag(const std::string &tagName)
+		{
+			std::string lowerTagName = tagName;
+			boost::algorithm::to_lower(lowerTagName);
+			return map_skipTextInTag.end() != map_skipTextInTag.find(lowerTagName);
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::parse(http::client::Response resp, const std::string &baseUrlString, std::deque<Uri> &uris)
+	{
+	
+		//подготовить базовый урл
+		Uri base(baseUrlString);
+		if(!base.isOk())
+		{
+			assert(0);
+			return;
+		}
+
+		//парсить dom
+		HTML::ParserDom parser;
+		parser.parse(resp.body().begin(), resp.body().end());
+		const tree<HTML::Node> &tr = parser.getTree();
+		
+		//выявить кодировку из заголовков, meta html
+		//сформировать конвертор в utf-8 если нужен
+		boost::shared_ptr<htmlcxx::CharsetConverter> cc =
+			convertorFromContentTypeOrDom(resp.header(http::hn::contentType), tr);
+
+		//перебирать ноды, перерабатывать каждую
 		tree<HTML::Node>::iterator iter = tr.begin();
 		tree<HTML::Node>::iterator end = tr.end();
+		tree<HTML::Node>::iterator parent;
 
 		{
 			TextParser parser((Hunspell *)_hunspell);
 			for(; iter!=end; ++iter)
 			{
-				const HTML::Node &n = *iter;
+				HTML::Node &n = *iter;
 				if(n.isTag())
 				{
-					if("A" == n.tagName())
+					if(boost::algorithm::iequals(n.tagName(), "a"))
 					{
+						n.parseAttributes();
 						std::pair<bool, std::string> p = n.attribute("href");
 						if(p.first)
 						{
-							Uri uri(p.second);
+
+							Uri uri(HTML::convert_link(p.second, base));
 							if(uri.isOk())
 							{
-								uris.push_back(uri.absolute(base));
+								uris.push_back(uri);
 							}
 						}
 					}
@@ -574,6 +610,12 @@ namespace spider
 
 						if(!n.text().empty())
 						{
+							parent = tr.parent(iter);
+							if(parent != tr.end() && parent->isTag() && skipTextInTag(parent->tagName()))
+							{
+								continue;
+							}
+
 							//конвертировать в utf-8 если есть конвертор
 							//декодировать html-entities
 							if(cc)
@@ -595,7 +637,7 @@ namespace spider
 				std::map<Word, double> weights_w;
 
 				std::cout<<"phrase streamer \n";
-				PhraseStreamer<3,1,1> streamer(&parser.result());
+				PhraseStreamer<3,0,0> streamer(&parser.result());
 				Phrase<3> phrase;
 				while(streamer.next(phrase))
 				{
