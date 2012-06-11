@@ -18,7 +18,7 @@ namespace spider
     class TextParser
     {
     public:
-		TextParser(Hunspell *hunspell);
+		TextParser(Hunspell *hunspell, std::deque<WordBucket> &wordBuckets);
 		~TextParser();
 
 		void push(const std::string &text);
@@ -32,7 +32,7 @@ namespace spider
 
 	private:
 		Hunspell *_hunspell;
-		std::deque<WordBucket> _data;
+		std::deque<WordBucket> &_data;
     };
 }
 

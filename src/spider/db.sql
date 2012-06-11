@@ -1,144 +1,385 @@
--- Database: spider
+--
+-- PostgreSQL database dump
+--
 
--- DROP DATABASE spider;
+SET statement_timeout = 0;
+SET client_encoding = 'UTF8';
+SET standard_conforming_strings = on;
+SET check_function_bodies = false;
+SET client_min_messages = warning;
 
-CREATE DATABASE spider
-  WITH OWNER = spider
-       ENCODING = 'UTF8'
-       TABLESPACE = pg_default
-       LC_COLLATE = 'C'
-       LC_CTYPE = 'C'
-       CONNECTION LIMIT = -1;
+--
+-- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
+--
 
--- Table: host
+CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
 
--- DROP TABLE host;
 
-CREATE TABLE host
-(
-  id bigserial NOT NULL,
-  name character varying,
-  atime timestamp without time zone,
-  new_pages_count bigint NOT NULL DEFAULT 0,
-  address character varying,
-  CONSTRAINT host_pkey PRIMARY KEY (id )
-)
-WITH (
-  OIDS=FALSE
+--
+-- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
+--
+
+COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
+
+
+SET search_path = public, pg_catalog;
+
+SET default_tablespace = '';
+
+SET default_with_oids = false;
+
+--
+-- Name: page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE page (
+    id bigint NOT NULL,
+    site_id bigint,
+    uri character varying,
+    body_length bigint,
+    headers character varying,
+    status character varying
 );
-ALTER TABLE host
-  OWNER TO spider;
 
--- Index: host_name_idx
 
--- DROP INDEX host_name_idx;
+ALTER TABLE public.page OWNER TO spider;
 
-CREATE INDEX host_name_idx
-  ON host
-  USING btree
-  (name COLLATE pg_catalog."default" );
+--
+-- Name: page_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+--
 
--- Index: host_new_pages_count_idx
+CREATE SEQUENCE page_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP INDEX host_new_pages_count_idx;
 
-CREATE INDEX host_new_pages_count_idx
-  ON host
-  USING btree
-  (new_pages_count );
+ALTER TABLE public.page_id_seq OWNER TO spider;
 
--- Table: page
+--
+-- Name: page_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+--
 
--- DROP TABLE page;
+ALTER SEQUENCE page_id_seq OWNED BY page.id;
 
-CREATE TABLE page
-(
-  id bigserial NOT NULL,
-  host_id bigint,
-  url character varying,
-  atime timestamp without time zone,
-  status character varying,
-  count bigint NOT NULL DEFAULT 0,
-  get_time bigint,
-  body_length bigint,
-  headers character varying,
-  CONSTRAINT page_pkey PRIMARY KEY (id ),
-  CONSTRAINT hostref FOREIGN KEY (host_id)
-      REFERENCES host (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
-)
-WITH (
-  OIDS=FALSE
+
+--
+-- Name: page_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+--
+
+SELECT pg_catalog.setval('page_id_seq', 1, false);
+
+
+--
+-- Name: reference; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE reference (
+    id bigint NOT NULL,
+    from_id bigint,
+    to_id bigint NOT NULL
 );
-ALTER TABLE page
-  OWNER TO spider;
 
--- Index: fki_hostref
 
--- DROP INDEX fki_hostref;
+ALTER TABLE public.reference OWNER TO spider;
 
-CREATE INDEX fki_hostref
-  ON page
-  USING btree
-  (host_id );
+--
+-- Name: reference_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+--
 
--- Index: page_atime_idx
+CREATE SEQUENCE reference_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
 
--- DROP INDEX page_atime_idx;
 
-CREATE INDEX page_atime_idx
-  ON page
-  USING btree
-  (atime );
+ALTER TABLE public.reference_id_seq OWNER TO spider;
 
--- Index: page_status_idx
+--
+-- Name: reference_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+--
 
--- DROP INDEX page_status_idx;
+ALTER SEQUENCE reference_id_seq OWNED BY reference.id;
 
-CREATE INDEX page_status_idx
-  ON page
-  USING btree
-  (status COLLATE pg_catalog."default" );
 
--- Index: page_url_idx
+--
+-- Name: reference_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+--
 
--- DROP INDEX page_url_idx;
+SELECT pg_catalog.setval('reference_id_seq', 1, false);
 
-CREATE INDEX page_url_idx
-  ON page
-  USING btree
-  (url COLLATE pg_catalog."default" );
 
--- Table: reference
+--
+-- Name: site; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
 
--- DROP TABLE reference;
-
-CREATE TABLE reference
-(
-  id bigserial NOT NULL,
-  from_id bigint,
-  to_id bigserial NOT NULL,
-  CONSTRAINT reference_pkey PRIMARY KEY (id ),
-  CONSTRAINT cnstr_from FOREIGN KEY (from_id)
-      REFERENCES page (id) MATCH SIMPLE
-      ON UPDATE NO ACTION ON DELETE NO ACTION
-)
-WITH (
-  OIDS=FALSE
+CREATE TABLE site (
+    id bigint NOT NULL,
+    name character varying NOT NULL,
+    address character varying NOT NULL,
+    priority double precision DEFAULT 1.0 NOT NULL,
+    amount_ref_incoming integer DEFAULT 0 NOT NULL,
+    amount_ref_outgoing integer DEFAULT 0 NOT NULL,
+    amount_page_all integer DEFAULT 0 NOT NULL,
+    amount_page_new integer DEFAULT 0 NOT NULL,
+    amount_page_update integer DEFAULT 0 NOT NULL,
+    amount_page_dead integer DEFAULT 0 NOT NULL,
+    time_per_page interval DEFAULT '00:00:10'::interval NOT NULL,
+    time_access timestamp without time zone DEFAULT now() NOT NULL
 );
-ALTER TABLE reference
-  OWNER TO spider;
 
--- Index: fki_cnstr_from
 
--- DROP INDEX fki_cnstr_from;
+ALTER TABLE public.site OWNER TO spider;
 
-CREATE INDEX fki_cnstr_from
-  ON reference
-  USING btree
-  (from_id );
+--
+-- Name: site_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+--
 
-------------------------
-INSERT INTO host (name, new_pages_count, atime) VALUES('127.0.0.1', 1, CURRENT_TIMESTAMP);
-INSERT INTO page (host_id, url) VALUES(1, 'http://127.0.0.1/index.html');
+CREATE SEQUENCE site_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.site_id_seq OWNER TO spider;
+
+--
+-- Name: site_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+--
+
+ALTER SEQUENCE site_id_seq OWNED BY site.id;
+
+
+--
+-- Name: site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+--
+
+SELECT pg_catalog.setval('site_id_seq', 1, false);
+
+
+--
+-- Name: word2; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE word2 (
+    id bigint NOT NULL,
+    word1 integer,
+    word2 integer
+);
+
+
+ALTER TABLE public.word2 OWNER TO spider;
+
+--
+-- Name: word2_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+--
+
+CREATE SEQUENCE word2_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.word2_id_seq OWNER TO spider;
+
+--
+-- Name: word2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+--
+
+ALTER SEQUENCE word2_id_seq OWNED BY word2.id;
+
+
+--
+-- Name: word2_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+--
+
+SELECT pg_catalog.setval('word2_id_seq', 1, false);
+
+
+--
+-- Name: word2_to_page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE word2_to_page (
+    word2_id bigint,
+    page_id bigint
+);
+
+
+ALTER TABLE public.word2_to_page OWNER TO spider;
+
+--
+-- Name: word3; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE word3 (
+    id bigint NOT NULL,
+    word1 integer,
+    word2 integer,
+    word3 integer
+);
+
+
+ALTER TABLE public.word3 OWNER TO spider;
+
+--
+-- Name: word3_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+--
+
+CREATE SEQUENCE word3_id_seq
+    START WITH 1
+    INCREMENT BY 1
+    NO MINVALUE
+    NO MAXVALUE
+    CACHE 1;
+
+
+ALTER TABLE public.word3_id_seq OWNER TO spider;
+
+--
+-- Name: word3_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+--
+
+ALTER SEQUENCE word3_id_seq OWNED BY word3.id;
+
+
+--
+-- Name: word3_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+--
+
+SELECT pg_catalog.setval('word3_id_seq', 1, false);
+
+
+--
+-- Name: word3_to_page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+--
+
+CREATE TABLE word3_to_page (
+    word3_id bigint,
+    page_id bigint
+);
+
+
+ALTER TABLE public.word3_to_page OWNER TO spider;
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+--
+
+ALTER TABLE ONLY page ALTER COLUMN id SET DEFAULT nextval('page_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+--
+
+ALTER TABLE ONLY reference ALTER COLUMN id SET DEFAULT nextval('reference_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+--
+
+ALTER TABLE ONLY site ALTER COLUMN id SET DEFAULT nextval('site_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+--
+
+ALTER TABLE ONLY word2 ALTER COLUMN id SET DEFAULT nextval('word2_id_seq'::regclass);
+
+
+--
+-- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+--
+
+ALTER TABLE ONLY word3 ALTER COLUMN id SET DEFAULT nextval('word3_id_seq'::regclass);
+
+
+--
+-- Data for Name: page; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY page (id, site_id, uri, body_length, headers, status) FROM stdin;
+\.
+
+
+--
+-- Data for Name: reference; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY reference (id, from_id, to_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY site (id, name, address, priority, amount_ref_incoming, amount_ref_outgoing, amount_page_all, amount_page_new, amount_page_update, amount_page_dead, time_per_page, time_access) FROM stdin;
+\.
+
+
+--
+-- Data for Name: word2; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY word2 (id, word1, word2) FROM stdin;
+\.
+
+
+--
+-- Data for Name: word2_to_page; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY word2_to_page (word2_id, page_id) FROM stdin;
+\.
+
+
+--
+-- Data for Name: word3; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY word3 (id, word1, word2, word3) FROM stdin;
+\.
+
+
+--
+-- Data for Name: word3_to_page; Type: TABLE DATA; Schema: public; Owner: spider
+--
+
+COPY word3_to_page (word3_id, page_id) FROM stdin;
+\.
+
+
+--
+-- Name: site_pkey; Type: CONSTRAINT; Schema: public; Owner: spider; Tablespace: 
+--
+
+ALTER TABLE ONLY site
+    ADD CONSTRAINT site_pkey PRIMARY KEY (id);
+
+
+--
+-- Name: public; Type: ACL; Schema: -; Owner: local
+--
+
+REVOKE ALL ON SCHEMA public FROM PUBLIC;
+REVOKE ALL ON SCHEMA public FROM local;
+GRANT ALL ON SCHEMA public TO local;
+GRANT ALL ON SCHEMA public TO PUBLIC;
+
+
+--
+-- PostgreSQL database dump complete
+--
 

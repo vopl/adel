@@ -36,6 +36,7 @@ namespace pgc
 
 		operator bool() const;
 		bool operator!() const;
+		void reset();
 
 		async::Future<Result> query(const char *sql);
 		async::Future<Result> query(const char *sql, const utils::Variant &data);

@@ -10,7 +10,10 @@
 #include "http/client.hpp"
 
 #include "htmlcxx/html/Uri.h"
+#include "spider/wordBucket.hpp"
+#include "spider/phraseStreamer.hpp"
 #include <deque>
+
 
 namespace spider
 {
@@ -34,7 +37,45 @@ namespace spider
 		void processLoop();
 		void processOne(utils::Variant hostId, utils::Variant pageId, utils::Variant url);
 
-		void parse(http::client::Response resp, const std::string &baseUrlString, std::deque<Uri> &urls);
+		void parse(
+			http::client::Response resp,
+			const std::string &baseUrlString,
+			std::deque<Uri> &urls,
+			std::deque<WordBucket> &wordBuckets);
+
+		void updatePageWords(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets);
+		void updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2]);
+		void updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3]);
+
+		template <class Streamer>
+		void updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
+		{
+			Phrase<2> phrase;
+			Streamer streamer(&wordBuckets);
+			while(streamer.next(phrase))
+			{
+				const Word *words[2];
+				while(phrase.nextCombination(words))
+				{
+					updatePageWords2(c, pageId, words);
+				}
+			}
+		}
+
+		template <class Streamer>
+		void updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
+		{
+			Phrase<3> phrase;
+			Streamer streamer(&wordBuckets);
+			while(streamer.next(phrase))
+			{
+				const Word *words[3];
+				while(phrase.nextCombination(words))
+				{
+					updatePageWords3(c, pageId, words);
+				}
+			}
+		}
 
 	private:
 		http::Client _htc;

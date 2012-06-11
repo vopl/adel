@@ -7,8 +7,9 @@
 namespace spider
 {
 	//////////////////////////////////////////////////////////////////////////
-	TextParser::TextParser(Hunspell *hunspell)
+	TextParser::TextParser(Hunspell *hunspell, std::deque<WordBucket> &wordBuckets)
 		: _hunspell(hunspell)
+		, _data(wordBuckets)
 	{
 
 	}
