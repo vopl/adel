@@ -84,6 +84,8 @@ namespace spider
 
 		pgc::Statement	_stLockSite;
 		pgc::Statement	_stLockPage;
+		pgc::Statement	_stLockWord2;
+		pgc::Statement	_stLockWord3;
 
 		pgc::Statement	_stSelectPages4Process;
 		pgc::Statement	_stUpdateSiteTime;

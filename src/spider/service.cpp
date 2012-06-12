@@ -100,6 +100,8 @@ namespace spider
 		_stRollback = pgc::Statement("ROLLBACK");
 		_stLockSite = pgc::Statement("LOCK TABLE site");
 		_stLockPage = pgc::Statement("LOCK TABLE page");
+		_stLockWord2 = pgc::Statement("LOCK TABLE word2");
+		_stLockWord3 = pgc::Statement("LOCK TABLE word3");
 
 		_stSelectPages4Process = pgc::Statement("SELECT "
 			"	DISTINCT ON(log(s.amount_page_new+1)*s.priority, s.id)"
@@ -246,7 +248,7 @@ namespace spider
 
 			pgc::Result res;
 
-#define CHECK_PGR(...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg());return;}}
+#define CHECK_PGR(...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(__LINE__<<", "<<r.errorMsg());return;}}
 
 			CHECK_PGR(c.query(_stBegin));
 			CHECK_PGR(c.query(_stLockSite));
@@ -254,7 +256,6 @@ namespace spider
 
 			//выбрать страницы
 			res = c.query(_stSelectPages4Process).data();
-
 			CHECK_PGR(res);
 
 
@@ -426,12 +427,17 @@ namespace spider
 				continue;
 			}
 
- 			if(u.hostnameWithPort() != "127.0.0.1:8080")
- 			{
- 				continue;
- 			}
+// 			if(u.hostname().find(".ru") == std::string::npos)
+// 			{
+// 				continue;
+// 			}
 
-			std::string uri = u.unparse(Uri::REMOVE_FRAGMENT);
+//  			if(u.hostnameWithPort() != "127.0.0.1:8080")
+//  			{
+//  				continue;
+//  			}
+
+			std::string uri = Uri::encode(Uri::decode(u.unparse(Uri::REMOVE_FRAGMENT)));
 
 			utils::Variant hostId2;
 			utils::Variant pageId2;
@@ -488,9 +494,12 @@ namespace spider
 		CHECK_PGR(res);
 
 		CHECK_PGR(c.query(_stCommit));
+		c.reset();
 
 		c = _db.allocConnection();
 		CHECK_PGR(c.query(_stBegin));
+		CHECK_PGR(c.query(_stLockWord2));
+		CHECK_PGR(c.query(_stLockWord3));
 		updatePageWords(c, pageId, wordBuckets);
 		CHECK_PGR(c.query(_stCommit));
 
@@ -671,7 +680,7 @@ namespace spider
 		updatePageWords2<PhraseStreamer<2,1> >(c, pageId, wordBuckets);
 		updatePageWords2<PhraseStreamer<2,2> >(c, pageId, wordBuckets);
 
-		updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets);
+		/*updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets);
 		updatePageWords3<PhraseStreamer<3,0,1> >(c, pageId, wordBuckets);
 		updatePageWords3<PhraseStreamer<3,0,2> >(c, pageId, wordBuckets);
 		updatePageWords3<PhraseStreamer<3,1,0> >(c, pageId, wordBuckets);
@@ -680,6 +689,7 @@ namespace spider
 		updatePageWords3<PhraseStreamer<3,2,0> >(c, pageId, wordBuckets);
 		updatePageWords3<PhraseStreamer<3,2,1> >(c, pageId, wordBuckets);
 		updatePageWords3<PhraseStreamer<3,2,2> >(c, pageId, wordBuckets);
+		*/
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////

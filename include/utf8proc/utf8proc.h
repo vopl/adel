@@ -96,6 +96,8 @@ extern "C" {
 #define UTF8PROC_CHARBOUND (1<<11)
 #define UTF8PROC_LUMP      (1<<12)
 #define UTF8PROC_STRIPMARK (1<<13)
+
+#define UTF8PROC_SKIPINVALID (1<<14)
 /*
  *  Flags being regarded by several functions in the library:
  *  NULLTERM:  The given UTF-8 input is NULL terminated.

@@ -26,7 +26,7 @@ namespace spider
 		//нормализовать, разбить по словам
 		size_t bufSize = text.size()*3+16;
 		boost::shared_array<int32_t> buf(new int32_t[bufSize]);
-		bufSize = utf8proc_decompose((const uint8_t *)text.data(), text.length(), buf.get(), bufSize, UTF8PROC_IGNORE|UTF8PROC_STABLE|UTF8PROC_REJECTNA|UTF8PROC_LUMP);
+		bufSize = utf8proc_decompose((const uint8_t *)text.data(), text.length(), buf.get(), bufSize, UTF8PROC_SKIPINVALID|UTF8PROC_STABLE|UTF8PROC_LUMP);
 
 		enum EWordType
 		{
