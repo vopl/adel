@@ -179,7 +179,7 @@ void Uri::init(const string &uri_str)
 
 	DEBUGP("Dealing with scheme\n");
 	/* find the scheme: */
-	if (!isalpha(*uri)) goto deal_with_path;
+	if (!isalpha(static_cast<unsigned char>(*uri))) goto deal_with_path;
 	s = uri;
 	while ((uri_delims[*(unsigned char *)s] & NOTEND_SCHEME) == 0) {
 		++s;
@@ -305,6 +305,15 @@ void Uri::fragment(const std::string &fragment) {
 unsigned int Uri::port() const { return mPort; }
 void Uri::port(unsigned int port) { mPort = port; }
 
+const std::string &Uri::portString() const
+{
+	return mPortStr;
+}
+void Uri::portString(const std::string &port)
+{
+	mPortStr = port;
+}
+
 static const char *default_filenames[] = { "index", "default", NULL };
 static const char *default_extensions[] = { ".html", ".htm", ".php", ".shtml", ".asp", ".cgi", NULL };
 
@@ -320,6 +329,18 @@ static unsigned short default_port_for_scheme(const char *scheme_str)
 			return scheme->default_port;
 
 	return 0;
+}
+
+std::string Uri::hostnameWithPort() const
+{
+	std::string ret = mHostname;
+
+	if (!mPortStr.empty() && !(!mScheme.empty() && mPort == default_port_for_scheme(mScheme.c_str())))
+	{
+		ret += ':';
+		ret += mPortStr;
+	}
+	return ret;
 }
 
 Uri Uri::absolute(const Uri &base) const
@@ -493,7 +514,7 @@ static size_t wwwPrefixOffset(const std::string& hostname)
 		{
 			return 4;
 		}
-		if(len > 4 && isdigit(hostname[3]) && hostname[4] == '.')
+		if(len > 4 && isdigit(static_cast<unsigned char>(hostname[3])) && hostname[4] == '.')
 		{
 			return 5;
 		}

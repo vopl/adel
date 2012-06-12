@@ -79,7 +79,7 @@ void htmlcxx::HTML::ParserSax::parse(_Iterator &begin, _Iterator &end, std::forw
 					if (!*l && strcmp(mpLiteral, "plaintext"))
 					{
 						// matched all and is not tag plaintext
-						while (isspace(*c)) ++c;
+						while (isspace(static_cast<unsigned char>(*c))) ++c;
 
 						if (*c == '>')
 						{
@@ -122,7 +122,7 @@ void htmlcxx::HTML::ParserSax::parse(_Iterator &begin, _Iterator &end, std::forw
 				++d;
 				if (d != end)
 				{
-					if (isalpha(*d))
+					if (isalpha(static_cast<unsigned char>(*d)))
 					{
 						// beginning of tag
 						if (begin != c)
@@ -145,7 +145,7 @@ void htmlcxx::HTML::ParserSax::parse(_Iterator &begin, _Iterator &end, std::forw
 
 						iterator e(d);
 						++e;
-						if (e != end && isalpha(*e))
+						if (e != end && isalpha(static_cast<unsigned char>(*e)))
 						{
 							// end of tag
 //							DEBUGP("Parsing end of tag\n");
@@ -279,7 +279,7 @@ void htmlcxx::HTML::ParserSax::parseHtmlTag(_Iterator b, _Iterator c)
 	if (is_end_tag) ++name_begin;
 
 	_Iterator name_end(name_begin);
-	while (name_end != c && isalnum(*name_end)) 
+	while (name_end != c && isalnum(static_cast<unsigned char>(*name_end))) 
 	{
 		++name_end;
 	}
@@ -330,7 +330,7 @@ htmlcxx::HTML::ParserSax::skipHtmlComment(_Iterator c, _Iterator end)
 		if (*c++ == '-' && c != end && *c == '-')
 		{
 			_Iterator d(c);
-			while (++c != end && isspace(*c));
+			while (++c != end && isspace(static_cast<unsigned char>(*c)));
 			if (c == end || *c++ == '>') break;
 			c = d;
 		}
@@ -375,7 +375,7 @@ _Iterator htmlcxx::HTML::ParserSax::skipHtmlTag(_Iterator c, _Iterator end)
 		else
 		{ // found an attribute
 			++c;
-			while (c != end && isspace(*c)) ++c;
+			while (c != end && isspace(static_cast<unsigned char>(*c))) ++c;
 
 			if (c == end) break;
 

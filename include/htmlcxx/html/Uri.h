@@ -76,6 +76,9 @@ namespace htmlcxx
 			void fragment(const std::string &fragment);
 			unsigned int port() const;
 			void port(unsigned int port);
+			const std::string &portString() const;
+			std::string hostnameWithPort() const;
+			void portString(const std::string &port);
 			bool existsFragment() const;
 			void existsFragment(bool existsFragment);
 			bool existsQuery() const;

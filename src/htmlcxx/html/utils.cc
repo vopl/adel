@@ -54,11 +54,11 @@ namespace htmlcxx {
 			string ret(str.length(), ' ');
 			
 			// Skip space at beginning
-			while (isspace(*ptr)) ++ptr;
+			while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 			
 			while (*ptr)
 			{
-				if (isspace(*ptr))
+				if (isspace(static_cast<unsigned char>(*ptr)))
 				{
 					if (first_space)
 					{
@@ -101,7 +101,7 @@ namespace htmlcxx {
 			while(1) {
 				if(!inside_comment) {
 					if(ptr  + 4 < end) {
-						if(*ptr == '<' && *(ptr+1) == '!' && *(ptr+2) =='-' && *(ptr + 3) == '-' && isspace(*(ptr + 4))) {
+						if(*ptr == '<' && *(ptr+1) == '!' && *(ptr+2) =='-' && *(ptr + 3) == '-' && isspace(static_cast<unsigned char>(*(ptr + 4)))) {
 							inside_comment = true;
 						}
 					}
@@ -319,11 +319,11 @@ namespace htmlcxx {
 				return val;
 
 			a += attr.length();
-			while (a < tag.length() && isspace(tag[a])) a++;
+			while (a < tag.length() && isspace(static_cast<unsigned char>(tag[a]))) a++;
 			if (a == tag.length() || tag[a] != '=')
 				return val;
 			a++;
-			while (a < tag.length() && isspace(tag[a])) a++;
+			while (a < tag.length() && isspace(static_cast<unsigned char>(tag[a]))) a++;
 			if (a == tag.length())
 				return val;
 
@@ -336,7 +336,7 @@ namespace htmlcxx {
 				if (b == string::npos) return val;
 				val = tag.substr(a+1, b-a-1);
 			} else {
-				while (a < tag.length() && !isspace(tag[a]) && tag[a] != '>') {
+				while (a < tag.length() && !isspace(static_cast<unsigned char>(tag[a])) && tag[a] != '>') {
 					val += tag[a++];
 				}
 			}

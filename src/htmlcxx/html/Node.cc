@@ -21,38 +21,38 @@ void Node::parseAttributes()
 	++ptr;
 
 	// Skip initial blankspace
-	while (isspace(*ptr)) ++ptr;
+	while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 
 	// Skip tagname
-	if (!isalpha(*ptr)) return;
-	while (!isspace(*ptr) && *ptr != '>') ++ptr;
+	if (!isalpha(static_cast<unsigned char>(*ptr))) return;
+	while (!isspace(static_cast<unsigned char>(*ptr)) && *ptr != '>') ++ptr;
 
 	// Skip blankspace after tagname
-	while (isspace(*ptr)) ++ptr;
+	while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 
 	while (*ptr && *ptr != '>') 
 	{
 		string key, val;
 
 		// skip unrecognized
-		while (*ptr && !isalnum(*ptr) && !isspace(*ptr)) ++ptr;
+		while (*ptr && !isalnum(static_cast<unsigned char>(*ptr)) && !isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 
 		// skip blankspace
-		while (isspace(*ptr)) ++ptr;
+		while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 
 		end = ptr;
-		while (isalnum(*end) || *end == '-') ++end;
+		while (isalnum(static_cast<unsigned char>(*end)) || *end == '-') ++end;
 		key.assign(end - ptr, '\0');
 		transform(ptr, end, key.begin(), ::tolower);
 		ptr = end;
 
 		// skip blankspace
-		while (isspace(*ptr)) ++ptr;
+		while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 
 		if (*ptr == '=') 
 		{
 			++ptr;
-			while (isspace(*ptr)) ++ptr;
+			while (isspace(static_cast<unsigned char>(*ptr))) ++ptr;
 			if (*ptr == '"' || *ptr == '\'') 
 			{
 				char quote = *ptr;
@@ -69,16 +69,16 @@ void Node::parseAttributes()
 					if (end == 0) return;
 				}
 				const char *begin = ptr + 1;
-				while (isspace(*begin) && begin < end) ++begin;
+				while (isspace(static_cast<unsigned char>(*begin)) && begin < end) ++begin;
 				const char *trimmed_end = end - 1;
-				while (isspace(*trimmed_end) && trimmed_end >= begin) --trimmed_end;
+				while (isspace(static_cast<unsigned char>(*trimmed_end)) && trimmed_end >= begin) --trimmed_end;
 				val.assign(begin, trimmed_end + 1);
 				ptr = end + 1;
 			}
 			else 
 			{
 				end = ptr;
-				while (*end && !isspace(*end) && *end != '>') end++;
+				while (*end && !isspace(static_cast<unsigned char>(*end)) && *end != '>') end++;
 				val.assign(ptr, end);
 				ptr = end;
 			}

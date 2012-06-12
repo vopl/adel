@@ -93,7 +93,8 @@ namespace spider
 		pgc::Statement	_stSelectSiteIdWhereName;
 		pgc::Statement	_stInsertSite;
 		pgc::Statement	_stSelectPageIdWhereUri;
-		pgc::Statement	_stUpdateSite;
+		pgc::Statement	_stUpdateSiteAmountPlusOne;
+		pgc::Statement	_stUpdateSiteAmountMinusOne;
 		pgc::Statement	_stInsertPage;
 
 		pgc::Statement	_stInsertReference;

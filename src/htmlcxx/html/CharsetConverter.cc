@@ -14,7 +14,10 @@ CharsetConverter::CharsetConverter(const string &from, const string &to)
 
 CharsetConverter::~CharsetConverter()
 {
-	iconv_close(mIconvDescriptor);
+	if(isOk())
+	{
+		iconv_close(mIconvDescriptor);
+	}
 }
 
 bool CharsetConverter::isOk()
