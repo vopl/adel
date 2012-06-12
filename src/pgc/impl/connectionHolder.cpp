@@ -147,7 +147,7 @@ namespace pgc { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void ConnectionHolder::processRequest()
+	void ConnectionHolder::processRequest_f()
 	{
 		async::Mutex::ScopedLock sl(_mtxProcess);
 
@@ -310,6 +310,7 @@ namespace pgc { namespace impl
 				if(ersCommandOk != r1.data().status())
 				{
 					ELOG(__FUNCTION__<<", "<<PQerrorMessage(_pgcon));
+					delPrepared(s);
 					setResult(res);
 					return;
 				}
@@ -337,6 +338,7 @@ namespace pgc { namespace impl
 						if(ersCommandOk != r3.data().status())
 						{
 							ELOG(__FUNCTION__<<", "<<PQerrorMessage(_pgcon));
+							delPrepared(s);
 							setResult(res);
 							return;
 						}
@@ -361,11 +363,11 @@ namespace pgc { namespace impl
 			if(ersCommandOk != r4.data().status())
 			{
 				ELOG(__FUNCTION__<<", "<<PQerrorMessage(_pgcon));
+				delPrepared(s);
 				setResult(res);
 				return;
 			}
 		}
-
 
 		runQueryPrepared_f(res, getPrid(s), bindData);
 	}
@@ -670,18 +672,23 @@ namespace pgc { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void ConnectionHolder::runQuery(async::Future<pgc::Result> res, const std::string &sql, BindDataPtr bindData)
+	void ConnectionHolder::pushRequest(const SRequestPtr &request)
 	{
-		assert(sql.size());
 		mutex::scoped_lock sl(_mtx);
 		assert(_pgcon);
 
-		SRequestPtr r(new SRequestQuery(res, sql, bindData));
-		_requests.push_back(r);
+		_requests.push_back(request);
 		if(_requests.size()<2)
 		{
-			async::spawn(bind(&ConnectionHolder::processRequest, shared_from_this()));
+			async::spawn(bind(&ConnectionHolder::processRequest_f, shared_from_this()));
 		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void ConnectionHolder::runQuery(async::Future<pgc::Result> res, const std::string &sql, BindDataPtr bindData)
+	{
+		assert(sql.size());
+		pushRequest(SRequestPtr(new SRequestQuery(res, sql, bindData)));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -690,16 +697,7 @@ namespace pgc { namespace impl
 		assert(s);
 		assert(s.getSql().size());
 
-		mutex::scoped_lock sl(_mtx);
-		assert(_pgcon);
-
-		SRequestPtr r(new SRequestQueryWithPrepare(res, utils::ImplAccess<pgc::Statement>(s), bindData));
-		_requests.push_back(r);
-
-		if(_requests.size()<2)
-		{
-			async::spawn(bind(&ConnectionHolder::processRequest, shared_from_this()));
-		}
+		pushRequest(SRequestPtr(new SRequestQueryWithPrepare(res, utils::ImplAccess<pgc::Statement>(s), bindData)));
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -715,18 +713,7 @@ namespace pgc { namespace impl
 	void ConnectionHolder::endWork()
 	{
 		async::Future<pgc::Result> res;
-		{
-			mutex::scoped_lock sl(_mtx);
-			assert(_pgcon);
-
-			SRequestPtr r(new SRequestEndWork(res));
-			_requests.push_back(r);
-
-			//if(_requests.size()<2)
-			{
-				async::spawn(bind(&ConnectionHolder::processRequest, shared_from_this()));
-			}
-		}
+		pushRequest(SRequestPtr(new SRequestEndWork(res)));
 		res.wait();
 		_db->unwork(shared_from_this());
 	}

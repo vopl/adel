@@ -206,7 +206,8 @@ namespace pgc { namespace impl
 		void setResult(async::Future<pgc::Result> &res, bool success=false);
 
 	private:
-		void processRequest();
+		void pushRequest(const SRequestPtr &request);
+		void processRequest_f();
 
 	private:
 		void processSingle(async::Future<pgc::Result> res);

@@ -201,14 +201,29 @@ namespace spider
 		for(;;)
 		{
 			//контроль окончания
+			bool stop = false;
 			{
 				async::Mutex::ScopedLock sl(_mtx);
 				if(_stop)
 				{
 					_stop = false;
-					break;
+					stop = true;
 				}
+			}
 
+			if(stop)
+			{
+				for(;;)
+				{
+					{
+						async::Mutex::ScopedLock sl(_mtxWorkers);
+						if(!_numWorkers)
+						{
+							break;
+						}
+					}
+					_evtWorkerDone.wait();
+				}
 			}
 
 			//контроль переполнения пула воркеров
@@ -257,6 +272,10 @@ namespace spider
 					CHECK_PGR(c.query(_stUpdateSiteTime, siteId));
 					CHECK_PGR(c.query(_stUpdatePageStatus, MVA(pageId, "pend")));
 
+					{
+						async::Mutex::ScopedLock sl(_mtx);
+						_numWorkers++;
+					}
 					async::spawn(boost::bind(&Service::processOne, this, siteId, pageId, pageUrl));
 				}
 				CHECK_PGR(c.query(_stCommit));
@@ -301,9 +320,6 @@ namespace spider
 				, _numWorkers(numWorkers)
 				, _evtDone(evtDone)
 			{
-				async::Mutex::ScopedLock sl(_mtx);
-				_numWorkers++;
-				TLOG(_numWorkers);
 			}
 
 			~WorkerRaii()
@@ -311,7 +327,6 @@ namespace spider
 				{
 					async::Mutex::ScopedLock sl(_mtx);
 					_numWorkers--;
-					TLOG(_numWorkers);
 				}
 				_evtDone.set();
 			}
@@ -411,11 +426,11 @@ namespace spider
 				continue;
 			}
 
-// 			if(u.hostnameWithPort() != "127.0.0.1:8080")
-// 			{
-// 				continue;
-// 			}
-// 
+ 			if(u.hostnameWithPort() != "127.0.0.1:8080")
+ 			{
+ 				continue;
+ 			}
+
 			std::string uri = u.unparse(Uri::REMOVE_FRAGMENT);
 
 			utils::Variant hostId2;

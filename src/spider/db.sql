@@ -2,50 +2,43 @@
 -- PostgreSQL database dump
 --
 
+-- Dumped from database version 9.1.2
+-- Dumped by pg_dump version 9.1.2
+-- Started on 2012-06-12 21:10:07
+
 SET statement_timeout = 0;
 SET client_encoding = 'UTF8';
 SET standard_conforming_strings = on;
 SET check_function_bodies = false;
 SET client_min_messages = warning;
 
---
--- Name: plpgsql; Type: EXTENSION; Schema: -; Owner: 
---
-
-CREATE EXTENSION IF NOT EXISTS plpgsql WITH SCHEMA pg_catalog;
-
-
---
--- Name: EXTENSION plpgsql; Type: COMMENT; Schema: -; Owner: 
---
-
-COMMENT ON EXTENSION plpgsql IS 'PL/pgSQL procedural language';
-
 
 SET search_path = public, pg_catalog;
-
-SET default_tablespace = '';
 
 SET default_with_oids = false;
 
 --
--- Name: page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 161 (class 1259 OID 1782574)
+-- Dependencies: 5
+-- Name: page; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS page CASCADE;
 CREATE TABLE page (
     id bigint NOT NULL,
     site_id bigint,
     uri character varying,
     body_length bigint,
     headers character varying,
-    status character varying
+    status character varying,
+    get_time integer
 );
 
 
-ALTER TABLE public.page OWNER TO spider;
-
 --
--- Name: page_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+-- TOC entry 162 (class 1259 OID 1782580)
+-- Dependencies: 161 5
+-- Name: page_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE page_id_seq
@@ -56,26 +49,31 @@ CREATE SEQUENCE page_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.page_id_seq OWNER TO spider;
-
 --
--- Name: page_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+-- TOC entry 1912 (class 0 OID 0)
+-- Dependencies: 162
+-- Name: page_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE page_id_seq OWNED BY page.id;
 
 
 --
--- Name: page_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+-- TOC entry 1913 (class 0 OID 0)
+-- Dependencies: 162
+-- Name: page_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('page_id_seq', 1, false);
+SELECT pg_catalog.setval('page_id_seq', 1, true);
 
 
 --
--- Name: reference; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 163 (class 1259 OID 1782582)
+-- Dependencies: 5
+-- Name: reference; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS reference CASCADE;
 CREATE TABLE reference (
     id bigint NOT NULL,
     from_id bigint,
@@ -83,10 +81,10 @@ CREATE TABLE reference (
 );
 
 
-ALTER TABLE public.reference OWNER TO spider;
-
 --
--- Name: reference_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+-- TOC entry 164 (class 1259 OID 1782585)
+-- Dependencies: 163 5
+-- Name: reference_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE reference_id_seq
@@ -97,26 +95,31 @@ CREATE SEQUENCE reference_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.reference_id_seq OWNER TO spider;
-
 --
--- Name: reference_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+-- TOC entry 1914 (class 0 OID 0)
+-- Dependencies: 164
+-- Name: reference_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE reference_id_seq OWNED BY reference.id;
 
 
 --
--- Name: reference_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+-- TOC entry 1915 (class 0 OID 0)
+-- Dependencies: 164
+-- Name: reference_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('reference_id_seq', 1, false);
 
 
 --
--- Name: site; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 165 (class 1259 OID 1782587)
+-- Dependencies: 1884 1885 1886 1887 1888 1889 1890 1891 1892 5
+-- Name: site; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS site CASCADE;
 CREATE TABLE site (
     id bigint NOT NULL,
     name character varying NOT NULL,
@@ -133,10 +136,10 @@ CREATE TABLE site (
 );
 
 
-ALTER TABLE public.site OWNER TO spider;
-
 --
--- Name: site_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+-- TOC entry 166 (class 1259 OID 1782602)
+-- Dependencies: 5 165
+-- Name: site_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE site_id_seq
@@ -147,26 +150,31 @@ CREATE SEQUENCE site_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.site_id_seq OWNER TO spider;
-
 --
--- Name: site_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+-- TOC entry 1916 (class 0 OID 0)
+-- Dependencies: 166
+-- Name: site_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE site_id_seq OWNED BY site.id;
 
 
 --
--- Name: site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+-- TOC entry 1917 (class 0 OID 0)
+-- Dependencies: 166
+-- Name: site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
-SELECT pg_catalog.setval('site_id_seq', 1, false);
+SELECT pg_catalog.setval('site_id_seq', 1, true);
 
 
 --
--- Name: word2; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 167 (class 1259 OID 1782604)
+-- Dependencies: 5
+-- Name: word2; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS word2 CASCADE;
 CREATE TABLE word2 (
     id bigint NOT NULL,
     word1 integer,
@@ -174,10 +182,10 @@ CREATE TABLE word2 (
 );
 
 
-ALTER TABLE public.word2 OWNER TO spider;
-
 --
--- Name: word2_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+-- TOC entry 168 (class 1259 OID 1782607)
+-- Dependencies: 167 5
+-- Name: word2_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE word2_id_seq
@@ -188,38 +196,44 @@ CREATE SEQUENCE word2_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.word2_id_seq OWNER TO spider;
-
 --
--- Name: word2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+-- TOC entry 1918 (class 0 OID 0)
+-- Dependencies: 168
+-- Name: word2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE word2_id_seq OWNED BY word2.id;
 
 
 --
--- Name: word2_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+-- TOC entry 1919 (class 0 OID 0)
+-- Dependencies: 168
+-- Name: word2_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('word2_id_seq', 1, false);
 
 
 --
--- Name: word2_to_page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 169 (class 1259 OID 1782609)
+-- Dependencies: 5
+-- Name: word2_to_page; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS word2_to_page CASCADE;
 CREATE TABLE word2_to_page (
     word2_id bigint,
     page_id bigint
 );
 
 
-ALTER TABLE public.word2_to_page OWNER TO spider;
-
 --
--- Name: word3; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 170 (class 1259 OID 1782612)
+-- Dependencies: 5
+-- Name: word3; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS word3 CASCADE;
 CREATE TABLE word3 (
     id bigint NOT NULL,
     word1 integer,
@@ -228,10 +242,10 @@ CREATE TABLE word3 (
 );
 
 
-ALTER TABLE public.word3 OWNER TO spider;
-
 --
--- Name: word3_id_seq; Type: SEQUENCE; Schema: public; Owner: spider
+-- TOC entry 171 (class 1259 OID 1782615)
+-- Dependencies: 170 5
+-- Name: word3_id_seq; Type: SEQUENCE; Schema: public; Owner: -
 --
 
 CREATE SEQUENCE word3_id_seq
@@ -242,144 +256,165 @@ CREATE SEQUENCE word3_id_seq
     CACHE 1;
 
 
-ALTER TABLE public.word3_id_seq OWNER TO spider;
-
 --
--- Name: word3_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: spider
+-- TOC entry 1920 (class 0 OID 0)
+-- Dependencies: 171
+-- Name: word3_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
 --
 
 ALTER SEQUENCE word3_id_seq OWNED BY word3.id;
 
 
 --
--- Name: word3_id_seq; Type: SEQUENCE SET; Schema: public; Owner: spider
+-- TOC entry 1921 (class 0 OID 0)
+-- Dependencies: 171
+-- Name: word3_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
 --
 
 SELECT pg_catalog.setval('word3_id_seq', 1, false);
 
 
 --
--- Name: word3_to_page; Type: TABLE; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 172 (class 1259 OID 1782617)
+-- Dependencies: 5
+-- Name: word3_to_page; Type: TABLE; Schema: public; Owner: -
 --
 
+DROP TABLE IF EXISTS word3_to_page CASCADE;
 CREATE TABLE word3_to_page (
     word3_id bigint,
     page_id bigint
 );
 
 
-ALTER TABLE public.word3_to_page OWNER TO spider;
-
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: spider
---
-
-ALTER TABLE ONLY page ALTER COLUMN id SET DEFAULT nextval('page_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+-- TOC entry 1882 (class 2604 OID 1782620)
+-- Dependencies: 162 161
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY reference ALTER COLUMN id SET DEFAULT nextval('reference_id_seq'::regclass);
+ALTER TABLE page ALTER COLUMN id SET DEFAULT nextval('page_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+-- TOC entry 1883 (class 2604 OID 1782621)
+-- Dependencies: 164 163
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY site ALTER COLUMN id SET DEFAULT nextval('site_id_seq'::regclass);
-
-
---
--- Name: id; Type: DEFAULT; Schema: public; Owner: spider
---
-
-ALTER TABLE ONLY word2 ALTER COLUMN id SET DEFAULT nextval('word2_id_seq'::regclass);
+ALTER TABLE reference ALTER COLUMN id SET DEFAULT nextval('reference_id_seq'::regclass);
 
 
 --
--- Name: id; Type: DEFAULT; Schema: public; Owner: spider
+-- TOC entry 1893 (class 2604 OID 1782622)
+-- Dependencies: 166 165
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-ALTER TABLE ONLY word3 ALTER COLUMN id SET DEFAULT nextval('word3_id_seq'::regclass);
-
-
---
--- Data for Name: page; Type: TABLE DATA; Schema: public; Owner: spider
---
-
-COPY page (id, site_id, uri, body_length, headers, status) FROM stdin;
-\.
+ALTER TABLE site ALTER COLUMN id SET DEFAULT nextval('site_id_seq'::regclass);
 
 
 --
--- Data for Name: reference; Type: TABLE DATA; Schema: public; Owner: spider
+-- TOC entry 1894 (class 2604 OID 1782623)
+-- Dependencies: 168 167
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-COPY reference (id, from_id, to_id) FROM stdin;
-\.
-
-
---
--- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: spider
---
-
-COPY site (id, name, address, priority, amount_ref_incoming, amount_ref_outgoing, amount_page_all, amount_page_new, amount_page_update, amount_page_dead, time_per_page, time_access) FROM stdin;
-\.
+ALTER TABLE word2 ALTER COLUMN id SET DEFAULT nextval('word2_id_seq'::regclass);
 
 
 --
--- Data for Name: word2; Type: TABLE DATA; Schema: public; Owner: spider
+-- TOC entry 1895 (class 2604 OID 1782624)
+-- Dependencies: 171 170
+-- Name: id; Type: DEFAULT; Schema: public; Owner: -
 --
 
-COPY word2 (id, word1, word2) FROM stdin;
-\.
-
-
---
--- Data for Name: word2_to_page; Type: TABLE DATA; Schema: public; Owner: spider
---
-
-COPY word2_to_page (word2_id, page_id) FROM stdin;
-\.
+ALTER TABLE word3 ALTER COLUMN id SET DEFAULT nextval('word3_id_seq'::regclass);
 
 
 --
--- Data for Name: word3; Type: TABLE DATA; Schema: public; Owner: spider
+-- TOC entry 1900 (class 0 OID 1782574)
+-- Dependencies: 161
+-- Data for Name: page; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-COPY word3 (id, word1, word2, word3) FROM stdin;
-\.
-
-
---
--- Data for Name: word3_to_page; Type: TABLE DATA; Schema: public; Owner: spider
---
-
-COPY word3_to_page (word3_id, page_id) FROM stdin;
-\.
+INSERT INTO page (id, site_id, uri, body_length, headers, status) VALUES (1, 1, 'http://127.0.0.1:8080/index.html', NULL, NULL, NULL);
 
 
 --
--- Name: site_pkey; Type: CONSTRAINT; Schema: public; Owner: spider; Tablespace: 
+-- TOC entry 1901 (class 0 OID 1782582)
+-- Dependencies: 163
+-- Data for Name: reference; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- TOC entry 1902 (class 0 OID 1782587)
+-- Dependencies: 165
+-- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+INSERT INTO site (id, name, address, priority, amount_ref_incoming, amount_ref_outgoing, amount_page_all, amount_page_new, amount_page_update, amount_page_dead, time_per_page, time_access) VALUES (1, '127.0.0.1:8080', '127.0.0.1', 1, 0, 0, 1, 1, 0, 0, '00:00:10', '2012-06-12 21:06:36.558');
+
+
+--
+-- TOC entry 1903 (class 0 OID 1782604)
+-- Dependencies: 167
+-- Data for Name: word2; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- TOC entry 1904 (class 0 OID 1782609)
+-- Dependencies: 169
+-- Data for Name: word2_to_page; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- TOC entry 1905 (class 0 OID 1782612)
+-- Dependencies: 170
+-- Data for Name: word3; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- TOC entry 1906 (class 0 OID 1782617)
+-- Dependencies: 172
+-- Data for Name: word3_to_page; Type: TABLE DATA; Schema: public; Owner: -
+--
+
+
+
+--
+-- TOC entry 1897 (class 2606 OID 1782628)
+-- Dependencies: 161 161
+-- Name: page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
+--
+
+ALTER TABLE ONLY page
+    ADD CONSTRAINT page_pkey PRIMARY KEY (id);
+
+
+--
+-- TOC entry 1899 (class 2606 OID 1782626)
+-- Dependencies: 165 165
+-- Name: site_pkey; Type: CONSTRAINT; Schema: public; Owner: -
 --
 
 ALTER TABLE ONLY site
     ADD CONSTRAINT site_pkey PRIMARY KEY (id);
 
 
---
--- Name: public; Type: ACL; Schema: -; Owner: local
---
-
-REVOKE ALL ON SCHEMA public FROM PUBLIC;
-REVOKE ALL ON SCHEMA public FROM local;
-GRANT ALL ON SCHEMA public TO local;
-GRANT ALL ON SCHEMA public TO PUBLIC;
-
+-- Completed on 2012-06-12 21:10:08
 
 --
 -- PostgreSQL database dump complete
 --
 
+CREATE UNIQUE INDEX word2_words_idx ON word2 (word1,word2);
+CREATE UNIQUE INDEX word3_words_idx ON word3 (word1,word2,word3);
