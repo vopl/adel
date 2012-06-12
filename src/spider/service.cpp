@@ -114,7 +114,7 @@ namespace spider
 			"	((s.time_access+s.time_per_page)<CURRENT_TIMESTAMP AND p.status IS NULL) OR"
 			"	((s.time_access+INTERVAL '1 hour')<CURRENT_TIMESTAMP AND p.status='pend') "
 			"ORDER BY "
-			"	log(s.amount_page_new+1)*s.priority ASC, "
+			"	log(s.amount_page_new+1)*s.priority DESC, "
 			"	s.id ASC "
 			"LIMIT"
 			"	1 "
