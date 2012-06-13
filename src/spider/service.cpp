@@ -89,26 +89,14 @@ namespace spider
 
 
 
-		/*_stSelectWord3Id = pgc::Statement("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3");
-		_stInsertWord3 = pgc::Statement("INSERT INTO word3 (word1, word2, word3) VALUES ($1,$2,$3)");
-		_stInsertWord3ToPage = pgc::Statement("INSERT INTO word3_to_page (word3_id, page_id) VALUES ($1,$2)");
-		_stSelectWord2Id = pgc::Statement("SELECT id FROM word2 WHERE word1=$1 AND word2=$2");
-		_stInsertWord2 = pgc::Statement("INSERT INTO word2 (word1, word2) VALUES ($1,$2)");
-		_stInsertWord2ToPage = pgc::Statement("INSERT INTO word2_to_page (word2_id, page_id) VALUES ($1,$2)");
-		*/
-		_stLinkPageWord2 = pgc::Statement("SELECT link_page_word2($1::bigint,$2::int4,$3::int4)");
-		_stLinkPageWord3 = pgc::Statement("SELECT link_page_word3($1::bigint,$2::int4,$3::int4,$4::int4)");
-
-		_stInsertWord2 = pgc::Statement("INSERT INTO word2 (word1, word2) VALUES ($1,$2)");
-		_stInsertWord2ToPage_lastId = pgc::Statement("INSERT INTO word2_to_page (word2_id, page_id) VALUES (currval('word2_id_seq'::regclass),$1)");
+		_stInsertWord2ToPage_tmp = pgc::Statement("INSERT INTO word2_to_page_tmp (page_id,word1,word2) VALUES ($1::bigint,$2::int4,$3::int4)");
+		_stInsertWord3ToPage_tmp = pgc::Statement("INSERT INTO word3_to_page_tmp (page_id,word1,word2,word3) VALUES ($1::bigint,$2::int4,$3::int4,$4::int4)");
 
 		_stBegin = pgc::Statement("BEGIN");
 		_stCommit = pgc::Statement("COMMIT");
 		_stRollback = pgc::Statement("ROLLBACK");
 		_stLockSite = pgc::Statement("LOCK TABLE site");
 		_stLockPage = pgc::Statement("LOCK TABLE page");
-		_stLockWord2 = pgc::Statement("LOCK TABLE word2");
-		_stLockWord3 = pgc::Statement("LOCK TABLE word3");
 
 		_stSelectPages4Process = pgc::Statement("SELECT "
 			"	DISTINCT ON(log(s.amount_page_new+1)*s.priority, s.id)"
@@ -741,27 +729,7 @@ namespace spider
 	///////////////////////////////////////////////////////////////////////////////////
 	bool Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
 	{
-		/*pgc::Result res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
-		CHECK_PGR(res);
-
-		if(!res.rows())
-		{
-			res = c.query(_stInsertWord2, utils::MVA(words[0]->_value,words[1]->_value));
-			CHECK_PGR(res);
-			res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
-			CHECK_PGR(res);
-		}
-		utils::Variant word2_id;
-		res.fetch(word2_id, 0, 0);
-
-		res = c.query(_stInsertWord2ToPage, utils::MVA(word2_id, pageId));
-		CHECK_PGR(res);
-		*/
-
-		/*pgc::Result res = c.query(_stLinkPageWord2, utils::MVA(pageId, words[0]->_value, words[1]->_value));
-		CHECK_PGR_NORETURN(res);*/
-
-		pgc::Result res = c.query(_stInsertWord2, utils::MVA(words[0]->_value,words[1]->_value));
+		pgc::Result res = c.query(_stInsertWord2ToPage_tmp, utils::MVA(pageId, words[0]->_value,words[1]->_value));
 		CHECK_PGR_NORETURN(res);
 
 		if(pgc::ersError == res.status())
@@ -769,37 +737,13 @@ namespace spider
 			return false;
 		}
 
-		res = c.query(_stInsertWord2ToPage_lastId, pageId);
-		CHECK_PGR_NORETURN(res);
-
-		if(pgc::ersError == res.status())
-		{
-			return false;
-		}
 		return true;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
 	bool Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
 	{
-		/*pgc::Result res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-		CHECK_PGR(res);
-
-		if(!res.rows())
-		{
-			res = c.query(_stInsertWord3, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-			CHECK_PGR(res);
-			res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-			CHECK_PGR(res);
-		}
-		utils::Variant word3_id;
-		res.fetch(word3_id, 0, 0);
-
-		res = c.query(_stInsertWord3ToPage, utils::MVA(word3_id, pageId));
-		CHECK_PGR(res);
-		*/
-
-		pgc::Result res = c.query(_stLinkPageWord3, utils::MVA(pageId, words[0]->_value, words[1]->_value, words[2]->_value));
+		pgc::Result res = c.query(_stInsertWord3ToPage_tmp, utils::MVA(pageId, words[0]->_value,words[1]->_value,words[2]->_value));
 		CHECK_PGR_NORETURN(res);
 
 		if(pgc::ersError == res.status())

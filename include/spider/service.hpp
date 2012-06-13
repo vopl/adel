@@ -94,8 +94,6 @@ namespace spider
 
 		pgc::Statement	_stLockSite;
 		pgc::Statement	_stLockPage;
-		pgc::Statement	_stLockWord2;
-		pgc::Statement	_stLockWord3;
 
 		pgc::Statement	_stSelectPages4Process;
 		pgc::Statement	_stUpdateSiteTime;
@@ -112,22 +110,8 @@ namespace spider
 		pgc::Statement	_stInsertReference;
 		pgc::Statement	_stUpdatePage;
 
-/*		pgc::Statement	_stSelectWord3Id;
-		pgc::Statement	_stInsertWord3;
-		pgc::Statement	_stInsertWord3ToPage;
-
-		pgc::Statement	_stSelectWord2Id;
-		pgc::Statement	_stInsertWord2;
-		pgc::Statement	_stInsertWord2ToPage;*/
-		pgc::Statement	_stLinkPageWord2;
-		pgc::Statement	_stLinkPageWord3;
-
-		/*
-		 * вобщем надо сделать промежуточную таблицу в которой слова с ид страницы, в нее писать неуникально
-		 * отдельного воркера, который из промежуточной будет сливать в основную с уникальностью
-		 */
-		pgc::Statement	_stInsertWord2;
-		pgc::Statement	_stInsertWord2ToPage_lastId;
+		pgc::Statement	_stInsertWord2ToPage_tmp;
+		pgc::Statement	_stInsertWord3ToPage_tmp;
 
 
 	private:
