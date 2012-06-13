@@ -89,12 +89,16 @@ namespace spider
 
 
 
-		_stSelectWord3Id = pgc::Statement("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3");
+		/*_stSelectWord3Id = pgc::Statement("SELECT id FROM word3 WHERE word1=$1 AND word2=$2 AND word3=$3");
 		_stInsertWord3 = pgc::Statement("INSERT INTO word3 (word1, word2, word3) VALUES ($1,$2,$3)");
 		_stInsertWord3ToPage = pgc::Statement("INSERT INTO word3_to_page (word3_id, page_id) VALUES ($1,$2)");
 		_stSelectWord2Id = pgc::Statement("SELECT id FROM word2 WHERE word1=$1 AND word2=$2");
 		_stInsertWord2 = pgc::Statement("INSERT INTO word2 (word1, word2) VALUES ($1,$2)");
 		_stInsertWord2ToPage = pgc::Statement("INSERT INTO word2_to_page (word2_id, page_id) VALUES ($1,$2)");
+		*/
+		_stLinkPageWord2 = pgc::Statement("SELECT link_page_word2($1::bigint,$2::int4,$3::int4)");
+		_stLinkPageWord3 = pgc::Statement("SELECT link_page_word3($1::bigint,$2::int4,$3::int4,$4::int4)");
+
 		_stBegin = pgc::Statement("BEGIN");
 		_stCommit = pgc::Statement("COMMIT");
 		_stRollback = pgc::Statement("ROLLBACK");
@@ -432,10 +436,10 @@ namespace spider
 // 				continue;
 // 			}
 
-//  			if(u.hostnameWithPort() != "127.0.0.1:8080")
-//  			{
-//  				continue;
-//  			}
+  			if(u.hostnameWithPort() != "127.0.0.1:8080")
+  			{
+  				continue;
+  			}
 
 			std::string uri = Uri::encode(Uri::decode(u.unparse(Uri::REMOVE_FRAGMENT)));
 
@@ -498,8 +502,8 @@ namespace spider
 
 		c = _db.allocConnection();
 		CHECK_PGR(c.query(_stBegin));
-		CHECK_PGR(c.query(_stLockWord2));
-		CHECK_PGR(c.query(_stLockWord3));
+		//CHECK_PGR(c.query(_stLockWord2));
+		//CHECK_PGR(c.query(_stLockWord3));
 		updatePageWords(c, pageId, wordBuckets);
 		CHECK_PGR(c.query(_stCommit));
 
@@ -693,29 +697,9 @@ namespace spider
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
-	void Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
-	{
-		pgc::Result res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-		CHECK_PGR(res);
-
-		if(!res.rows())
-		{
-			res = c.query(_stInsertWord3, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-			CHECK_PGR(res);
-			res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
-			CHECK_PGR(res);
-		}
-		utils::Variant word3_id;
-		res.fetch(word3_id, 0, 0);
-
-		res = c.query(_stInsertWord3ToPage, utils::MVA(word3_id, pageId));
-		CHECK_PGR(res);
-	}
-
-	///////////////////////////////////////////////////////////////////////////////////
 	void Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
 	{
-		pgc::Result res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
+		/*pgc::Result res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
 		CHECK_PGR(res);
 
 		if(!res.rows())
@@ -730,6 +714,35 @@ namespace spider
 
 		res = c.query(_stInsertWord2ToPage, utils::MVA(word2_id, pageId));
 		CHECK_PGR(res);
+		*/
+		pgc::Result res = c.query(_stLinkPageWord2, utils::MVA(pageId, words[0]->_value, words[1]->_value));
+		CHECK_PGR(res);
 	}
+
+	///////////////////////////////////////////////////////////////////////////////////
+	void Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
+	{
+		/*pgc::Result res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+		CHECK_PGR(res);
+
+		if(!res.rows())
+		{
+			res = c.query(_stInsertWord3, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+			CHECK_PGR(res);
+			res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
+			CHECK_PGR(res);
+		}
+		utils::Variant word3_id;
+		res.fetch(word3_id, 0, 0);
+
+		res = c.query(_stInsertWord3ToPage, utils::MVA(word3_id, pageId));
+		CHECK_PGR(res);
+		*/
+
+		pgc::Result res = c.query(_stLinkPageWord3, utils::MVA(pageId, words[0]->_value, words[1]->_value, words[2]->_value));
+		CHECK_PGR(res);
+
+	}
+
 
 }

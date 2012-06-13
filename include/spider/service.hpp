@@ -102,13 +102,15 @@ namespace spider
 		pgc::Statement	_stInsertReference;
 		pgc::Statement	_stUpdatePage;
 
-		pgc::Statement	_stSelectWord3Id;
+/*		pgc::Statement	_stSelectWord3Id;
 		pgc::Statement	_stInsertWord3;
 		pgc::Statement	_stInsertWord3ToPage;
 
 		pgc::Statement	_stSelectWord2Id;
 		pgc::Statement	_stInsertWord2;
-		pgc::Statement	_stInsertWord2ToPage;
+		pgc::Statement	_stInsertWord2ToPage;*/
+		pgc::Statement	_stLinkPageWord2;
+		pgc::Statement	_stLinkPageWord3;
 
 
 	private:

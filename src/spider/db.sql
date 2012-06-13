@@ -418,3 +418,66 @@ ALTER TABLE ONLY site
 
 CREATE UNIQUE INDEX word2_words_idx ON word2 (word1,word2);
 CREATE UNIQUE INDEX word3_words_idx ON word3 (word1,word2,word3);
+
+
+
+
+
+
+
+CREATE OR REPLACE function link_page_word2(page_id bigint, w1 int4, w2 int4) returns bigint AS
+$$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word2 WHERE word1=w1 AND word2=w2;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+    BEGIN
+        INSERT INTO word2 (word1,word2) VALUES (w1,w2) RETURNING id INTO mID;
+    EXCEPTION WHEN unique_violation THEN
+      OPEN cid; 
+      FETCH cID INTO mID;
+      CLOSE cid;
+    END;
+  END IF;
+
+  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,page_id);
+  RETURN mID;
+END;
+$$language plpgsql;
+
+
+
+
+
+CREATE OR REPLACE function link_page_word3(page_id bigint, w1 int4, w2 int4, w3 int4) returns bigint AS
+$$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word3 WHERE word1=w1 AND word2=w2 AND word3=w3;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+    BEGIN
+        INSERT INTO word3 (word1,word2,word3) VALUES (w1,w2,w3) RETURNING id INTO mID;
+    EXCEPTION WHEN unique_violation THEN
+      OPEN cid; 
+      FETCH cID INTO mID;
+      CLOSE cid;
+    END;
+  END IF;
+
+  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,page_id);
+  RETURN mID;
+END;
+$$language plpgsql;
+
+
+
