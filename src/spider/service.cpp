@@ -685,7 +685,7 @@ namespace spider
 			return false;
 		}
 
-		/*if(!updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets))
+		if(!updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets))
 		{
 			return false;
 		}
@@ -721,7 +721,7 @@ namespace spider
 		{
 			return false;
 		}
-		*/
+
 
 		return true;
 	}
