@@ -445,7 +445,7 @@ BEGIN
     END;
   END IF;
 
-  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,page_id);
+  INSERT INTO word2_to_page (word2_id, page_id) VALUES (mID,page_id);
   RETURN mID;
 END;
 $$language plpgsql;

@@ -99,6 +99,9 @@ namespace spider
 		_stLinkPageWord2 = pgc::Statement("SELECT link_page_word2($1::bigint,$2::int4,$3::int4)");
 		_stLinkPageWord3 = pgc::Statement("SELECT link_page_word3($1::bigint,$2::int4,$3::int4,$4::int4)");
 
+		_stInsertWord2 = pgc::Statement("INSERT INTO word2 (word1, word2) VALUES ($1,$2)");
+		_stInsertWord2ToPage_lastId = pgc::Statement("INSERT INTO word2_to_page (word2_id, page_id) VALUES (currval('word2_id_seq'::regclass),$1)");
+
 		_stBegin = pgc::Statement("BEGIN");
 		_stCommit = pgc::Statement("COMMIT");
 		_stRollback = pgc::Statement("ROLLBACK");
@@ -252,6 +255,7 @@ namespace spider
 
 			pgc::Result res;
 
+#define CHECK_PGR_NORETURN(...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(__LINE__<<", "<<r.errorMsg());}}
 #define CHECK_PGR(...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(__LINE__<<", "<<r.errorMsg());return;}}
 
 			CHECK_PGR(c.query(_stBegin));
@@ -678,26 +682,64 @@ namespace spider
 		}
 	}
 
-	void Service::updatePageWords(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
+	bool Service::updatePageWords(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
 	{
-		updatePageWords2<PhraseStreamer<2,0> >(c, pageId, wordBuckets);
-		updatePageWords2<PhraseStreamer<2,1> >(c, pageId, wordBuckets);
-		updatePageWords2<PhraseStreamer<2,2> >(c, pageId, wordBuckets);
+		if(!updatePageWords2<PhraseStreamer<2,0> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords2<PhraseStreamer<2,1> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords2<PhraseStreamer<2,2> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
 
-		/*updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,0,1> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,0,2> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,1,0> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,1,1> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,1,2> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,2,0> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,2,1> >(c, pageId, wordBuckets);
-		updatePageWords3<PhraseStreamer<3,2,2> >(c, pageId, wordBuckets);
+		/*if(!updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,0,1> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,0,2> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,1,0> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,1,1> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,1,2> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,2,0> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,2,1> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
+		if(!updatePageWords3<PhraseStreamer<3,2,2> >(c, pageId, wordBuckets))
+		{
+			return false;
+		}
 		*/
+
+		return true;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
-	void Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
+	bool Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
 	{
 		/*pgc::Result res = c.query(_stSelectWord2Id, utils::MVA(words[0]->_value,words[1]->_value));
 		CHECK_PGR(res);
@@ -715,12 +757,30 @@ namespace spider
 		res = c.query(_stInsertWord2ToPage, utils::MVA(word2_id, pageId));
 		CHECK_PGR(res);
 		*/
-		pgc::Result res = c.query(_stLinkPageWord2, utils::MVA(pageId, words[0]->_value, words[1]->_value));
-		CHECK_PGR(res);
+
+		/*pgc::Result res = c.query(_stLinkPageWord2, utils::MVA(pageId, words[0]->_value, words[1]->_value));
+		CHECK_PGR_NORETURN(res);*/
+
+		pgc::Result res = c.query(_stInsertWord2, utils::MVA(words[0]->_value,words[1]->_value));
+		CHECK_PGR_NORETURN(res);
+
+		if(pgc::ersError == res.status())
+		{
+			return false;
+		}
+
+		res = c.query(_stInsertWord2ToPage_lastId, pageId);
+		CHECK_PGR_NORETURN(res);
+
+		if(pgc::ersError == res.status())
+		{
+			return false;
+		}
+		return true;
 	}
 
 	///////////////////////////////////////////////////////////////////////////////////
-	void Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
+	bool Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
 	{
 		/*pgc::Result res = c.query(_stSelectWord3Id, utils::MVA(words[0]->_value,words[1]->_value,words[2]->_value));
 		CHECK_PGR(res);
@@ -740,7 +800,13 @@ namespace spider
 		*/
 
 		pgc::Result res = c.query(_stLinkPageWord3, utils::MVA(pageId, words[0]->_value, words[1]->_value, words[2]->_value));
-		CHECK_PGR(res);
+		CHECK_PGR_NORETURN(res);
+
+		if(pgc::ersError == res.status())
+		{
+			return false;
+		}
+		return true;
 
 	}
 

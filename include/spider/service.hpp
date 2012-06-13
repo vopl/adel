@@ -43,12 +43,12 @@ namespace spider
 			std::deque<Uri> &urls,
 			std::deque<WordBucket> &wordBuckets);
 
-		void updatePageWords(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets);
-		void updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2]);
-		void updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3]);
+		bool updatePageWords(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets);
+		bool updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2]);
+		bool updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3]);
 
 		template <class Streamer>
-		void updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
+		bool updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
 		{
 			Phrase<2> phrase;
 			Streamer streamer(&wordBuckets);
@@ -57,13 +57,18 @@ namespace spider
 				const Word *words[2];
 				while(phrase.nextCombination(words))
 				{
-					updatePageWords2(c, pageId, words);
+					if(!updatePageWords2(c, pageId, words))
+					{
+						return false;
+					}
 				}
 			}
+
+			return true;
 		}
 
 		template <class Streamer>
-		void updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
+		bool updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const std::deque<WordBucket> &wordBuckets)
 		{
 			Phrase<3> phrase;
 			Streamer streamer(&wordBuckets);
@@ -72,9 +77,14 @@ namespace spider
 				const Word *words[3];
 				while(phrase.nextCombination(words))
 				{
-					updatePageWords3(c, pageId, words);
+					if(!updatePageWords3(c, pageId, words))
+					{
+						return false;
+					}
 				}
 			}
+
+			return true;
 		}
 
 	private:
@@ -111,6 +121,13 @@ namespace spider
 		pgc::Statement	_stInsertWord2ToPage;*/
 		pgc::Statement	_stLinkPageWord2;
 		pgc::Statement	_stLinkPageWord3;
+
+		/*
+		 * вобщем надо сделать промежуточную таблицу в которой слова с ид страницы, в нее писать неуникально
+		 * отдельного воркера, который из промежуточной будет сливать в основную с уникальностью
+		 */
+		pgc::Statement	_stInsertWord2;
+		pgc::Statement	_stInsertWord2ToPage_lastId;
 
 
 	private:
