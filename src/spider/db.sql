@@ -125,36 +125,31 @@ CREATE INDEX page_status_idx1
   (status COLLATE pg_catalog."default" )
   WHERE status IS NULL;
 
+-- Index: page_uri_idx
+
+-- DROP INDEX page_uri_idx;
+
+CREATE INDEX page_uri_idx
+  ON page
+  USING btree
+  (uri COLLATE pg_catalog."default" );
 
 
---
--- TOC entry 163 (class 1259 OID 1782582)
--- Dependencies: 5
--- Name: reference; Type: TABLE; Schema: public; Owner: -
---
 
-DROP TABLE IF EXISTS reference CASCADE;
--- Table: reference
 
--- DROP TABLE reference;
 
-CREATE TABLE reference
-(
-  id bigserial NOT NULL,
-  from_id bigint,
-  to_id bigint NOT NULL
-)
-WITH (
-  OIDS=FALSE
-);
-ALTER TABLE reference
-  OWNER TO spider;
 
---
--- TOC entry 165 (class 1259 OID 1782587)
--- Dependencies: 1884 1885 1886 1887 1888 1889 1890 1891 1892 5
--- Name: site; Type: TABLE; Schema: public; Owner: -
---
+
+
+
+
+
+
+
+
+
+
+
 
 DROP TABLE IF EXISTS site CASCADE;
 -- Table: site
@@ -192,6 +187,15 @@ CREATE INDEX site_expr_idx
   USING btree
   ((time_access + time_per_page) );
 
+-- Index: site_name_idx
+
+-- DROP INDEX site_name_idx;
+
+CREATE INDEX site_name_idx
+  ON site
+  USING btree
+  (name COLLATE pg_catalog."default" );
+
 -- Index: site_time_access_idx
 
 -- DROP INDEX site_time_access_idx;
@@ -203,11 +207,14 @@ CREATE INDEX site_time_access_idx
 
 
 
---
--- TOC entry 167 (class 1259 OID 1782604)
--- Dependencies: 5
--- Name: word2; Type: TABLE; Schema: public; Owner: -
---
+
+
+
+
+
+
+
+
 
 DROP TABLE IF EXISTS word2 CASCADE;
 -- Table: word2

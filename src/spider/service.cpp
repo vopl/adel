@@ -41,7 +41,7 @@ namespace spider
 
 		options->addOption(
 			"pgc.maxConnections",
-			boost::program_options::value<size_t>()->default_value(10),
+			boost::program_options::value<size_t>()->default_value(20),
 			"maximum number of connections to postgres database");
 
 		options->addOption(
@@ -453,10 +453,10 @@ namespace spider
 // 				continue;
 // 			}
 
-   			if(u.hostnameWithPort() != "127.0.0.1:8080")
-   			{
-   				continue;
-   			}
+//    			if(u.hostnameWithPort() != "127.0.0.1:8080")
+//    			{
+//    				continue;
+//    			}
 
 			std::string uri = Uri::encode(Uri::decode(u.unparse(Uri::REMOVE_FRAGMENT)));
 
