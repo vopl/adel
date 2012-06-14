@@ -28,6 +28,16 @@ namespace http { namespace client { namespace impl
 	public:
 		Response(const http::impl::ClientPtr &client, const net::Channel &channel, Request *request);
 		~Response();
+
+		EStatusCode status() const;
+		const Version &version() const;
+
+	private:
+		EStatusCode _status;
+
+	private:
+		virtual boost::system::error_code readFirstLine();
+
 	};
 
 }}}

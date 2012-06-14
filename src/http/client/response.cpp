@@ -26,4 +26,18 @@ namespace http { namespace client
 	{
 
 	}
+
+	/////////////////////////////////////////////////////////////////////
+	EStatusCode Response::status() const
+	{
+
+		return _impl->status();
+	}
+
+	/////////////////////////////////////////////////////////////////////
+	const Version &Response::version() const
+	{
+		return _impl->version();
+	}
+
 }}

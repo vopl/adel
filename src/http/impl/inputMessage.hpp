@@ -26,7 +26,7 @@ namespace http { namespace impl
 		bool isConnected() const;
 		net::Channel channel();
 
-		boost::system::error_code readFirstLine();
+		virtual boost::system::error_code readFirstLine();
 		boost::system::error_code readHeaders();
 		boost::system::error_code readBody();
 		boost::system::error_code ignoreBody();

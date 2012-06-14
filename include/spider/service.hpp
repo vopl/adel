@@ -87,6 +87,9 @@ namespace spider
 			return true;
 		}
 
+		void processMoveTmp2();
+		void processMoveTmp3();
+
 	private:
 		pgc::Statement	_stBegin;
 		pgc::Statement	_stCommit;
@@ -113,6 +116,8 @@ namespace spider
 		pgc::Statement	_stInsertWord2ToPage_tmp;
 		pgc::Statement	_stInsertWord3ToPage_tmp;
 
+		pgc::Statement	_stMoveWord2_tmp;
+		pgc::Statement	_stMoveWord3_tmp;
 
 	private:
 		http::Client _htc;

@@ -92,6 +92,11 @@ namespace spider
 		_stInsertWord2ToPage_tmp = pgc::Statement("INSERT INTO word2_to_page_tmp (page_id,word1,word2) VALUES ($1::bigint,$2::int4,$3::int4)");
 		_stInsertWord3ToPage_tmp = pgc::Statement("INSERT INTO word3_to_page_tmp (page_id,word1,word2,word3) VALUES ($1::bigint,$2::int4,$3::int4,$4::int4)");
 
+		//_stMoveWord2_tmp = pgc::Statement("delete from word2_to_page_tmp WHERE ctid IN (SELECT ctid FROM word2_to_page_tmp LIMIT $1)");
+		//_stMoveWord3_tmp = pgc::Statement("delete from word3_to_page_tmp WHERE ctid IN (SELECT ctid FROM word3_to_page_tmp LIMIT $1)");
+		_stMoveWord2_tmp = pgc::Statement("delete from word2_to_page_tmp");
+		_stMoveWord3_tmp = pgc::Statement("delete from word3_to_page_tmp");
+
 		_stBegin = pgc::Statement("BEGIN");
 		_stCommit = pgc::Statement("COMMIT");
 		_stRollback = pgc::Statement("ROLLBACK");
@@ -99,7 +104,7 @@ namespace spider
 		_stLockPage = pgc::Statement("LOCK TABLE page");
 
 		_stSelectPages4Process = pgc::Statement("SELECT "
-			"	DISTINCT ON(log(s.amount_page_new+1)*s.priority, s.id)"
+			//"	DISTINCT ON(log(s.amount_page_new+1)*s.priority, s.id)"
 			"	s.id AS site_id, p.id AS page_id, p.uri "
 			"FROM"
 			"	page AS p "
@@ -107,10 +112,10 @@ namespace spider
 			"	site AS s ON(s.id=p.site_id) "
 			"WHERE "
 			"	((s.time_access+s.time_per_page)<CURRENT_TIMESTAMP AND p.status IS NULL) OR"
-			"	((s.time_access+INTERVAL '1 hour')<CURRENT_TIMESTAMP AND p.status='pend') "
-			"ORDER BY "
-			"	log(s.amount_page_new+1)*s.priority DESC, "
-			"	s.id ASC "
+			"	((s.time_access)<CURRENT_TIMESTAMP-INTERVAL '1 hour' AND p.status='pend') "
+			//"ORDER BY "
+			//"	log(s.amount_page_new+1)*s.priority ASC, "
+			//"	s.id ASC "
 			"LIMIT"
 			"	1 "
 			" ");
@@ -157,6 +162,18 @@ namespace spider
 			boost::bind(&Service::onConnectionLost, this, _1));
 
 		async::spawn(boost::bind(&Service::processLoop, this));
+
+		{
+			async::Mutex::ScopedLock sl(_mtx);
+			_numWorkers++;
+		}
+		async::spawn(boost::bind(&Service::processMoveTmp2, this));
+
+		{
+			async::Mutex::ScopedLock sl(_mtx);
+			_numWorkers++;
+		}
+		async::spawn(boost::bind(&Service::processMoveTmp3, this));
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -169,8 +186,8 @@ namespace spider
 		for(;;)
 		{
 			{
-				async::Mutex::ScopedLock sl(_mtx);
-				if(!_stop)
+				async::Mutex::ScopedLock sl(_mtxWorkers);
+				if(!_numWorkers)
 				{
 					break;
 				}
@@ -198,30 +215,14 @@ namespace spider
 		for(;;)
 		{
 			//контроль окончания
-			bool stop = false;
 			{
 				async::Mutex::ScopedLock sl(_mtx);
 				if(_stop)
 				{
-					_stop = false;
-					stop = true;
+					break;
 				}
 			}
 
-			if(stop)
-			{
-				for(;;)
-				{
-					{
-						async::Mutex::ScopedLock sl(_mtxWorkers);
-						if(!_numWorkers)
-						{
-							break;
-						}
-					}
-					_evtWorkerDone.wait();
-				}
-			}
 
 			//контроль переполнения пула воркеров
 			bool needWaitWorker = false;
@@ -356,12 +357,6 @@ namespace spider
 			CHECK_PGR(c.query(_stUpdatePageStatus, utils::MVA(pageId, "read first line failed")));
 			return;
 		}
-		if(std::string::npos == std::string(resp.firstLine().begin(), resp.firstLine().end()).find("200"))
-		{
-			WLOG("bad status: "<<std::string(resp.firstLine().begin(), resp.firstLine().end())<<", ["<<uri.as<std::string>()<<"]");
-			CHECK_PGR(c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad status")));
-			return;
-		}
 
 		ec = resp.readHeaders();
 		if(ec)
@@ -372,6 +367,31 @@ namespace spider
 			return;
 		}
 
+		Uri redirectUri;
+		switch(resp.status())
+		{
+		case http::esc_200:
+			//ok
+			break;
+		case http::esc_301:
+		case http::esc_302:
+			{
+				if(const http::client::Response::Segment *locs = resp.header(http::hn::location))
+				{
+					redirectUri = Uri(std::string(locs->begin(), locs->end()));
+				}
+				if(redirectUri.isOk())
+				{
+					//ok
+					break;
+				}
+			}
+			//err, no break
+		default:
+			WLOG("bad status: "<<std::string(resp.firstLine().begin(), resp.firstLine().end())<<", ["<<uri.as<std::string>()<<"]");
+			CHECK_PGR(c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad status")));
+			return;
+		}
 
 		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
 		if(length.isCorrect() && length.value() > 1024*1024)
@@ -382,7 +402,7 @@ namespace spider
 		}
 
 		const http::client::Response::Segment *contentType = resp.header(http::hn::contentType);
-		if(!isGoodContentType(contentType))
+		if(!isGoodContentType(contentType) && !redirectUri.isOk())
 		{
 			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
 			CHECK_PGR(c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad content type")));
@@ -403,6 +423,10 @@ namespace spider
 		std::deque<Uri> uris;
 		std::deque<WordBucket> wordBuckets;
 		parse(resp, uri.as<std::string>(), uris, wordBuckets);
+		if(redirectUri.isOk())
+		{
+			uris.push_back(redirectUri);
+		}
 
 		//store urls
 
@@ -684,7 +708,7 @@ namespace spider
 		{
 			return false;
 		}
-
+/*
 		if(!updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets))
 		{
 			return false;
@@ -721,7 +745,7 @@ namespace spider
 		{
 			return false;
 		}
-
+*/
 
 		return true;
 	}
@@ -752,6 +776,67 @@ namespace spider
 		}
 		return true;
 
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::processMoveTmp2()
+	{
+		WorkerRaii wr(_mtxWorkers, _numWorkers, _evtWorkerDone);
+		for(;;)
+		{
+			{
+				async::Mutex::ScopedLock sl(_mtx);
+				if(_stop)
+				{
+					break;
+				}
+			}
+
+			pgc::Connection c = _db.allocConnection();
+			pgc::Result res = c.query(_stMoveWord2_tmp/*, utils::Variant(100)*/);
+
+			if(pgc::ersError == res.status())
+			{
+				CHECK_PGR_NORETURN(res);
+				continue;
+			}
+
+			size_t count = res.cmdRows();
+			if(!count)
+			{
+				async::timeout(100).wait();
+			}
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::processMoveTmp3()
+	{
+		WorkerRaii wr(_mtxWorkers, _numWorkers, _evtWorkerDone);
+		for(;;)
+		{
+			{
+				async::Mutex::ScopedLock sl(_mtx);
+				if(_stop)
+				{
+					break;
+				}
+			}
+
+			pgc::Connection c = _db.allocConnection();
+			pgc::Result res = c.query(_stMoveWord3_tmp/*, utils::Variant(100)*/);
+
+			if(pgc::ersError == res.status())
+			{
+				CHECK_PGR_NORETURN(res);
+				continue;
+			}
+			size_t count = res.cmdRows();
+			if(!count)
+			{
+				async::timeout(100).wait();
+			}
+		}
 	}
 
 

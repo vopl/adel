@@ -29,6 +29,9 @@ namespace http { namespace client
 		Response(const ImplPtr &impl);
 		~Response();
 
+		EStatusCode status() const;
+		const Version &version() const;
+
 	};
 }}
 

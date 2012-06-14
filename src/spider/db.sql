@@ -24,47 +24,46 @@ SET default_with_oids = false;
 --
 
 DROP TABLE IF EXISTS page CASCADE;
-CREATE TABLE page (
-    id bigint NOT NULL,
-    site_id bigint,
-    uri character varying,
-    body_length bigint,
-    headers character varying,
-    status character varying,
-    get_time integer
+-- Table: page
+
+-- DROP TABLE page;
+
+CREATE TABLE page
+(
+  id bigserial NOT NULL,
+  site_id bigint,
+  uri character varying,
+  body_length bigint,
+  headers character varying,
+  status character varying,
+  get_time integer,
+  CONSTRAINT page_pkey PRIMARY KEY (id )
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE page
+  OWNER TO spider;
 
+-- Index: page_status_idx
 
---
--- TOC entry 162 (class 1259 OID 1782580)
--- Dependencies: 161 5
--- Name: page_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
+-- DROP INDEX page_status_idx;
 
-CREATE SEQUENCE page_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+CREATE INDEX page_status_idx
+  ON page
+  USING btree
+  (status COLLATE pg_catalog."default" );
 
+-- Index: page_status_idx1
 
---
--- TOC entry 1912 (class 0 OID 0)
--- Dependencies: 162
--- Name: page_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
+-- DROP INDEX page_status_idx1;
 
-ALTER SEQUENCE page_id_seq OWNED BY page.id;
+CREATE INDEX page_status_idx1
+  ON page
+  USING btree
+  (status COLLATE pg_catalog."default" )
+  WHERE status IS NULL;
 
-
---
--- TOC entry 1913 (class 0 OID 0)
--- Dependencies: 162
--- Name: page_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('page_id_seq', 1, true);
 
 
 --
@@ -74,44 +73,21 @@ SELECT pg_catalog.setval('page_id_seq', 1, true);
 --
 
 DROP TABLE IF EXISTS reference CASCADE;
-CREATE TABLE reference (
-    id bigint NOT NULL,
-    from_id bigint,
-    to_id bigint NOT NULL
+-- Table: reference
+
+-- DROP TABLE reference;
+
+CREATE TABLE reference
+(
+  id bigserial NOT NULL,
+  from_id bigint,
+  to_id bigint NOT NULL
+)
+WITH (
+  OIDS=FALSE
 );
-
-
---
--- TOC entry 164 (class 1259 OID 1782585)
--- Dependencies: 163 5
--- Name: reference_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
-
-CREATE SEQUENCE reference_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
-
-
---
--- TOC entry 1914 (class 0 OID 0)
--- Dependencies: 164
--- Name: reference_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE reference_id_seq OWNED BY reference.id;
-
-
---
--- TOC entry 1915 (class 0 OID 0)
--- Dependencies: 164
--- Name: reference_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('reference_id_seq', 1, false);
-
+ALTER TABLE reference
+  OWNER TO spider;
 
 --
 -- TOC entry 165 (class 1259 OID 1782587)
@@ -120,52 +96,50 @@ SELECT pg_catalog.setval('reference_id_seq', 1, false);
 --
 
 DROP TABLE IF EXISTS site CASCADE;
-CREATE TABLE site (
-    id bigint NOT NULL,
-    name character varying NOT NULL,
-    address character varying NOT NULL,
-    priority double precision DEFAULT 1.0 NOT NULL,
-    amount_ref_incoming integer DEFAULT 0 NOT NULL,
-    amount_ref_outgoing integer DEFAULT 0 NOT NULL,
-    amount_page_all integer DEFAULT 0 NOT NULL,
-    amount_page_new integer DEFAULT 0 NOT NULL,
-    amount_page_update integer DEFAULT 0 NOT NULL,
-    amount_page_dead integer DEFAULT 0 NOT NULL,
-    time_per_page interval DEFAULT '00:00:10'::interval NOT NULL,
-    time_access timestamp without time zone DEFAULT now() NOT NULL
+-- Table: site
+
+-- DROP TABLE site;
+
+CREATE TABLE site
+(
+  id bigserial NOT NULL,
+  name character varying NOT NULL,
+  address character varying,
+  priority double precision NOT NULL DEFAULT 1.0,
+  amount_ref_incoming integer NOT NULL DEFAULT 0,
+  amount_ref_outgoing integer NOT NULL DEFAULT 0,
+  amount_page_all integer NOT NULL DEFAULT 0,
+  amount_page_new integer NOT NULL DEFAULT 0,
+  amount_page_update integer NOT NULL DEFAULT 0,
+  amount_page_dead integer NOT NULL DEFAULT 0,
+  time_per_page interval NOT NULL DEFAULT '00:00:10'::interval,
+  time_access timestamp without time zone NOT NULL DEFAULT now(),
+  CONSTRAINT site_pkey PRIMARY KEY (id )
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE site
+  OWNER TO spider;
 
+-- Index: site_expr_idx
 
---
--- TOC entry 166 (class 1259 OID 1782602)
--- Dependencies: 5 165
--- Name: site_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
+-- DROP INDEX site_expr_idx;
 
-CREATE SEQUENCE site_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+CREATE INDEX site_expr_idx
+  ON site
+  USING btree
+  ((time_access + time_per_page) );
 
+-- Index: site_time_access_idx
 
---
--- TOC entry 1916 (class 0 OID 0)
--- Dependencies: 166
--- Name: site_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
+-- DROP INDEX site_time_access_idx;
 
-ALTER SEQUENCE site_id_seq OWNED BY site.id;
+CREATE INDEX site_time_access_idx
+  ON site
+  USING btree
+  (time_access );
 
-
---
--- TOC entry 1917 (class 0 OID 0)
--- Dependencies: 166
--- Name: site_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('site_id_seq', 1, true);
 
 
 --
@@ -175,43 +149,31 @@ SELECT pg_catalog.setval('site_id_seq', 1, true);
 --
 
 DROP TABLE IF EXISTS word2 CASCADE;
-CREATE TABLE word2 (
-    id bigint NOT NULL,
-    word1 integer,
-    word2 integer
+-- Table: word2
+
+-- DROP TABLE word2;
+
+CREATE TABLE word2
+(
+  id bigserial NOT NULL,
+  word1 integer,
+  word2 integer
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE word2
+  OWNER TO spider;
 
+-- Index: word2_word1_word2_idx
 
---
--- TOC entry 168 (class 1259 OID 1782607)
--- Dependencies: 167 5
--- Name: word2_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
+-- DROP INDEX word2_word1_word2_idx;
 
-CREATE SEQUENCE word2_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+CREATE INDEX word2_word1_word2_idx
+  ON word2
+  USING btree
+  (word1 , word2 );
 
-
---
--- TOC entry 1918 (class 0 OID 0)
--- Dependencies: 168
--- Name: word2_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE word2_id_seq OWNED BY word2.id;
-
-
---
--- TOC entry 1919 (class 0 OID 0)
--- Dependencies: 168
--- Name: word2_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('word2_id_seq', 1, false);
 
 
 --
@@ -221,10 +183,47 @@ SELECT pg_catalog.setval('word2_id_seq', 1, false);
 --
 
 DROP TABLE IF EXISTS word2_to_page CASCADE;
-CREATE TABLE word2_to_page (
-    word2_id bigint,
-    page_id bigint
+-- Table: word2_to_page
+
+-- DROP TABLE word2_to_page;
+
+CREATE TABLE word2_to_page
+(
+  word2_id bigint,
+  page_id bigint
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE word2_to_page
+  OWNER TO spider;
+
+  -- Table: word2_to_page_tmp
+
+-- DROP TABLE word2_to_page_tmp;
+
+CREATE TABLE word2_to_page_tmp
+(
+  page_id bigint,
+  word1 integer,
+  word2 integer
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE word2_to_page_tmp
+  OWNER TO spider;
+
+-- Trigger: on_delete_word2_tmp on word2_to_page_tmp
+
+-- DROP TRIGGER on_delete_word2_tmp ON word2_to_page_tmp;
+
+CREATE TRIGGER on_delete_word2_tmp
+  BEFORE DELETE
+  ON word2_to_page_tmp
+  FOR EACH ROW
+  EXECUTE PROCEDURE on_delete_word2_tmp();
+
 
 
 --
@@ -234,44 +233,32 @@ CREATE TABLE word2_to_page (
 --
 
 DROP TABLE IF EXISTS word3 CASCADE;
-CREATE TABLE word3 (
-    id bigint NOT NULL,
-    word1 integer,
-    word2 integer,
-    word3 integer
+-- Table: word3
+
+-- DROP TABLE word3;
+
+CREATE TABLE word3
+(
+  id bigserial NOT NULL,
+  word1 integer,
+  word2 integer,
+  word3 integer
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE word3
+  OWNER TO spider;
 
+-- Index: word3_word1_word2_word3_idx
 
---
--- TOC entry 171 (class 1259 OID 1782615)
--- Dependencies: 170 5
--- Name: word3_id_seq; Type: SEQUENCE; Schema: public; Owner: -
---
+-- DROP INDEX word3_word1_word2_word3_idx;
 
-CREATE SEQUENCE word3_id_seq
-    START WITH 1
-    INCREMENT BY 1
-    NO MINVALUE
-    NO MAXVALUE
-    CACHE 1;
+CREATE INDEX word3_word1_word2_word3_idx
+  ON word3
+  USING btree
+  (word1 , word2 , word3 );
 
-
---
--- TOC entry 1920 (class 0 OID 0)
--- Dependencies: 171
--- Name: word3_id_seq; Type: SEQUENCE OWNED BY; Schema: public; Owner: -
---
-
-ALTER SEQUENCE word3_id_seq OWNED BY word3.id;
-
-
---
--- TOC entry 1921 (class 0 OID 0)
--- Dependencies: 171
--- Name: word3_id_seq; Type: SEQUENCE SET; Schema: public; Owner: -
---
-
-SELECT pg_catalog.setval('word3_id_seq', 1, false);
 
 
 --
@@ -281,55 +268,49 @@ SELECT pg_catalog.setval('word3_id_seq', 1, false);
 --
 
 DROP TABLE IF EXISTS word3_to_page CASCADE;
-CREATE TABLE word3_to_page (
-    word3_id bigint,
-    page_id bigint
+-- Table: word3_to_page
+
+-- DROP TABLE word3_to_page;
+
+CREATE TABLE word3_to_page
+(
+  word3_id bigint,
+  page_id bigint
+)
+WITH (
+  OIDS=FALSE
 );
+ALTER TABLE word3_to_page
+  OWNER TO spider;
 
 
---
--- TOC entry 1882 (class 2604 OID 1782620)
--- Dependencies: 162 161
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
+-- Table: word3_to_page_tmp
 
-ALTER TABLE page ALTER COLUMN id SET DEFAULT nextval('page_id_seq'::regclass);
+-- DROP TABLE word3_to_page_tmp;
 
+CREATE TABLE word3_to_page_tmp
+(
+  page_id bigint,
+  word1 integer,
+  word2 integer,
+  word3 integer
+)
+WITH (
+  OIDS=FALSE
+);
+ALTER TABLE word3_to_page_tmp
+  OWNER TO spider;
 
---
--- TOC entry 1883 (class 2604 OID 1782621)
--- Dependencies: 164 163
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
+-- Trigger: on_delete_word3_tmp on word3_to_page_tmp
 
-ALTER TABLE reference ALTER COLUMN id SET DEFAULT nextval('reference_id_seq'::regclass);
+-- DROP TRIGGER on_delete_word3_tmp ON word3_to_page_tmp;
 
+CREATE TRIGGER on_delete_word3_tmp
+  BEFORE DELETE
+  ON word3_to_page_tmp
+  FOR EACH ROW
+  EXECUTE PROCEDURE on_delete_word3_tmp();
 
---
--- TOC entry 1893 (class 2604 OID 1782622)
--- Dependencies: 166 165
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE site ALTER COLUMN id SET DEFAULT nextval('site_id_seq'::regclass);
-
-
---
--- TOC entry 1894 (class 2604 OID 1782623)
--- Dependencies: 168 167
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE word2 ALTER COLUMN id SET DEFAULT nextval('word2_id_seq'::regclass);
-
-
---
--- TOC entry 1895 (class 2604 OID 1782624)
--- Dependencies: 171 170
--- Name: id; Type: DEFAULT; Schema: public; Owner: -
---
-
-ALTER TABLE word3 ALTER COLUMN id SET DEFAULT nextval('word3_id_seq'::regclass);
 
 
 --
@@ -390,50 +371,88 @@ INSERT INTO site (id, name, address, priority, amount_ref_incoming, amount_ref_o
 
 
 
---
--- TOC entry 1897 (class 2606 OID 1782628)
--- Dependencies: 161 161
--- Name: page_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY page
-    ADD CONSTRAINT page_pkey PRIMARY KEY (id);
-
-
---
--- TOC entry 1899 (class 2606 OID 1782626)
--- Dependencies: 165 165
--- Name: site_pkey; Type: CONSTRAINT; Schema: public; Owner: -
---
-
-ALTER TABLE ONLY site
-    ADD CONSTRAINT site_pkey PRIMARY KEY (id);
-
-
--- Completed on 2012-06-12 21:10:08
-
---
--- PostgreSQL database dump complete
---
-
-CREATE UNIQUE INDEX word2_words_idx ON word2 (word1,word2);
-CREATE UNIQUE INDEX word3_words_idx ON word3 (word1,word2,word3);
 
 
 
-DROP TABLE IF EXISTS word2_to_page_tmp CASCADE;
-CREATE TABLE word2_to_page_tmp (
-    page_id bigint,
-    word1 int4,
-    word2 int4
-);
+-- Function: on_delete_word2_tmp()
+
+-- DROP FUNCTION on_delete_word2_tmp();
+
+CREATE OR REPLACE FUNCTION on_delete_word2_tmp()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word2 WHERE word1=OLD.word1 AND word2=OLD.word2;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+    BEGIN
+        INSERT INTO word2 (word1,word2) VALUES (OLD.word1,OLD.word2) RETURNING id INTO mID;
+    EXCEPTION WHEN unique_violation THEN
+      OPEN cid; 
+      FETCH cID INTO mID;
+      CLOSE cid;
+    END;
+  END IF;
+
+  INSERT INTO word2_to_page (word2_id, page_id) VALUES (mID,OLD.page_id);
+  RETURN OLD;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION on_delete_word2_tmp()
+  OWNER TO postgres;
+
+DROP TRIGGER IF EXISTS on_delete_word2_tmp ON word2_to_page_tmp;
+CREATE TRIGGER on_delete_word2_tmp BEFORE DELETE
+    ON word2_to_page_tmp FOR EACH ROW
+    EXECUTE PROCEDURE on_delete_word2_tmp();
 
 
-DROP TABLE IF EXISTS word3_to_page_tmp CASCADE;
-CREATE TABLE word3_to_page_tmp (
-    page_id bigint,
-    word1 int4,
-    word2 int4,
-    word3 int4
-);
+
+
+
+-- Function: on_delete_word3_tmp()
+
+-- DROP FUNCTION on_delete_word3_tmp();
+
+CREATE OR REPLACE FUNCTION on_delete_word3_tmp()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word3 WHERE word1=OLD.word1 AND word2=OLD.word2 AND word3=OLD.word2;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+    BEGIN
+        INSERT INTO word2 (word1,word2,word3) VALUES (OLD.word1,OLD.word2,OLD.word3) RETURNING id INTO mID;
+    EXCEPTION WHEN unique_violation THEN
+      OPEN cid; 
+      FETCH cID INTO mID;
+      CLOSE cid;
+    END;
+  END IF;
+
+  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,OLD.page_id);
+  RETURN OLD;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION on_delete_word3_tmp()
+  OWNER TO postgres;
+
+DROP TRIGGER IF EXISTS on_delete_word3_tmp ON word3_to_page_tmp;
+CREATE TRIGGER on_delete_word3_tmp BEFORE DELETE
+    ON word3_to_page_tmp FOR EACH ROW
+    EXECUTE PROCEDURE on_delete_word3_tmp();
 

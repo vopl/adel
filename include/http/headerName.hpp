@@ -53,6 +53,8 @@ HTTP_HN_INSTANCE(ifUnmodifiedSince, 'I','f','-','U','n','m','o','d','i','f','i',
 
 HTTP_HN_INSTANCE(userAgent, 'U','s','e','r','-','A','g','e','n','t')
 
+HTTP_HN_INSTANCE(location, 'L','o','c','a','t','i','o','n')
+
 namespace http { namespace hn
 {
 	//////////////////////////////////////////////////////////////////////////////
