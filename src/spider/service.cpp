@@ -162,7 +162,7 @@ namespace spider
 			boost::bind(&Service::onConnectionLost, this, _1));
 
 		async::spawn(boost::bind(&Service::processLoop, this));
-
+/*
 		{
 			async::Mutex::ScopedLock sl(_mtx);
 			_numWorkers++;
@@ -174,6 +174,7 @@ namespace spider
 			_numWorkers++;
 		}
 		async::spawn(boost::bind(&Service::processMoveTmp3, this));
+*/
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -452,10 +453,10 @@ namespace spider
 // 				continue;
 // 			}
 
-//   			if(u.hostnameWithPort() != "127.0.0.1:8080")
-//   			{
-//   				continue;
-//   			}
+   			if(u.hostnameWithPort() != "127.0.0.1:8080")
+   			{
+   				continue;
+   			}
 
 			std::string uri = Uri::encode(Uri::decode(u.unparse(Uri::REMOVE_FRAGMENT)));
 

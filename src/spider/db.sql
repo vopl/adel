@@ -51,12 +51,7 @@ $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
 ALTER FUNCTION on_delete_word2_tmp()
-  OWNER TO postgres;
-
-DROP TRIGGER IF EXISTS on_delete_word2_tmp ON word2_to_page_tmp;
-CREATE TRIGGER on_delete_word2_tmp BEFORE DELETE
-    ON word2_to_page_tmp FOR EACH ROW
-    EXECUTE PROCEDURE on_delete_word2_tmp();
+  OWNER TO spider;
 
 CREATE OR REPLACE FUNCTION on_delete_word3_tmp()
   RETURNS trigger AS
@@ -80,7 +75,7 @@ $BODY$
   LANGUAGE plpgsql VOLATILE
   COST 100;
 ALTER FUNCTION on_delete_word3_tmp()
-  OWNER TO postgres;
+  OWNER TO spider;
 
 
 --
@@ -282,8 +277,7 @@ ALTER TABLE word2_to_page_tmp
 
 -- Trigger: on_delete_word2_tmp on word2_to_page_tmp
 
--- DROP TRIGGER on_delete_word2_tmp ON word2_to_page_tmp;
-
+DROP TRIGGER IF EXISTS on_delete_word2_tmp ON word2_to_page_tmp;
 CREATE TRIGGER on_delete_word2_tmp
   BEFORE DELETE
   ON word2_to_page_tmp
@@ -369,8 +363,7 @@ ALTER TABLE word3_to_page_tmp
 
 -- Trigger: on_delete_word3_tmp on word3_to_page_tmp
 
--- DROP TRIGGER on_delete_word3_tmp ON word3_to_page_tmp;
-
+DROP TRIGGER IF EXISTS on_delete_word3_tmp ON word3_to_page_tmp;
 CREATE TRIGGER on_delete_word3_tmp
   BEFORE DELETE
   ON word3_to_page_tmp
