@@ -709,7 +709,7 @@ namespace spider
 		{
 			return false;
 		}
-/*
+
 		if(!updatePageWords3<PhraseStreamer<3,0,0> >(c, pageId, wordBuckets))
 		{
 			return false;
@@ -746,7 +746,6 @@ namespace spider
 		{
 			return false;
 		}
-*/
 
 		return true;
 	}
@@ -754,6 +753,8 @@ namespace spider
 	///////////////////////////////////////////////////////////////////////////////////
 	bool Service::updatePageWords2(pgc::Connection c, const utils::Variant &pageId, const Word *words[2])
 	{
+		static volatile void *words_ = words;
+		return true;
 		pgc::Result res = c.query(_stInsertWord2ToPage_tmp, utils::MVA(pageId, words[0]->_value,words[1]->_value));
 		CHECK_PGR_NORETURN(res);
 
@@ -768,6 +769,8 @@ namespace spider
 	///////////////////////////////////////////////////////////////////////////////////
 	bool Service::updatePageWords3(pgc::Connection c, const utils::Variant &pageId, const Word *words[3])
 	{
+		static volatile void *words_ = words;
+		return true;
 		pgc::Result res = c.query(_stInsertWord3ToPage_tmp, utils::MVA(pageId, words[0]->_value,words[1]->_value,words[2]->_value));
 		CHECK_PGR_NORETURN(res);
 
