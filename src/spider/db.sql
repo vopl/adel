@@ -17,6 +17,72 @@ SET search_path = public, pg_catalog;
 
 SET default_with_oids = false;
 
+
+
+
+
+
+
+
+
+
+
+
+
+CREATE OR REPLACE FUNCTION on_delete_word2_tmp()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word2 WHERE word1=OLD.word1 AND word2=OLD.word2;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+        INSERT INTO word2 (word1,word2) VALUES (OLD.word1,OLD.word2) RETURNING id INTO mID;
+  END IF;
+
+  INSERT INTO word2_to_page (word2_id, page_id) VALUES (mID,OLD.page_id);
+  RETURN OLD;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION on_delete_word2_tmp()
+  OWNER TO postgres;
+
+DROP TRIGGER IF EXISTS on_delete_word2_tmp ON word2_to_page_tmp;
+CREATE TRIGGER on_delete_word2_tmp BEFORE DELETE
+    ON word2_to_page_tmp FOR EACH ROW
+    EXECUTE PROCEDURE on_delete_word2_tmp();
+
+CREATE OR REPLACE FUNCTION on_delete_word3_tmp()
+  RETURNS trigger AS
+$BODY$
+DECLARE
+  mID bigint;
+  cID CURSOR IS SELECT id FROM word3 WHERE word1=OLD.word1 AND word2=OLD.word2 AND word3=OLD.word2;
+BEGIN
+  OPEN cid;
+  FETCH cID INTO mID;
+  CLOSE cid;
+  IF NOT FOUND
+  THEN
+        INSERT INTO word2 (word1,word2,word3) VALUES (OLD.word1,OLD.word2,OLD.word3) RETURNING id INTO mID;
+  END IF;
+
+  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,OLD.page_id);
+  RETURN OLD;
+END;
+$BODY$
+  LANGUAGE plpgsql VOLATILE
+  COST 100;
+ALTER FUNCTION on_delete_word3_tmp()
+  OWNER TO postgres;
+
+
 --
 -- TOC entry 161 (class 1259 OID 1782574)
 -- Dependencies: 5
@@ -200,7 +266,7 @@ ALTER TABLE word2_to_page
 
   -- Table: word2_to_page_tmp
 
--- DROP TABLE word2_to_page_tmp;
+DROP TABLE IF EXISTS word2_to_page_tmp;
 
 CREATE TABLE word2_to_page_tmp
 (
@@ -286,7 +352,7 @@ ALTER TABLE word3_to_page
 
 -- Table: word3_to_page_tmp
 
--- DROP TABLE word3_to_page_tmp;
+DROP TABLE IF EXISTS word3_to_page_tmp;
 
 CREATE TABLE word3_to_page_tmp
 (
@@ -319,7 +385,7 @@ CREATE TRIGGER on_delete_word3_tmp
 -- Data for Name: page; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO page (id, site_id, uri, body_length, headers, status) VALUES (1, 1, 'http://127.0.0.1:8080/index.html', NULL, NULL, NULL);
+INSERT INTO page (id, site_id, uri, body_length, headers, status) VALUES (0, 0, 'http://127.0.0.1:8080/index.html', NULL, NULL, NULL);
 
 
 --
@@ -336,7 +402,7 @@ INSERT INTO page (id, site_id, uri, body_length, headers, status) VALUES (1, 1, 
 -- Data for Name: site; Type: TABLE DATA; Schema: public; Owner: -
 --
 
-INSERT INTO site (id, name, address, priority, amount_ref_incoming, amount_ref_outgoing, amount_page_all, amount_page_new, amount_page_update, amount_page_dead, time_per_page, time_access) VALUES (1, '127.0.0.1:8080', '127.0.0.1', 1, 0, 0, 1, 1, 0, 0, '00:00:10', '2012-06-12 21:06:36.558');
+INSERT INTO site (id, name, address, priority, amount_ref_incoming, amount_ref_outgoing, amount_page_all, amount_page_new, amount_page_update, amount_page_dead, time_per_page, time_access) VALUES (0, '127.0.0.1:8080', '127.0.0.1', 1, 0, 0, 1, 1, 0, 0, '00:00:00', '2012-06-12 21:06:36.558');
 
 
 --
@@ -374,45 +440,6 @@ INSERT INTO site (id, name, address, priority, amount_ref_incoming, amount_ref_o
 
 
 
--- Function: on_delete_word2_tmp()
-
--- DROP FUNCTION on_delete_word2_tmp();
-
-CREATE OR REPLACE FUNCTION on_delete_word2_tmp()
-  RETURNS trigger AS
-$BODY$
-DECLARE
-  mID bigint;
-  cID CURSOR IS SELECT id FROM word2 WHERE word1=OLD.word1 AND word2=OLD.word2;
-BEGIN
-  OPEN cid;
-  FETCH cID INTO mID;
-  CLOSE cid;
-  IF NOT FOUND
-  THEN
-    BEGIN
-        INSERT INTO word2 (word1,word2) VALUES (OLD.word1,OLD.word2) RETURNING id INTO mID;
-    EXCEPTION WHEN unique_violation THEN
-      OPEN cid; 
-      FETCH cID INTO mID;
-      CLOSE cid;
-    END;
-  END IF;
-
-  INSERT INTO word2_to_page (word2_id, page_id) VALUES (mID,OLD.page_id);
-  RETURN OLD;
-END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-ALTER FUNCTION on_delete_word2_tmp()
-  OWNER TO postgres;
-
-DROP TRIGGER IF EXISTS on_delete_word2_tmp ON word2_to_page_tmp;
-CREATE TRIGGER on_delete_word2_tmp BEFORE DELETE
-    ON word2_to_page_tmp FOR EACH ROW
-    EXECUTE PROCEDURE on_delete_word2_tmp();
-
 
 
 
@@ -421,35 +448,6 @@ CREATE TRIGGER on_delete_word2_tmp BEFORE DELETE
 
 -- DROP FUNCTION on_delete_word3_tmp();
 
-CREATE OR REPLACE FUNCTION on_delete_word3_tmp()
-  RETURNS trigger AS
-$BODY$
-DECLARE
-  mID bigint;
-  cID CURSOR IS SELECT id FROM word3 WHERE word1=OLD.word1 AND word2=OLD.word2 AND word3=OLD.word2;
-BEGIN
-  OPEN cid;
-  FETCH cID INTO mID;
-  CLOSE cid;
-  IF NOT FOUND
-  THEN
-    BEGIN
-        INSERT INTO word2 (word1,word2,word3) VALUES (OLD.word1,OLD.word2,OLD.word3) RETURNING id INTO mID;
-    EXCEPTION WHEN unique_violation THEN
-      OPEN cid; 
-      FETCH cID INTO mID;
-      CLOSE cid;
-    END;
-  END IF;
-
-  INSERT INTO word3_to_page (word3_id, page_id) VALUES (mID,OLD.page_id);
-  RETURN OLD;
-END;
-$BODY$
-  LANGUAGE plpgsql VOLATILE
-  COST 100;
-ALTER FUNCTION on_delete_word3_tmp()
-  OWNER TO postgres;
 
 DROP TRIGGER IF EXISTS on_delete_word3_tmp ON word3_to_page_tmp;
 CREATE TRIGGER on_delete_word3_tmp BEFORE DELETE
