@@ -28,7 +28,7 @@ target_link_libraries(entry
     net
     http
     pgc
-    spider)
+    scom)
 
 if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
     target_link_libraries(${PROJECT} rt)

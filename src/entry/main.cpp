@@ -1,12 +1,10 @@
 #include "pch.hpp"
 #include <iostream>
 #include <boost/bind.hpp>
+#include <boost/foreach.hpp>
 
 #include "async/manager.hpp"
-#include "http/server.hpp"
-#include "http/server/handlerFs.hpp"
-#include "http/client.hpp"
-#include "spider/service.hpp"
+#include "scom/service.hpp"
 
 #include "async/log.hpp"
 #include "pgc/log.hpp"
@@ -14,7 +12,7 @@
 #include "http/log.hpp"
 #include "http/server/log.hpp"
 #include "http/client/log.hpp"
-#include "spider/log.hpp"
+#include "scom/log.hpp"
 
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
@@ -31,7 +29,8 @@ int main(int argc, const char **argv)
 		desc.add_options()
 				("help", "produce help message")
 				("help-log", "produce help message for logging")
-				("run,R", "run")
+				("run,R", boost::program_options::value<std::vector<std::string> >(),
+					"module to run, [scom]")
 				("config", boost::program_options::value<std::string>()->default_value("../etc/global.conf"),
 					"configuration file, filesystem path, relative from working directory of this process or absolute");
 
@@ -47,17 +46,32 @@ int main(int argc, const char **argv)
 		}
 		po::notify(varsGeneral);
 
+		if(!varsGeneral.count("run"))
+		{
+		    cout << desc << "\n";
+			return 0;
+		}
+
+		bool runScom = false;
+		BOOST_FOREACH(const std::string &module, varsGeneral["run"].as<std::vector<std::string> >())
+		{
+			if("scom" == module)
+			{
+				runScom = true;
+			}
+		}
+
+		if(!runScom)
+		{
+		    cout << desc << "\n";
+			return 0;
+		}
+
 		//////////////////////////////////////
 		utils::OptionsPtr omanager = async::Manager::prepareOptions("async.manager");
 		desc.add(omanager->desc());
-		utils::OptionsPtr ohttpServer1 = http::Server::prepareOptions("httpServer1");
-		desc.add(ohttpServer1->desc());
-		utils::OptionsPtr ohttpServer1HandlerFs = http::server::HandlerFs::prepareOptions("httpServer1.handlerFs");
-		desc.add(ohttpServer1HandlerFs->desc());
-		utils::OptionsPtr ohttpClient1 = http::Client::prepareOptions("httpClient1");
-		desc.add(ohttpClient1->desc());
-		utils::OptionsPtr ospider = spider::Service::prepareOptions("spider");
-		desc.add(ospider->desc());
+		utils::OptionsPtr oscom = scom::Service::prepareOptions("scom");
+		desc.add(oscom->desc());
 
 		if(varsGeneral.count("help"))
 		{
@@ -79,8 +93,8 @@ int main(int argc, const char **argv)
 		desc_log.add(ohttpClientLog->desc());
 		utils::OptionsPtr ohttpLog = http::prepareOptionsLog();
 		desc_log.add(ohttpLog->desc());
-		utils::OptionsPtr ospiderLog = spider::prepareOptionsLog();
-		desc_log.add(ospiderLog->desc());
+		utils::OptionsPtr oscomLog = scom::prepareOptionsLog();
+		desc_log.add(oscomLog->desc());
 
 		if(varsGeneral.count("help-log"))
 		{
@@ -123,13 +137,10 @@ int main(int argc, const char **argv)
 		oasyncLog->store(&parsedOptions1, &parsedOptions2);
 		opgcLog->store(&parsedOptions1, &parsedOptions2);
 		onetLog->store(&parsedOptions1, &parsedOptions2);
-		ospiderLog->store(&parsedOptions1, &parsedOptions2);
+		oscomLog->store(&parsedOptions1, &parsedOptions2);
 
 		omanager->store(&parsedOptions1, &parsedOptions2);
-		ohttpServer1->store(&parsedOptions1, &parsedOptions2);
-		ohttpServer1HandlerFs->store(&parsedOptions1, &parsedOptions2);
-		ohttpClient1->store(&parsedOptions1, &parsedOptions2);
-		ospider->store(&parsedOptions1, &parsedOptions2);
+		oscom->store(&parsedOptions1, &parsedOptions2);
 
 		if(varsGeneral.count("run"))
 		{
@@ -139,25 +150,29 @@ int main(int argc, const char **argv)
 			http::initLog(ohttpLog);
 			http::server::initLog(ohttpServerLog);
 			http::client::initLog(ohttpClientLog);
-			spider::initLog(ospiderLog);
+			scom::initLog(oscomLog);
 
 
 			async::Manager manager(omanager);
 			manager.asrv().setAsGlobal(true);
 			{
-				http::Server httpServer1(ohttpServer1);
 
-				http::server::HandlerFs httpServer1HandlerFs(ohttpServer1HandlerFs);
-				httpServer1.onRequest(boost::bind(&http::server::HandlerFs::onRequest, httpServer1HandlerFs, _1));
-
-				http::Client httpClient1(ohttpClient1);
-
-				spider::Service s(ospider, httpClient1);
-				manager.asrv().onStart(boost::bind(&spider::Service::start, boost::ref(s)));
-				manager.asrv().onStop(boost::bind(&spider::Service::stop, boost::ref(s)));
+				scom::Service *scom = NULL;
+				if(runScom)
+				{
+					scom = new scom::Service(oscom);
+					manager.asrv().onStart(boost::bind(&scom::Service::start, scom));
+					manager.asrv().onStop(boost::bind(&scom::Service::stop, scom));
+				}
 
 				//run workspace
 				manager.run();
+
+				if(scom)
+				{
+					delete scom;
+					scom = NULL;
+				}
 			}
 		}
 
