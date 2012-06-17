@@ -6,8 +6,18 @@
 
 namespace scom
 {
+	namespace impl
+	{
+		class Service;
+		typedef boost::shared_ptr<Service> ServicePtr;
+	}
+
 	class Service
 	{
+	protected:
+		typedef impl::ServicePtr ImplPtr;
+		ImplPtr _impl;
+
 	public:
 		Service(utils::OptionsPtr optionsPtr);
 		virtual ~Service();

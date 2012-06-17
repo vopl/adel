@@ -40,16 +40,16 @@ source_group(src FILES ${SRC_PCH})
 set(IMPL_INC
 	${PSRC}/impl/service.hpp
 )
-source_group(include/impl FILES ${INC})
+source_group(include/impl FILES ${IMPL_INC})
 
 set(IMPL_SRC
 	${PSRC}/impl/service.cpp
 )
-source_group(src/impl FILES ${SRC})
+source_group(src/impl FILES ${IMPL_SRC})
 
 
 
-
+include_directories(${PSRC})
 
 
 include(FindHunSpell)

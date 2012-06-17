@@ -46,27 +46,6 @@ int main(int argc, const char **argv)
 		}
 		po::notify(varsGeneral);
 
-		if(!varsGeneral.count("run"))
-		{
-		    cout << desc << "\n";
-			return 0;
-		}
-
-		bool runScom = false;
-		BOOST_FOREACH(const std::string &module, varsGeneral["run"].as<std::vector<std::string> >())
-		{
-			if("scom" == module)
-			{
-				runScom = true;
-			}
-		}
-
-		if(!runScom)
-		{
-		    cout << desc << "\n";
-			return 0;
-		}
-
 		//////////////////////////////////////
 		utils::OptionsPtr omanager = async::Manager::prepareOptions("async.manager");
 		desc.add(omanager->desc());
@@ -103,6 +82,32 @@ int main(int argc, const char **argv)
 		}
 		desc.add(desc_log);
 
+		///////////////////////////////////////////////////////
+		if(!varsGeneral.count("run"))
+		{
+		    cout << "no module to run" << "\n";
+			return -4;
+		}
+
+		///////////////////////////////////////////////////////
+		bool runScom = false;
+		BOOST_FOREACH(const std::string &module, varsGeneral["run"].as<std::vector<std::string> >())
+		{
+			if("scom" == module)
+			{
+			    cout << "run scom" << "\n";
+				runScom = true;
+			}
+		}
+
+		if(!runScom)
+		{
+		    cout << "unknown module to run" << "\n";
+			return -5;
+		}
+
+
+		///////////////////////////////////////////////////////
 		po::parsed_options parsedOptions1(&desc);
 		po::parsed_options parsedOptions2(&desc);
 
