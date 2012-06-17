@@ -93,7 +93,7 @@ if(WIN32)
 		HAVE_WINFIBER)
 endif()
 
-include(FindValgrind.cmake)
+include(FindValgrind)
 if(VALGRIND_FOUND)
     set(HAVE_VALGRIND TRUE)
     message(STATUS "use valgrind: ${VALGRIND_PROGRAM}, ${VALGRIND_INCLUDE_DIR}")

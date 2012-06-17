@@ -36,7 +36,7 @@ set(SRC_PCH
 )
 source_group(src FILES ${SRC_PCH})
 
-include(FindHunSpell.cmake)
+include(FindHunSpell)
 
 if(NOT HUNSPELL_FOUND)
 	message(FATAL_ERROR "hunspell required")
@@ -46,7 +46,7 @@ include_directories(${HUNSPELL_INCLUDE_DIR})
 add_definitions(-DHUNSPELL_STATIC)
 
 
-include(../htmlcxx/FindIconv.cmake)
+include(FindIconv)
 if(NOT ICONV_FOUND)
 	message(FATAL_ERROR "iconv required")
 endif()

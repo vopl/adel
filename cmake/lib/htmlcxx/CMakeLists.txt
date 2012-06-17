@@ -44,7 +44,7 @@ source_group(src FILES ${SRC_HDR})
 
 include_directories(${PINC}/html)
 
-include(FindIconv.cmake)
+include(FindIconv)
 if(NOT ICONV_FOUND)
 	message(FATAL_ERROR "iconv required")
 endif()
