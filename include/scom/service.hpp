@@ -17,12 +17,26 @@ namespace scom
 	///////////////////////////////////////////////////////////////////////////////
 	struct PageRule
 	{
-		std::string		_uri;
-		int				_domainLevelMin;
-		int				_domainLevelMax;
-		int				_pathLevelMin;
-		int				_pathLevelMax;
-		int				_referenceLevelMax;
+		enum EAccess
+		{
+			ea_ignore	=0,
+			ea_allow	=1,
+			ea_deny		=2,
+		};
+
+		enum EKind
+		{
+			ek_null			=0,
+			ek_domain		=1,
+			ek_path			=2,
+			ek_reference	=3,
+		};
+
+		std::string		_baseUri;
+
+		int				_kindAndAccess;
+		int				_kindAndAccessMin;
+		int				_kindAndAccessMax;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -37,10 +51,10 @@ namespace scom
 	///////////////////////////////////////////////////////////////////////////////
 	struct Status
 	{
-		int _srcPages;
-		int _srcPagesProcessed;
-		int _dstPages;
-		int _dstPagesProcessed;
+		//int _srcPagesAmount;
+		//int _srcPagesProcessed;
+		//int _dstPagesAmount;
+		//int _dstPagesProcessed;
 		boost::posix_time::ptime _destroyTime;
 
 		enum EStage
