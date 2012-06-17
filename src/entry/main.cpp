@@ -39,9 +39,14 @@ int main(int argc, const char **argv)
 		{
 			po::store(po::command_line_parser(argc, argv).options(desc).allow_unregistered().run(), varsGeneral);
 		}
-		catch(boost::program_options::unknown_option &e)
+		catch(std::exception &e)
 		{
-			std::cout<<e.what()<<std::endl<<desc<<std::endl;
+			std::cout<<e.what()<<std::endl;
+			return EXIT_FAILURE;
+		}
+		catch(...)
+		{
+			std::cout<<"unknown exception"<<std::endl;
 			return EXIT_FAILURE;
 		}
 		po::notify(varsGeneral);
@@ -54,7 +59,7 @@ int main(int argc, const char **argv)
 
 		if(varsGeneral.count("help"))
 		{
-		    cout << desc << "\n";
+		    cout << desc << std::endl;
 		    break;
 		}
 
@@ -77,7 +82,7 @@ int main(int argc, const char **argv)
 
 		if(varsGeneral.count("help-log"))
 		{
-		    cout << desc_log << "\n";
+		    cout << desc_log << std::endl;
 		    break;
 		}
 		desc.add(desc_log);
@@ -85,7 +90,7 @@ int main(int argc, const char **argv)
 		///////////////////////////////////////////////////////
 		if(!varsGeneral.count("run"))
 		{
-		    cout << "no module to run" << "\n";
+		    cout << "no module to run" << std::endl;
 			return -4;
 		}
 
@@ -95,14 +100,14 @@ int main(int argc, const char **argv)
 		{
 			if("scom" == module)
 			{
-			    cout << "run scom" << "\n";
+				cout << "run scom" << std::endl;
 				runScom = true;
 			}
 		}
 
 		if(!runScom)
 		{
-		    cout << "unknown module to run" << "\n";
+		    cout << "unknown module to run" << std::endl;
 			return -5;
 		}
 
@@ -130,9 +135,14 @@ int main(int argc, const char **argv)
 				}
 			}
 		}
-		catch(boost::program_options::unknown_option &e)
+		catch(std::exception &e)
 		{
-			std::cout<<e.what()<<std::endl<<desc<<std::endl;
+			std::cout<<e.what()<<std::endl;
+			return EXIT_FAILURE;
+		}
+		catch(...)
+		{
+			std::cout<<"unknown exception"<<std::endl;
 			return EXIT_FAILURE;
 		}
 
@@ -161,7 +171,6 @@ int main(int argc, const char **argv)
 			async::Manager manager(omanager);
 			manager.asrv().setAsGlobal(true);
 			{
-
 				scom::Service *scom = NULL;
 				if(runScom)
 				{
