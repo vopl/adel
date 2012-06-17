@@ -71,6 +71,16 @@ include_directories(${ICONV_INCLUDE_DIRS})
 
 
 
+#find_package(XMLRPC REQUIRED c++)
+#if(NOT XMLRPC_FOUND)
+#	message(FATAL_ERROR "xmlrpc required")
+#endif()
+#message(STATUS "Found xmlrpc: ${XMLRPC_LIBRARIES}")
+#include_directories(${XMLRPC_INCLUDE_DIRS})
+
+
+
+
 add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${SRC_HDR} ${IMPL_INC} ${IMPL_SRC})
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${IMPL_SRC})
@@ -79,5 +89,6 @@ target_link_libraries(${PROJECT} async http pgc utils htmlcxx utf8proc)
 target_link_libraries(${PROJECT} ${l4cpl})
 target_link_libraries(${PROJECT} ${HUNSPELL_LIBRARIES})
 target_link_libraries(${PROJECT} ${ICONV_LIBRARIES})
+#target_link_libraries(${PROJECT} ${XMLRPC_LIBRARIES})
 
 
