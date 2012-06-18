@@ -37,7 +37,7 @@ namespace async { namespace impl
 		Event(bool autoReset);
 		~Event();
 
-		void set();
+		void set(bool all=false);
 		void reset();
 		bool isSet();
 		void wait();

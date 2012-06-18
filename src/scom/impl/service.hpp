@@ -51,6 +51,9 @@ namespace scom { namespace impl
 		std::string	_pgc_connectionString;
 		size_t		_pgc_maxConnections;
 		pgc::Db		_db;
+
+	private:
+		void mainWorker();
 	};
 }}
 #endif

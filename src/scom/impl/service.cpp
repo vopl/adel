@@ -47,6 +47,8 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	Service::Service(utils::OptionsPtr optionsPtr)
 		: _isWork(false)
+		, _evtWorkerDone(true)
+		, _numWorkers(0)
 	{
 		utils::Options &o = *optionsPtr;
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
@@ -73,19 +75,21 @@ namespace scom { namespace impl
 			_pgc_maxConnections);
 
 		async::Mutex::ScopedLock sl2(_mtxWorkers);
-		//_numWorkers++;
-		//async::spawn(boost::bind(&Service::processLoop, this));
+		_numWorkers++;
+		async::spawn(boost::bind(&Service::mainWorker, this));
 	}
 
 	///////////////////////////////////////////////////////////////////
 	void Service::stop()
 	{
-		async::Mutex::ScopedLock sl(_mtx);
-		if(!_isWork)
 		{
-			return;
+			async::Mutex::ScopedLock sl(_mtx);
+			if(!_isWork)
+			{
+				return;
+			}
+			_isWork = false;
 		}
-		_isWork = false;
 
 		for(;;)
 		{
@@ -98,6 +102,7 @@ namespace scom { namespace impl
 			}
 
 			_evtWorkerDone.wait();
+			//async::timeout(100).wait();
 		}
 		_db.reset();
 	}
@@ -142,4 +147,25 @@ namespace scom { namespace impl
 		assert(0);
 	}
 
+	///////////////////////////////////////////////////////////////////
+	void Service::mainWorker()
+	{
+		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
+
+		for(;;)
+		{
+			//контроль окончания
+			{
+				async::Mutex::ScopedLock sl(_mtx);
+				if(!_isWork)
+				{
+					break;
+				}
+			}
+
+			//удалить просроченные
+
+			//запускать готовые
+		}
+	}
 }}

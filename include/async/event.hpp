@@ -21,7 +21,7 @@ namespace async
 	public:
 		Event(bool autoReset = false);
 
-		void set();
+		void set(bool all=false);
 		void reset();
 		bool isSet();
 		void wait();

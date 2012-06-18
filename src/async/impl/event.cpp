@@ -26,7 +26,7 @@ namespace async { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void Event::set()
+	void Event::set(bool all)
 	{
 		boost::mutex::scoped_lock sl(_mtx);
 		if(!_isSet)
@@ -50,29 +50,43 @@ namespace async { namespace impl
 				return;
 			}
 
+			//autoReset
+			bool activated = false;
 			if(!_mnWaiters.empty())
 			{
 				for(std::vector<MultiNotifierMarked>::iterator ipmn(_mnWaiters.begin()); ipmn!=_mnWaiters.end(); ipmn++)
 				{
 					if(ipmn->_pmn->notifyReady(ipmn->_key))
 					{
+						activated = true;
 						_mnWaiters.erase(_mnWaiters.begin(), ipmn+1);
-						return;
+
+						if(!all)
+						{
+							return;
+						}
 					}
 				}
 				_mnWaiters.clear();
 			}
 
-			if(!_waiters.empty())
+			while(!_waiters.empty())
 			{
 				FiberPtr f;
 				f.swap(_waiters.front());
 				_waiters.erase(_waiters.begin());
 				Worker::current()->fiberReady(f);
-				return;
+				activated = true;
+				if(!all)
+				{
+					return;
+				}
 			}
 
-			_isSet = true;
+			if(!activated)
+			{
+				_isSet = true;
+			}
 		}
 	}
 

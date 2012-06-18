@@ -23,7 +23,7 @@ namespace scom { namespace impl
 				async::Mutex::ScopedLock sl(_mtx);
 				_numWorkers--;
 			}
-			_evtDone.set();
+			_evtDone.set(true);
 		}
 	};
 
