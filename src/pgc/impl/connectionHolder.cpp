@@ -712,6 +712,31 @@ namespace pgc { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void ConnectionHolder::endWork()
 	{
+		bool inTrans = false;
+		PGTransactionStatusType tstatus = PQtransactionStatus(pgcon());
+		switch(tstatus)
+		{
+// 		case PQTRANS_ACTIVE:
+		case PQTRANS_INTRANS:
+		case PQTRANS_INERROR:
+			inTrans = true;
+			break;
+		case PQTRANS_IDLE:
+			break;
+		default:
+			assert(!"wtf? unable to determine transaction status");
+			break;
+		}
+
+		if(inTrans)
+		{
+			WLOG("returned connection is in transaction, ROLLBACK now");
+
+			async::Future<pgc::Result> res;
+			pushRequest(SRequestPtr(new SRequestQuery(res, "ROLLBACK", BindDataPtr())));
+			res.wait();
+		}
+
 		async::Future<pgc::Result> res;
 		pushRequest(SRequestPtr(new SRequestEndWork(res)));
 		res.wait();
