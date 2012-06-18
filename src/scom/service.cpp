@@ -33,4 +33,44 @@ namespace scom
 	{
 		return _impl->stop();
 	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::create(
+		Auth &auth,
+		std::string password)
+	{
+		return _impl->create(auth, password);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::ping(
+		Status &status,
+		const Auth &auth)
+	{
+		return _impl->ping(status, auth);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::setup(
+		const Auth &auth,
+		const std::vector<PageRule> &srcRules,
+		const std::vector<PageRule> &dstRules)
+	{
+		return _impl->setup(auth, srcRules, dstRules);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::start(
+		const Auth &auth)
+	{
+		return _impl->start(auth);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::stop(
+		const Auth &auth)
+	{
+		return _impl->stop(auth);
+	}
+
 }

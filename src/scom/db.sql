@@ -6,6 +6,7 @@ CREATE TABLE instance
     id bigserial NOT NULL PRIMARY KEY,
     password varchar NOT NULL,
     stage int4 NOT NULL DEFAULT 0,
+    is_started boolean NOT NULL DEFAULT false,
     ctime TIMESTAMP WITHOUT TIME ZONE,
     atime TIMESTAMP WITHOUT TIME ZONE,
     dtime TIMESTAMP WITHOUT TIME ZONE
@@ -34,6 +35,7 @@ CREATE TABLE page
     uri varchar NOT NULL,
     is_allowed boolean NOT NULL,
     rule_id bigint NOT NULL REFERENCES page_rule(id),
+    reference_amount int,
 
     http_status varchar,
     http_headers varchar,

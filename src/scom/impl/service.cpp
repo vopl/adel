@@ -1,5 +1,6 @@
 #include "pch.hpp"
 #include "scom/impl/service.hpp"
+#include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
 
 namespace scom { namespace impl
@@ -45,7 +46,11 @@ namespace scom { namespace impl
 
 	///////////////////////////////////////////////////////////////////
 	Service::Service(utils::OptionsPtr optionsPtr)
+		: _isWork(false)
 	{
+		utils::Options &o = *optionsPtr;
+		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
+		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -56,10 +61,85 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	void Service::start()
 	{
+		async::Mutex::ScopedLock sl(_mtx);
+		if(_isWork)
+		{
+			return;
+		}
+		_isWork = true;
+
+		_db = pgc::Db(
+			_pgc_connectionString.data(),
+			_pgc_maxConnections);
+
+		async::Mutex::ScopedLock sl2(_mtxWorkers);
+		//_numWorkers++;
+		//async::spawn(boost::bind(&Service::processLoop, this));
 	}
 
 	///////////////////////////////////////////////////////////////////
 	void Service::stop()
 	{
+		async::Mutex::ScopedLock sl(_mtx);
+		if(!_isWork)
+		{
+			return;
+		}
+		_isWork = false;
+
+		for(;;)
+		{
+			{
+				async::Mutex::ScopedLock sl(_mtxWorkers);
+				if(!_numWorkers)
+				{
+					break;
+				}
+			}
+
+			_evtWorkerDone.wait();
+		}
+		_db.reset();
 	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::create(
+		Auth &auth,
+		std::string password)
+	{
+		//insert
+		assert(0);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::ping(
+		Status &status,
+		const Auth &auth)
+	{
+		assert(0);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::setup(
+		const Auth &auth,
+		const std::vector<PageRule> &srcRules,
+		const std::vector<PageRule> &dstRules)
+	{
+		assert(0);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::start(
+		const Auth &auth)
+	{
+		assert(0);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	EError Service::stop(
+		const Auth &auth)
+	{
+		assert(0);
+	}
+
 }}

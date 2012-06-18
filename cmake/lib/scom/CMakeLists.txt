@@ -39,6 +39,7 @@ source_group(src FILES ${SRC_PCH})
 
 set(IMPL_INC
 	${PSRC}/impl/service.hpp
+	${PSRC}/impl/workerRaii.hpp
 )
 source_group(include/impl FILES ${IMPL_INC})
 
