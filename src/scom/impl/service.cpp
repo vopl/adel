@@ -48,6 +48,7 @@ namespace scom { namespace impl
 	Service::Service(utils::OptionsPtr optionsPtr)
 		: _isWork(false)
 		, _evtWorkerDone(true)
+		, _evtIface(true)
 		, _numWorkers(0)
 	{
 		utils::Options &o = *optionsPtr;
@@ -77,6 +78,7 @@ namespace scom { namespace impl
 		async::Mutex::ScopedLock sl2(_mtxWorkers);
 		_numWorkers++;
 		async::spawn(boost::bind(&Service::mainWorker, this));
+		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -91,8 +93,10 @@ namespace scom { namespace impl
 			_isWork = false;
 		}
 
+		_evtIface.set(true);
 		for(;;)
 		{
+			_evtIface.set(true);
 			{
 				async::Mutex::ScopedLock sl(_mtxWorkers);
 				if(!_numWorkers)
@@ -100,7 +104,9 @@ namespace scom { namespace impl
 					break;
 				}
 			}
+			_evtIface.set(true);
 
+			//TODO: наличие события, да и вообще фибера не тормозит останов async, это может привести к ситуации разрушения работающих объектов. Надо пересмотреть останов async
 			_evtWorkerDone.wait();
 			//async::timeout(100).wait();
 		}
@@ -114,6 +120,7 @@ namespace scom { namespace impl
 	{
 		//insert
 		assert(0);
+		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -122,6 +129,7 @@ namespace scom { namespace impl
 		const Auth &auth)
 	{
 		assert(0);
+		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -131,6 +139,7 @@ namespace scom { namespace impl
 		const std::vector<PageRule> &dstRules)
 	{
 		assert(0);
+		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -145,6 +154,7 @@ namespace scom { namespace impl
 		const Auth &auth)
 	{
 		assert(0);
+		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -163,9 +173,26 @@ namespace scom { namespace impl
 				}
 			}
 
+			bool workWas = false;
+
 			//удалить просроченные
+			/*
+			 * SELECT id FROM instance WHERE dtime <= CURRENT_TIMESTAMP FOR UPDATE LIMIT 10;
+			 * foreach id
+			 * 		delete from page where instance_id=id
+			 * 		delete from page_rule where instance_id=id
+			 * 		delete from instance where id=id
+			 *
+			 * 	workWas = true
+			 */
 
 			//запускать готовые
+
+			//если работы небыло ждать событие интерфейса
+			if(!workWas)
+			{
+				_evtIface.wait();
+			}
 		}
 	}
 }}

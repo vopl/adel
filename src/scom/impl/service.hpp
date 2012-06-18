@@ -47,6 +47,7 @@ namespace scom { namespace impl
 		async::Mutex	_mtxWorkers;
 		size_t			_numWorkers;
 		async::Event	_evtWorkerDone;
+		async::Event	_evtIface;
 
 		std::string	_pgc_connectionString;
 		size_t		_pgc_maxConnections;
