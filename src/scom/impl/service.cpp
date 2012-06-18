@@ -12,7 +12,7 @@ namespace scom { namespace impl
 
 		options->addOption(
 			"pgc.connectionString",
-			boost::program_options::value<std::string>()->default_value("host=localhost port=5432 dbname=spider user=spider password=spider"),
+			boost::program_options::value<std::string>()->default_value("host=localhost port=5432 dbname=scom user=scom password=scom"),
 			"connection string for postgres database");
 
 		options->addOption(
@@ -175,18 +175,31 @@ namespace scom { namespace impl
 
 			bool workWas = false;
 
+#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
+
 			//удалить просроченные
-			/*
-			 * SELECT id FROM instance WHERE dtime <= CURRENT_TIMESTAMP FOR UPDATE LIMIT 10;
-			 * foreach id
-			 * 		delete from page where instance_id=id
-			 * 		delete from page_rule where instance_id=id
-			 * 		delete from instance where id=id
-			 *
-			 * 	workWas = true
-			 */
+
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(continue, c.query("BEGIN"));
+
+			pgc::Result res = c.query("SELECT id FROM instance WHERE dtime <= CURRENT_TIMESTAMP FOR UPDATE LIMIT 10");
+			IF_PGRES_ERROR(continue, res);
+
+			utils::Variant v;
+			for(size_t i(0); i<res.rows(); i++)
+			{
+				res.fetch(v, 0, i);
+				IF_PGRES_ERROR(continue, c.query("DELETE FROM page WHERE instance_id=$1", v));
+				IF_PGRES_ERROR(continue, c.query("DELETE FROM page_rule WHERE instance_id=$1", v));
+				IF_PGRES_ERROR(continue, c.query("DELETE FROM instance WHERE id=$1", v));
+				workWas = true;
+			}
+			IF_PGRES_ERROR(continue, c.query("COMMIT"));
+			c.reset();
+
 
 			//запускать готовые
+			c = _db.allocConnection();
 
 			//если работы небыло ждать событие интерфейса
 			if(!workWas)
