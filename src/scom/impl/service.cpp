@@ -3,6 +3,8 @@
 #include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
 
+#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
+
 namespace scom { namespace impl
 {
 	///////////////////////////////////////////////////////////////////
@@ -118,9 +120,28 @@ namespace scom { namespace impl
 		Auth &auth,
 		std::string password)
 	{
-		//insert
-		assert(0);
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		res = c.query(""
+			"INSERT INTO instance "
+			"	(password, stage, is_started, ctime, atime, dtime) "
+			"	VALUES "
+			"	($1, 0, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP+INTERVAL '1 month') "
+			"RETURNS id", password);
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		utils::Variant id;
+		res.fetch(id, 0, 0);
+
+		auth._secret = password;
+		auth._id = id;
+
 		_evtIface.set(true);
+
+		return ee_ok;
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -128,8 +149,38 @@ namespace scom { namespace impl
 		Status &status,
 		const Auth &auth)
 	{
-		assert(0);
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("BEGIN"));
+
+		res = c.query(""
+			"SELECT stage, is_started, dtime FROM instance "
+			"WHERE id=$1 AND password=$2 "
+			"FOR UPDATE", utils::MVA(auth._id, auth._secret));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		if(!res.rows())
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badId;
+		}
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1", utils::Variant(auth._id)));
+		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
+
+		utils::Variant row;
+		res.fetchRowList(row, 0);
+
+		status._stage		= (Status::EStage)(int)row[0];
+		status._isStarted	= row[1];
+		status._destroyTime	= row[2];
+
 		_evtIface.set(true);
+
+		return ee_ok;
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -139,7 +190,6 @@ namespace scom { namespace impl
 		const std::vector<PageRule> &dstRules)
 	{
 		assert(0);
-		_evtIface.set(true);
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -175,31 +225,24 @@ namespace scom { namespace impl
 
 			bool workWas = false;
 
-#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
+			pgc::Connection c;
+			pgc::Result res;
 
 			//удалить просроченные
-
-			pgc::Connection c = _db.allocConnection();
-			IF_PGRES_ERROR(continue, c.query("BEGIN"));
-
-			pgc::Result res = c.query("SELECT id FROM instance WHERE dtime <= CURRENT_TIMESTAMP FOR UPDATE LIMIT 10");
-			IF_PGRES_ERROR(continue, res);
-
-			utils::Variant v;
-			for(size_t i(0); i<res.rows(); i++)
 			{
-				res.fetch(v, 0, i);
-				IF_PGRES_ERROR(continue, c.query("DELETE FROM page WHERE instance_id=$1", v));
-				IF_PGRES_ERROR(continue, c.query("DELETE FROM page_rule WHERE instance_id=$1", v));
-				IF_PGRES_ERROR(continue, c.query("DELETE FROM instance WHERE id=$1", v));
-				workWas = true;
-			}
-			IF_PGRES_ERROR(continue, c.query("COMMIT"));
-			c.reset();
+				c = _db.allocConnection();
 
+				res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
+				IF_PGRES_ERROR(continue, res);
+
+				c.reset();
+			}
 
 			//запускать готовые
-			c = _db.allocConnection();
+			{
+				c = _db.allocConnection();
+				c.reset();
+			}
 
 			//если работы небыло ждать событие интерфейса
 			if(!workWas)

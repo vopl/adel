@@ -29,7 +29,7 @@ namespace scom
 			ek_null			=0,
 			ek_domain		=1,
 			ek_path			=2,
-			ek_reference	=3,
+			ek_reference	=4,
 		};
 
 		std::string		_baseUri;
@@ -37,6 +37,8 @@ namespace scom
 		int				_kindAndAccess;
 		int				_kindAndAccessMin;
 		int				_kindAndAccessMax;
+
+		int				_maxAmount;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -51,10 +53,6 @@ namespace scom
 	///////////////////////////////////////////////////////////////////////////////
 	struct Status
 	{
-		//int _srcPagesAmount;
-		//int _srcPagesProcessed;
-		//int _dstPagesAmount;
-		//int _dstPagesProcessed;
 		boost::posix_time::ptime _destroyTime;
 
 		enum EStage
@@ -65,6 +63,11 @@ namespace scom
 			es_report	=30,
 			es_fail		=40,
 		} _stage;
+
+		bool _isStarted;
+
+		int _workVolume;
+		int _workProcessed;
 	};
 
 	/////////////////////////////////////////////////////////////////////////////////

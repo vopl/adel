@@ -17,12 +17,13 @@ DROP TABLE IF EXISTS page_rule CASCADE;
 CREATE TABLE page_rule
 (
     id bigserial NOT NULL PRIMARY KEY,
-    instance_id bigint NOT NULL REFERENCES instance(id),
+    instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
     is_src boolean NOT NULL,
     base_uri varchar NOT NULL,
     kind_and_access int4 NOT NULL,
     kind_and_access_min int4 NOT NULL,
-    kind_and_access_max int4 NOT NULL
+    kind_and_access_max int4 NOT NULL,
+    max_amount int4 NOT NULL
 );
 
 --------------------------------------------------------
@@ -30,11 +31,11 @@ DROP TABLE IF EXISTS page CASCADE;
 CREATE TABLE page
 (
     id bigserial NOT NULL PRIMARY KEY,
-    instance_id bigint NOT NULL REFERENCES instance(id),
+    instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
     is_src boolean NOT NULL,
     uri varchar NOT NULL,
     is_allowed boolean NOT NULL,
-    rule_id bigint NOT NULL REFERENCES page_rule(id),
+    rule_id bigint NOT NULL REFERENCES page_rule(id) ON DELETE CASCADE ON UPDATE CASCADE,
     reference_amount int,
 
     http_status varchar,
