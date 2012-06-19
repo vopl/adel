@@ -47,6 +47,7 @@ namespace scom
 		ee_ok,
 		ee_internalError,
 		ee_badId,
+		ee_badStage,
 
 	};
 

@@ -3,6 +3,8 @@
 #include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
 
+#include <boost/foreach.hpp>
+
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
 namespace scom { namespace impl
@@ -127,9 +129,9 @@ namespace scom { namespace impl
 
 		res = c.query(""
 			"INSERT INTO instance "
-			"	(password, stage, is_started, ctime, atime, dtime) "
-			"	VALUES "
-			"	($1, 0, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP+INTERVAL '1 month') "
+			"(password, stage, is_started, ctime, atime, dtime) "
+			"VALUES "
+			"($1, 0, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP+INTERVAL '1 month') "
 			"RETURNS id", password);
 		IF_PGRES_ERROR(return ee_internalError, res);
 
@@ -189,22 +191,172 @@ namespace scom { namespace impl
 		const std::vector<PageRule> &srcRules,
 		const std::vector<PageRule> &dstRules)
 	{
-		assert(0);
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("BEGIN"));
+
+		res = c.query(""
+			"SELECT stage FROM instance "
+			"WHERE id=$1 AND password=$2 "
+			"FOR UPDATE", utils::MVA(auth._id, auth._secret));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		if(!res.rows())
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badId;
+		}
+
+		utils::Variant rowInstance;
+		res.fetchRowList(rowInstance, 0);
+		Status::EStage stage = (Status::EStage)rowInstance[0].to<int>();
+		if(Status::es_init != stage)
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badStage;
+		}
+
+		BOOST_FOREACH(const PageRule &pr, srcRules)
+		{
+			IF_PGRES_ERROR(
+				return ee_internalError,
+				c.query("INSERT INTO page_rule SET "
+						"instance_id=$1 "
+						"is_src=true "
+						"base_uri=$2 "
+						"kind_and_access=$3 "
+						"kind_and_access_min=$4 "
+						"kind_and_access_max=$5 "
+						"max_amount=$6",
+					utils::MVA(
+						auth._id,
+						pr._baseUri,
+						pr._kindAndAccess,
+						pr._kindAndAccessMin,
+						pr._kindAndAccessMax,
+						pr._maxAmount)
+				)
+			);
+		}
+
+		BOOST_FOREACH(const PageRule &pr, dstRules)
+		{
+			IF_PGRES_ERROR(
+				return ee_internalError,
+				c.query("INSERT INTO page_rule SET "
+						"instance_id=$1 "
+						"is_src=false "
+						"base_uri=$2 "
+						"kind_and_access=$3 "
+						"kind_and_access_min=$4 "
+						"kind_and_access_max=$5 "
+						"max_amount=$6",
+					utils::MVA(
+						auth._id,
+						pr._baseUri,
+						pr._kindAndAccess,
+						pr._kindAndAccessMin,
+						pr._kindAndAccessMax,
+						pr._maxAmount)
+				)
+			);
+		}
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1", utils::Variant(auth._id)));
+		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
+
+		_evtIface.set(true);
+
+		return ee_ok;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	EError Service::start(
 		const Auth &auth)
 	{
-		assert(0);
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("BEGIN"));
+
+		res = c.query(""
+			"SELECT stage FROM instance "
+			"WHERE id=$1 AND password=$2 "
+			"FOR UPDATE", utils::MVA(auth._id, auth._secret));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		if(!res.rows())
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badId;
+		}
+
+		utils::Variant rowInstance;
+		res.fetchRowList(rowInstance, 0);
+
+		Status::EStage stage = (Status::EStage)rowInstance[0].to<int>();
+		if(Status::es_init != stage && Status::es_load != stage)
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badStage;
+		}
+
+		IF_PGRES_ERROR(
+			return ee_internalError,
+			c.query("UPDATE instance SET atime=CURRENT_TIMESTAMP, stage=$2, is_started=$3 WHERE id=$1", utils::MVA(auth._id, Status::es_load, true)));
+		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
+
+		_evtIface.set(true);
+
+		return ee_ok;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	EError Service::stop(
 		const Auth &auth)
 	{
-		assert(0);
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("BEGIN"));
+
+		res = c.query(""
+			"SELECT stage FROM instance "
+			"WHERE id=$1 AND password=$2 "
+			"FOR UPDATE", utils::MVA(auth._id, auth._secret));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		if(!res.rows())
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badId;
+		}
+
+		utils::Variant rowInstance;
+		res.fetchRowList(rowInstance, 0);
+
+		Status::EStage stage = (Status::EStage)rowInstance[0].to<int>();
+		if(Status::es_load != stage)
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badStage;
+		}
+
+		IF_PGRES_ERROR(
+			return ee_internalError,
+			c.query("UPDATE instance SET atime=CURRENT_TIMESTAMP, is_started=$2 WHERE id=$1", utils::MVA(auth._id, false)));
+		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
+
 		_evtIface.set(true);
+
+		return ee_ok;
 	}
 
 	///////////////////////////////////////////////////////////////////
