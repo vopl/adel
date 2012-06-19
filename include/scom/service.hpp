@@ -15,24 +15,42 @@ namespace scom
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
+	/*
+способ обработки
+	не загружать
+	загружать, брать ссылки
+	загружать, брать слова
+
+простые
+	домен/уровень (от до)
+	рег выражение на урл
+
+цепочечные
+	урл и ссылочность от него на столько то уровней (от до)
+	для заданного урла с путем, уровень пути (от, до)
+
+к каждому правилу - количество
+	 */
 	struct PageRule
 	{
 		enum EAccess
 		{
-			ea_ignore	=0,
-			ea_allow	=1,
-			ea_deny		=2,
+			ea_null		=0,
+			ea_ignore	=1,
+			ea_useLinks	=2,
+			ea_useWords	=4,
 		};
 
 		enum EKind
 		{
-			ek_null			=0,
-			ek_domain		=1,
-			ek_path			=2,
-			ek_reference	=4,
+			ek_null			=0x000,
+			ek_domain		=0x100,
+			ek_regexp		=0x200,
+			ek_path			=0x300,
+			ek_reference	=0x400,
 		};
 
-		std::string		_baseUri;
+		std::string		_value;
 
 		int				_kindAndAccess;
 		int				_kindAndAccessMin;
@@ -104,8 +122,7 @@ namespace scom
 
 		EError setup(
 			const Auth &auth,
-			const std::vector<PageRule> &srcRules,
-			const std::vector<PageRule> &dstRules);
+			const std::vector<PageRule> &rules);
 
 		EError start(
 			const Auth &auth);

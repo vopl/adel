@@ -32,8 +32,7 @@ namespace scom { namespace impl
 
 		EError setup(
 			const Auth &auth,
-			const std::vector<PageRule> &srcRules,
-			const std::vector<PageRule> &dstRules);
+			const std::vector<PageRule> &rules);
 
 		EError start(
 			const Auth &auth);

@@ -53,10 +53,9 @@ namespace scom
 	///////////////////////////////////////////////////////////////////
 	EError Service::setup(
 		const Auth &auth,
-		const std::vector<PageRule> &srcRules,
-		const std::vector<PageRule> &dstRules)
+		const std::vector<PageRule> &rules)
 	{
-		return _impl->setup(auth, srcRules, dstRules);
+		return _impl->setup(auth, rules);
 	}
 
 	///////////////////////////////////////////////////////////////////

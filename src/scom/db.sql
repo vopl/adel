@@ -18,8 +18,7 @@ CREATE TABLE page_rule
 (
     id bigserial NOT NULL PRIMARY KEY,
     instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    is_src boolean NOT NULL,
-    base_uri varchar NOT NULL,
+    value varchar NOT NULL,
     kind_and_access int4 NOT NULL,
     kind_and_access_min int4 NOT NULL,
     kind_and_access_max int4 NOT NULL,
@@ -45,9 +44,7 @@ CREATE TABLE page
 (
     id bigserial NOT NULL PRIMARY KEY,
     instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    parent_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
     active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
-    is_src boolean NOT NULL,
     uri varchar NOT NULL,
     is_allowed boolean,
 

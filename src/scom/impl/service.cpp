@@ -201,8 +201,7 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	EError Service::setup(
 		const Auth &auth,
-		const std::vector<PageRule> &srcRules,
-		const std::vector<PageRule> &dstRules)
+		const std::vector<PageRule> &rules)
 	{
 		pgc::Connection c;
 		pgc::Result res;
@@ -232,13 +231,12 @@ namespace scom { namespace impl
 			return ee_badStage;
 		}
 
-		BOOST_FOREACH(const PageRule &pr, srcRules)
+		BOOST_FOREACH(const PageRule &pr, rules)
 		{
 			IF_PGRES_ERROR(
 				return ee_internalError,
 				c.query("INSERT INTO page_rule SET "
 						"instance_id=$1 "
-						"is_src=true "
 						"base_uri=$2 "
 						"kind_and_access=$3 "
 						"kind_and_access_min=$4 "
@@ -246,30 +244,7 @@ namespace scom { namespace impl
 						"max_amount=$6",
 					utils::MVA(
 						auth._id,
-						pr._baseUri,
-						pr._kindAndAccess,
-						pr._kindAndAccessMin,
-						pr._kindAndAccessMax,
-						pr._maxAmount)
-				)
-			);
-		}
-
-		BOOST_FOREACH(const PageRule &pr, dstRules)
-		{
-			IF_PGRES_ERROR(
-				return ee_internalError,
-				c.query("INSERT INTO page_rule SET "
-						"instance_id=$1 "
-						"is_src=false "
-						"base_uri=$2 "
-						"kind_and_access=$3 "
-						"kind_and_access_min=$4 "
-						"kind_and_access_max=$5 "
-						"max_amount=$6",
-					utils::MVA(
-						auth._id,
-						pr._baseUri,
+						pr._value,
 						pr._kindAndAccess,
 						pr._kindAndAccessMin,
 						pr._kindAndAccessMax,
