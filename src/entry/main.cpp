@@ -21,6 +21,17 @@ using namespace std;
 namespace po = boost::program_options;
 
 //////////////////////////////////////////////////////////////////////
+void testScomClient()
+{
+    std::cout<<__FUNCTION__;
+    //create
+    //setup
+    //ping-ping
+    //getResult
+    //delete
+}
+
+//////////////////////////////////////////////////////////////////////
 int main(int argc, const char **argv)
 {
 	for(int k=0; k<1; k++)
@@ -177,6 +188,8 @@ int main(int argc, const char **argv)
 					scom = new scom::Service(oscom);
 					manager.asrv().onStart(boost::bind(&scom::Service::start, scom));
 					manager.asrv().onStop(boost::bind(&scom::Service::stop, scom));
+					
+					manager.asrv().onStart(boost::bind(&testScomClient));
 				}
 
 				//run workspace
