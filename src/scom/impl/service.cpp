@@ -79,9 +79,10 @@ namespace scom { namespace impl
 			_pgc_connectionString.data(),
 			_pgc_maxConnections);
 
-		async::Mutex::ScopedLock sl2(_mtxWorkers);
-		_numWorkers++;
-		async::spawn(boost::bind(&Service::mainWorker, this));
+		runWorker(&Service::workerMain);
+		runWorker(&Service::workerInstancesDeleteOld, 1000);
+		runWorker(&Service::workerPageRestatusPend, 1000);
+		runWorker(&Service::workerHostDeleteOld, 1000);
 		_evtIface.set(true);
 	}
 
@@ -359,8 +360,16 @@ namespace scom { namespace impl
 		return ee_ok;
 	}
 
-	///////////////////////////////////////////////////////////////////
-	void Service::mainWorker()
+	////////////////////////////////////////////////////////////////////////
+	void Service::runWorker(TWorker worker, size_t idleTimeout)
+	{
+		async::Mutex::ScopedLock sl(_mtxWorkers);
+		_numWorkers++;
+		async::spawn(boost::bind(&Service::workerWrapper, this, worker, idleTimeout));
+	}
+
+	////////////////////////////////////////////////////////////////////////
+	void Service::workerWrapper(TWorker worker, size_t idleTimeout)
 	{
 		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
 
@@ -375,32 +384,45 @@ namespace scom { namespace impl
 				}
 			}
 
-			bool workWas = false;
-
-			pgc::Connection c;
-			pgc::Result res;
-
-			//удалить просроченные
+			if(!(this->*worker)())
 			{
-				c = _db.allocConnection();
-
-				res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
-				IF_PGRES_ERROR(continue, res);
-
-				c.reset();
-			}
-
-			//запускать готовые
-			{
-				c = _db.allocConnection();
-				c.reset();
-			}
-
-			//если работы небыло ждать событие интерфейса
-			if(!workWas)
-			{
-				_evtIface.wait();
+				async::timeout(idleTimeout).wait();
 			}
 		}
 	}
+
+	///////////////////////////////////////////////////////////////////
+	bool Service::workerMain()
+	{
+		_evtIface.wait();
+		return true;
+	}
+
+	///////////////////////////////////////////////////////////////////
+	bool Service::workerInstancesDeleteOld()
+	{
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
+		IF_PGRES_ERROR(return false, res);
+
+		return false;
+	}
+
+	///////////////////////////////////////////////////////////////////
+	bool Service::workerPageRestatusPend()
+	{
+		return false;
+	}
+
+	///////////////////////////////////////////////////////////////////
+	bool Service::workerHostDeleteOld()
+	{
+		return false;
+	}
+
+
 }}

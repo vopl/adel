@@ -54,7 +54,15 @@ namespace scom { namespace impl
 		pgc::Db		_db;
 
 	private:
-		void mainWorker();
+		typedef bool (Service::* TWorker)();
+		void runWorker(TWorker worker, size_t idleTimeout=0);
+		void workerWrapper(TWorker worker, size_t idleTimeout);
+
+		bool workerMain();
+		bool workerInstancesDeleteOld();
+		bool workerPageRestatusPend();
+		bool workerHostDeleteOld();
+
 	};
 }}
 #endif

@@ -26,17 +26,30 @@ CREATE TABLE page_rule
     max_amount int4 NOT NULL
 );
 
+
+
+
+
+--------------------------------------------------------
+DROP TABLE IF EXISTS active_host CASCADE;
+CREATE TABLE active_host
+(
+    id bigserial NOT NULL PRIMARY KEY,
+    name varchar NOT NULL,
+    atime timestamp without time zone
+);
+
 --------------------------------------------------------
 DROP TABLE IF EXISTS page CASCADE;
 CREATE TABLE page
 (
     id bigserial NOT NULL PRIMARY KEY,
     instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    parent_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
     is_src boolean NOT NULL,
     uri varchar NOT NULL,
-    is_allowed boolean NOT NULL,
-    rule_id bigint NOT NULL REFERENCES page_rule(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    reference_amount int,
+    is_allowed boolean,
 
     http_status varchar,
     http_headers varchar,
@@ -44,3 +57,13 @@ CREATE TABLE page
 
     atime timestamp without time zone
 );
+
+--------------------------------------------------------
+DROP TABLE IF EXISTS page_refs CASCADE;
+CREATE TABLE page_refs
+(
+    referrer_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    referenced_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE
+);
+
+
