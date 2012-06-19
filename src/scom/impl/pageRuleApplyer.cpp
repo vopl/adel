@@ -1,0 +1,39 @@
+#include "pch.hpp"
+#include "scom/impl/pageRuleApplyer.hpp"
+
+namespace scom { namespace impl
+{
+
+/////////////////////////////////////////////////////////////////////////////////////
+PageRuleApplyer::PageRuleApplyer(boost::int64_t instanceId, const boost::posix_time::ptime &accessTime)
+	: _instanceId(instanceId)
+	, _accessTime(accessTime)
+{
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+PageRuleApplyer::~PageRuleApplyer()
+{
+
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+boost::int64_t PageRuleApplyer::instanceId() const
+{
+	return _instanceId;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+boost::posix_time::ptime PageRuleApplyer::accessTime() const
+{
+	return _accessTime;
+}
+
+/////////////////////////////////////////////////////////////////////////////////////
+void PageRuleApplyer::accessTime(const boost::posix_time::ptime &accessTime)
+{
+	_accessTime = accessTime;
+}
+
+
+}}

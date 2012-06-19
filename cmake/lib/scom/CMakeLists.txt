@@ -40,11 +40,15 @@ source_group(src FILES ${SRC_PCH})
 set(IMPL_INC
 	${PSRC}/impl/service.hpp
 	${PSRC}/impl/workerRaii.hpp
+	${PSRC}/impl/pageRuleApplyer.hpp
+	${PSRC}/impl/pageRuleApplyersContainer.hpp
 )
-source_group(include/impl FILES ${IMPL_INC})
+source_group(src/impl FILES ${IMPL_INC})
 
 set(IMPL_SRC
 	${PSRC}/impl/service.cpp
+	${PSRC}/impl/pageRuleApplyer.cpp
+	${PSRC}/impl/pageRuleApplyersContainer.cpp
 )
 source_group(src/impl FILES ${IMPL_SRC})
 

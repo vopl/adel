@@ -7,6 +7,8 @@
 #include "async/mutex.hpp"
 #include "async/event.hpp"
 
+#include "scom/impl/pageRuleApplyersContainer.hpp"
+
 namespace scom { namespace impl
 {
 	class Service
@@ -49,9 +51,17 @@ namespace scom { namespace impl
 		async::Event	_evtWorkerDone;
 		async::Event	_evtIface;
 
-		std::string	_pgc_connectionString;
-		size_t		_pgc_maxConnections;
+		std::string						_pgc_connectionString;
+		size_t							_pgc_maxConnections;
+		utils::Variant::TimeDuration	_net_defaultHostDelay;
+		size_t							_net_concurrency;
+
 		pgc::Db		_db;
+
+		utils::Variant::TimeDuration _pageRestatusPentTimeout;
+		utils::Variant::TimeDuration _activeHostTimeout;
+
+		PageRuleApplyersContainer	_prac;
 
 	private:
 		typedef bool (Service::* TWorker)();

@@ -4,6 +4,7 @@
 #include "scom/log.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/date_time/posix_time/posix_time_duration.hpp>
 
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
@@ -53,11 +54,18 @@ namespace scom { namespace impl
 		: _isWork(false)
 		, _evtWorkerDone(true)
 		, _evtIface(true)
+		, _pgc_maxConnections(10)
+		, _net_defaultHostDelay(boost::posix_time::seconds(10))
+		, _net_concurrency(1000)
 		, _numWorkers(0)
+		, _pageRestatusPentTimeout(boost::posix_time::minutes(60))
+		, _activeHostTimeout(boost::posix_time::minutes(10))
 	{
 		utils::Options &o = *optionsPtr;
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
+		_net_defaultHostDelay = boost::posix_time::seconds(o["net.defaultHostDelay"].as<size_t>());
+		_net_concurrency = o["net.concurrency"].as<size_t>();
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -83,6 +91,8 @@ namespace scom { namespace impl
 		runWorker(&Service::workerInstancesDeleteOld, 1000);
 		runWorker(&Service::workerPageRestatusPend, 1000);
 		runWorker(&Service::workerHostDeleteOld, 1000);
+
+		_prac.start(_db, boost::posix_time::minutes(10));
 		_evtIface.set(true);
 	}
 
@@ -97,6 +107,8 @@ namespace scom { namespace impl
 			}
 			_isWork = false;
 		}
+
+		_prac.stop();
 
 		_evtIface.set(true);
 		for(;;)
@@ -401,12 +413,8 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerInstancesDeleteOld()
 	{
-		pgc::Connection c;
-		pgc::Result res;
-
-		c = _db.allocConnection();
-
-		res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
+		pgc::Connection c = _db.allocConnection();
+		pgc::Result res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
 		IF_PGRES_ERROR(return false, res);
 
 		return false;
@@ -415,12 +423,20 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerPageRestatusPend()
 	{
+		pgc::Connection c = _db.allocConnection();
+		pgc::Result res = c.query("UPDATE page SET status=NULL WHERE status='pend AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
+		IF_PGRES_ERROR(return false, res);
+
 		return false;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerHostDeleteOld()
 	{
+		pgc::Connection c = _db.allocConnection();
+		pgc::Result res = c.query("DELETE active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_activeHostTimeout));
+		IF_PGRES_ERROR(return false, res);
+
 		return false;
 	}
 
