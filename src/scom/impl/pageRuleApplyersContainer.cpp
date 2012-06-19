@@ -45,29 +45,43 @@ namespace scom { namespace impl
 	{
 		async::Mutex::ScopedLock sl(_mtx);
 
-		PageRuleApplyerPtr pra;
+		PageRuleApplyerPtr prap;
 
-		TInstances::nth_index<1>::type &idIndex = _instances.get<1>();
-		TInstances::nth_index<1>::type::iterator iter = idIndex.find(instanceId);
+		TInstances::nth_index<0>::type &idIndex = _instances.get<0>();
+		TInstances::nth_index<0>::type::iterator iter = idIndex.find(instanceId);
 		if(idIndex.end() != iter)
 		{
-			idIndex.modify(iter, ChangeAccessTime(posix_time::microsec_clock::local_time()));
-			pra = *iter;
+			idIndex.modify(iter, ChangeAccessTime(posix_time::second_clock::local_time()));
+			prap = *iter;
 		}
 		else
 		{
-			pra.reset(new PageRuleApplyer(instanceId, posix_time::microsec_clock::local_time()));
-			idIndex.insert(pra);
+			prap.reset(new PageRuleApplyer(instanceId, posix_time::second_clock::local_time()));
+			idIndex.insert(prap);
+
+			if(!loadRules(prap))
+			{
+				return false;
+			}
+		}
+		if(!loadPages(prap))
+		{
+			return false;
 		}
 
+		prap->update();
+
+		if(!storePages(prap))
+		{
+
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::drop(boost::int64_t instanceId)
 	{
 		async::Mutex::ScopedLock sl(_mtx);
-
-		assert(0);
+		_instances.get<0>().erase(instanceId);
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -75,6 +89,30 @@ namespace scom { namespace impl
 	{
 		async::Mutex::ScopedLock sl(_mtx);
 
+		//удаление по таймауту безактивности
+		posix_time::ptime boundATime = posix_time::second_clock::local_time() - _cacheTimeout;
+		TInstances::nth_index<1>::type &atimeIndex = _instances.get<1>();
+		while(!atimeIndex.empty() && boundATime > (*atimeIndex.begin())->accessTime())
+		{
+			atimeIndex.erase(atimeIndex.begin());
+		}
+	}
+
+	////////////////////////////////////////////////////////////////////
+	bool PageRuleApplyersContainer::loadRules(const PageRuleApplyerPtr &prap)
+	{
+		assert(0);
+	}
+
+	////////////////////////////////////////////////////////////////////
+	bool PageRuleApplyersContainer::loadPages(const PageRuleApplyerPtr &prap)
+	{
+		assert(0);
+	}
+
+	////////////////////////////////////////////////////////////////////
+	bool PageRuleApplyersContainer::storePages(const PageRuleApplyerPtr &prap)
+	{
 		assert(0);
 	}
 

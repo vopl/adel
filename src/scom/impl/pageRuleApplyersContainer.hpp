@@ -38,13 +38,10 @@ namespace scom { namespace impl
 		pgc::Db								_db;
 		boost::posix_time::time_duration	_cacheTimeout;
 
-		//контейнер, индексирован по элементу, id экземпляра анализа, по времени последнего доступа
+		//контейнер, индексирован по id экземпляра анализа, по времени последнего доступа
 		typedef multi_index_container<
 			PageRuleApplyerPtr,
 			indexed_by<
-				ordered_unique<
-					identity<PageRuleApplyerPtr>
-				>,
 				ordered_unique<
 					const_mem_fun<
 						PageRuleApplyer,
@@ -78,6 +75,11 @@ namespace scom { namespace impl
 
 
 		TInstances _instances;
+
+	private:
+		bool loadRules(const PageRuleApplyerPtr &prap);
+		bool loadPages(const PageRuleApplyerPtr &prap);
+		bool storePages(const PageRuleApplyerPtr &prap);
 	};
 }}
 #endif

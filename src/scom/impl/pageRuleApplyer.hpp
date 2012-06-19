@@ -18,6 +18,8 @@ namespace scom { namespace impl
 		boost::posix_time::ptime	accessTime() const;
 		void accessTime(const boost::posix_time::ptime &accessTime);
 
+		void update();
+
 	private:
 		boost::int64_t				_instanceId;
 		boost::posix_time::ptime	_accessTime;
