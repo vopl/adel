@@ -8,7 +8,7 @@
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/regex.hpp>
 
-#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
+#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {ELOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
 namespace scom { namespace impl
 {

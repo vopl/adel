@@ -36,7 +36,7 @@ namespace scom { namespace impl
 		
 		struct Rule
 		{
-			PageRule::EAccess	_access;
+			int					_access;//PageRule::EAccess bits
 			int					_amount;
 		};
 		
@@ -50,7 +50,6 @@ namespace scom { namespace impl
 			: Rule
 		{
 			std::vector<std::string>	_domain;
-			std::string			_port;
 			int				_levelMin;
 			int				_levelMax;
 		};

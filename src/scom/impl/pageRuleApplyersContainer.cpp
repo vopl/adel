@@ -1,8 +1,11 @@
 #include "pch.hpp"
 #include "async/freeFunctions.hpp"
 #include "scom/impl/pageRuleApplyersContainer.hpp"
+#include "scom/log.hpp"
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+
+#define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {ELOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
 namespace scom { namespace impl
 {
@@ -110,8 +113,18 @@ namespace scom { namespace impl
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::loadRules(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
-		assert(0);
-		return false;
+		pgc::Result res = c.query(
+			"SELECT "
+			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, max_amount "
+			"FROM page_rule WHERE instance_id=$1", utils::Variant(prap->instanceId()));
+
+		IF_PGRES_ERROR(
+			return false,
+			res);
+
+		prap->loadRules(res);
+
+		return true;
 	}
 
 	////////////////////////////////////////////////////////////////////
