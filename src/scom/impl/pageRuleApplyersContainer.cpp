@@ -73,8 +73,9 @@ namespace scom { namespace impl
 
 		if(!storePages(prap))
 		{
-
+			return false;
 		}
+		return true;
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -82,6 +83,7 @@ namespace scom { namespace impl
 	{
 		async::Mutex::ScopedLock sl(_mtx);
 		_instances.get<0>().erase(instanceId);
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
@@ -96,24 +98,28 @@ namespace scom { namespace impl
 		{
 			atimeIndex.erase(atimeIndex.begin());
 		}
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::loadRules(const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::loadPages(const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
+		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::storePages(const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
+		return false;
 	}
 
 }}

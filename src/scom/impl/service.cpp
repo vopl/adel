@@ -64,7 +64,7 @@ namespace scom { namespace impl
 		utils::Options &o = *optionsPtr;
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
-		_net_defaultHostDelay = boost::posix_time::seconds(o["net.defaultHostDelay"].as<size_t>());
+		_net_defaultHostDelay = boost::posix_time::seconds((long)o["net.defaultHostDelay"].as<size_t>());
 		_net_concurrency = o["net.concurrency"].as<size_t>();
 	}
 
