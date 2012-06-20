@@ -94,7 +94,7 @@ namespace scom { namespace impl
 		runWorker(&Service::workerPageRestatusPend, 1000);
 		runWorker(&Service::workerHostDeleteOld, 1000);
 
-		_prac.start(_db, boost::posix_time::minutes(10));
+		_prac.start(boost::posix_time::minutes(10));
 		_evtIface.set(true);
 	}
 
@@ -364,6 +364,12 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(
 			return ee_internalError,
 			c.query("UPDATE instance SET atime=CURRENT_TIMESTAMP, stage=$2, is_started=$3 WHERE id=$1", utils::MVA(auth._id, Status::es_load, true)));
+			
+		if(!_prac.update(c, auth._id))
+		{	
+			return ee_internalError;
+		}
+		
 		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
 
 		_evtIface.set(true);
@@ -478,6 +484,8 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerMain()
 	{
+		//выбрать  незагруженные страницы джоин инстанс, состояние лоад и запущенный
+		//инициировать загрузку этих страниц
 		_evtIface.wait();
 		return true;
 	}

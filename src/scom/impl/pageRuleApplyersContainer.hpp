@@ -2,7 +2,7 @@
 #define _SCOM_IMPL_PAGERULEAPPLYERSCONTAINER_HPP_
 
 #include "scom/impl/pageRuleApplyer.hpp"
-#include "pgc/db.hpp"
+#include "pgc/connection.hpp"
 #include "async/mutex.hpp"
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -25,17 +25,15 @@ namespace scom { namespace impl
 		~PageRuleApplyersContainer();
 
 		void start(
-			const pgc::Db &db,
 			const boost::posix_time::time_duration &cacheTimeout);
 		void stop();
 
-		bool update(boost::int64_t instanceId);
+		bool update(pgc::Connection c, boost::int64_t instanceId);
 		bool drop(boost::int64_t instanceId);
 		bool dropOlds();
 
 	private:
 		async::Mutex						_mtx;
-		pgc::Db								_db;
 		boost::posix_time::time_duration	_cacheTimeout;
 
 		//контейнер, индексирован по id экземпляра анализа, по времени последнего доступа
@@ -77,9 +75,9 @@ namespace scom { namespace impl
 		TInstances _instances;
 
 	private:
-		bool loadRules(const PageRuleApplyerPtr &prap);
-		bool loadPages(const PageRuleApplyerPtr &prap);
-		bool storePages(const PageRuleApplyerPtr &prap);
+		bool loadRules(pgc::Connection c, const PageRuleApplyerPtr &prap);
+		bool loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap);
+		bool storePages(pgc::Connection c, const PageRuleApplyerPtr &prap);
 	};
 }}
 #endif

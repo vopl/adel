@@ -1,4 +1,5 @@
 #include "pch.hpp"
+#include "async/freeFunctions.hpp"
 #include "scom/impl/pageRuleApplyersContainer.hpp"
 
 #include <boost/date_time/posix_time/posix_time_types.hpp>
@@ -20,12 +21,10 @@ namespace scom { namespace impl
 
 	////////////////////////////////////////////////////////////////////
 	void PageRuleApplyersContainer::start(
-		const pgc::Db &db,
 		const boost::posix_time::time_duration &cacheTimeout)
 	{
 		async::Mutex::ScopedLock sl(_mtx);
 
-		_db = db;
 		_cacheTimeout = cacheTimeout;
 		_instances.clear();
 	}
@@ -37,20 +36,18 @@ namespace scom { namespace impl
 		{
 			async::Mutex::ScopedLock sl(_mtx);
 
-			_db.reset();
 			_cacheTimeout = boost::posix_time::minutes(10);
 			_instances.clear();
 		}
 		else
 		{
-			assert(!_db);
 			assert(_cacheTimeout == boost::posix_time::minutes(10));
 			assert(_instances.empty());
 		}
 	}
 
 	////////////////////////////////////////////////////////////////////
-	bool PageRuleApplyersContainer::update(boost::int64_t instanceId)
+	bool PageRuleApplyersContainer::update(pgc::Connection c, boost::int64_t instanceId)
 	{
 		async::Mutex::ScopedLock sl(_mtx);
 
@@ -68,19 +65,19 @@ namespace scom { namespace impl
 			prap.reset(new PageRuleApplyer(instanceId, posix_time::second_clock::local_time()));
 			idIndex.insert(prap);
 
-			if(!loadRules(prap))
+			if(!loadRules(c, prap))
 			{
 				return false;
 			}
 		}
-		if(!loadPages(prap))
+		if(!loadPages(c, prap))
 		{
 			return false;
 		}
 
 		prap->update();
 
-		if(!storePages(prap))
+		if(!storePages(c, prap))
 		{
 			return false;
 		}
@@ -111,21 +108,21 @@ namespace scom { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	bool PageRuleApplyersContainer::loadRules(const PageRuleApplyerPtr &prap)
+	bool PageRuleApplyersContainer::loadRules(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
 		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
-	bool PageRuleApplyersContainer::loadPages(const PageRuleApplyerPtr &prap)
+	bool PageRuleApplyersContainer::loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
 		return false;
 	}
 
 	////////////////////////////////////////////////////////////////////
-	bool PageRuleApplyersContainer::storePages(const PageRuleApplyerPtr &prap)
+	bool PageRuleApplyersContainer::storePages(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
 		assert(0);
 		return false;
