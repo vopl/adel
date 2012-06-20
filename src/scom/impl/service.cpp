@@ -235,13 +235,14 @@ namespace scom { namespace impl
 		{
 			IF_PGRES_ERROR(
 				return ee_internalError,
-				c.query("INSERT INTO page_rule SET "
-						"instance_id=$1 "
-						"base_uri=$2 "
-						"kind_and_access=$3 "
-						"kind_and_access_min=$4 "
-						"kind_and_access_max=$5 "
-						"max_amount=$6",
+				c.query("INSERT INTO page_rule ( "
+						"instance_id,"
+						"value,"
+						"kind_and_access,"
+						"kind_and_access_min,"
+						"kind_and_access_max,"
+						"max_amount) VALUES ("
+						"$1,$2,$3,$4,$5,$6)",
 					utils::MVA(
 						auth._id,
 						pr._value,

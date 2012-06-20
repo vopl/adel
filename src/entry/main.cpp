@@ -21,24 +21,48 @@ using namespace std;
 namespace po = boost::program_options;
 
 //////////////////////////////////////////////////////////////////////
+#define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__;}
 void testScomClient(scom::Service *scom)
 {
-    //create
 	scom::Auth auth;
 	scom::EError err;
 
-	err = scom->create(auth, "secret");
-#define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__;}
-	CHECK_ERR(err);
+    //create
+	{
+		err = scom->create(auth, "secret");
+		CHECK_ERR(err);
+	}
 
     //setup
-	//scom->setup(auth, )
+	{
+		std::vector<scom::PageRule> rules;
+
+		scom::PageRule r1 = {
+			"127.0.0.1:8080",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
+			0, 10,
+			50};
+
+		rules.push_back(r1);
+
+		err = scom->setup(auth, rules);
+		CHECK_ERR(err);
+	}
+
+	//start
+	{
+		err = scom->start(auth);
+		CHECK_ERR(err);
+	}
+
     //ping-ping
     //getResult
 
     //delete
-	err = scom->destroy(auth);
-	CHECK_ERR(err);
+	{
+		err = scom->destroy(auth);
+		CHECK_ERR(err);
+	}
 }
 
 //////////////////////////////////////////////////////////////////////
