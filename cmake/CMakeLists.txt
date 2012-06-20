@@ -55,7 +55,7 @@ set(Boost_USE_STATIC_LIBS        ON)
 set(Boost_USE_MULTITHREADED      ON)
 set(Boost_USE_STATIC_RUNTIME     OFF)
 
-find_package( Boost 1.48.0 REQUIRED COMPONENTS system date_time filesystem thread random program_options chrono)
+find_package( Boost 1.48.0 REQUIRED COMPONENTS system date_time filesystem thread random program_options chrono regex)
 if (Boost_FOUND)
     include_directories(${Boost_INCLUDE_DIRS})
 endif()

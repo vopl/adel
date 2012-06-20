@@ -23,11 +23,11 @@ namespace scom
 
 простые
 	домен/уровень (от до)
+	для заданного урла с путем, уровень пути (от, до)
 	рег выражение на урл
 
 цепочечные
 	урл и ссылочность от него на столько то уровней (от до)
-	для заданного урла с путем, уровень пути (от, до)
 
 к каждому правилу - количество
 	 */
@@ -35,19 +35,21 @@ namespace scom
 	{
 		enum EAccess
 		{
-			ea_null		=0,
-			ea_ignore	=1,
-			ea_useLinks	=2,
-			ea_useWords	=4,
+			ea_null		=0x00,
+			ea_ignore	=0x01,
+			ea_useLinks	=0x02,
+			ea_useWords	=0x04,
+			ea_mask		=0xff,
 		};
 
 		enum EKind
 		{
-			ek_null			=0x000,
-			ek_domain		=0x100,
-			ek_regexp		=0x200,
-			ek_path			=0x300,
-			ek_reference	=0x400,
+			ek_null			=0x0000,
+			ek_domain		=0x0100,
+			ek_regex		=0x0200,
+			ek_path			=0x0300,
+			ek_reference	=0x0400,
+			ek_mask			=0xff00,
 		};
 
 		std::string		_value;
@@ -66,6 +68,9 @@ namespace scom
 		ee_internalError,
 		ee_badId,
 		ee_badStage,
+		ee_badDomain,
+		ee_badRegex,
+		ee_badUri,
 
 	};
 

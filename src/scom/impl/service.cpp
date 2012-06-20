@@ -2,9 +2,11 @@
 #include "scom/impl/service.hpp"
 #include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
+#include "htmlcxx/html/Uri.h"
 
 #include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
+#include <boost/regex.hpp>
 
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {TLOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
@@ -233,6 +235,70 @@ namespace scom { namespace impl
 
 		BOOST_FOREACH(const PageRule &pr, rules)
 		{
+			EError validator = ee_ok;
+			switch(pr._kindAndAccess & PageRule::ek_mask)
+			{
+			case PageRule::ek_regex:
+				try
+				{
+					boost::regex test(pr._value);
+				}
+				catch(...)
+				{
+					validator = ee_badRegex;
+				}
+				break;
+			case PageRule::ek_domain:
+				{
+					htmlcxx::Uri test("http://"+pr._value+"/");
+					if(!test.isOk() || test.hostname() != pr._value)
+					{
+						validator = ee_badDomain;
+					}
+				}
+				break;
+			case PageRule::ek_path:
+				{
+					htmlcxx::Uri test(pr._value);
+					if(!test.isOk())
+					{
+						validator = ee_badUri;
+					}
+				}
+				if(pr._kindAndAccess & (PageRule::ea_useWords || PageRule::ea_useLinks))
+				{
+					if(!insertPageIfAbsent(c, auth._id, pr._value))
+					{
+						return ee_internalError;
+					}
+				}
+				break;
+			case PageRule::ek_reference:
+				{
+					htmlcxx::Uri test(pr._value);
+					if(!test.isOk())
+					{
+						validator = ee_badUri;
+					}
+				}
+				if(pr._kindAndAccess & (PageRule::ea_useWords || PageRule::ea_useLinks))
+				{
+					if(!insertPageIfAbsent(c, auth._id, pr._value))
+					{
+						return ee_internalError;
+					}
+				}
+				break;
+			}
+			
+			
+			
+			if(validator)
+			{
+				IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+				return validator;
+			}
+			
 			IF_PGRES_ERROR(
 				return ee_internalError,
 				c.query("INSERT INTO page_rule ( "
@@ -445,6 +511,22 @@ namespace scom { namespace impl
 
 		return false;
 	}
+
+	bool Service::insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri)
+	{
+		pgc::Result res = c.query("SELECT id FROM page WHERE instance_id=$1 AND uri=$1", utils::MVA(instanceId, uri));
+		IF_PGRES_ERROR(return false, res);
+		
+		if(res.rows())
+		{
+			return true;
+		}
+		
+		res = c.query("INSERT INTO page (instance_id, uri)", utils::MVA(instanceId, uri));
+		IF_PGRES_ERROR(return false, res);
+		return true;
+	}
+			
 
 
 }}

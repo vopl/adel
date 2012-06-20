@@ -27,13 +27,13 @@ void testScomClient(scom::Service *scom)
 	scom::Auth auth;
 	scom::EError err;
 
-    //create
+	//create
 	{
 		err = scom->create(auth, "secret");
 		CHECK_ERR(err);
 	}
 
-    //setup
+	//setup
 	{
 		std::vector<scom::PageRule> rules;
 
@@ -43,7 +43,28 @@ void testScomClient(scom::Service *scom)
 			0, 10,
 			50};
 
+		scom::PageRule r2 = {
+			"http://127.0.0.1:8080/libs/index.html",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+			-1, 3,
+			20};
+
+		scom::PageRule r3 = {
+			"[xyz]{2}",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_regex,
+			0, 0,
+			20};
+
+		scom::PageRule r4 = {
+			"http://127.0.0.1:8080/index.html",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
+			0, 3,
+			20};
+
 		rules.push_back(r1);
+		rules.push_back(r2);
+		rules.push_back(r3);
+		rules.push_back(r4);
 
 		err = scom->setup(auth, rules);
 		CHECK_ERR(err);
