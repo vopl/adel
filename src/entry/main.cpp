@@ -21,14 +21,24 @@ using namespace std;
 namespace po = boost::program_options;
 
 //////////////////////////////////////////////////////////////////////
-void testScomClient()
+void testScomClient(scom::Service *scom)
 {
-    std::cout<<__FUNCTION__;
     //create
+	scom::Auth auth;
+	scom::EError err;
+
+	err = scom->create(auth, "secret");
+#define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__;}
+	CHECK_ERR(err);
+
     //setup
+	//scom->setup(auth, )
     //ping-ping
     //getResult
+
     //delete
+	err = scom->destroy(auth);
+	CHECK_ERR(err);
 }
 
 //////////////////////////////////////////////////////////////////////
@@ -189,7 +199,7 @@ int main(int argc, const char **argv)
 					manager.asrv().onStart(boost::bind(&scom::Service::start, scom));
 					manager.asrv().onStop(boost::bind(&scom::Service::stop, scom));
 					
-					manager.asrv().onStart(boost::bind(&testScomClient));
+					manager.asrv().onStart(boost::bind(&testScomClient, scom));
 				}
 
 				//run workspace

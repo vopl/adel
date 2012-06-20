@@ -145,7 +145,7 @@ namespace scom { namespace impl
 			"(password, stage, is_started, ctime, atime, dtime) "
 			"VALUES "
 			"($1, 0, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP+INTERVAL '1 month') "
-			"RETURNS id", password);
+			"RETURNING id", password);
 		IF_PGRES_ERROR(return ee_internalError, res);
 
 		utils::Variant id;
@@ -347,6 +347,36 @@ namespace scom { namespace impl
 		return ee_ok;
 	}
 
+	///////////////////////////////////////////////////////////////////
+	EError Service::destroy(
+		const Auth &auth)
+	{
+		pgc::Connection c;
+		pgc::Result res;
+
+		c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("BEGIN"));
+
+		res = c.query(""
+			"DELETE FROM instance "
+			"WHERE id=$1 AND password=$2 "
+			"RETURNING id", utils::MVA(auth._id, auth._secret));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+		if(!res.rows())
+		{
+			IF_PGRES_ERROR(return ee_internalError, c.query("ROLLBACK"));
+			return ee_badId;
+		}
+
+		IF_PGRES_ERROR(return ee_internalError, c.query("COMMIT"));
+
+		_evtIface.set(true);
+
+		return ee_ok;
+	}
+
 	////////////////////////////////////////////////////////////////////////
 	void Service::runWorker(TWorker worker, size_t idleTimeout)
 	{
@@ -399,7 +429,7 @@ namespace scom { namespace impl
 	bool Service::workerPageRestatusPend()
 	{
 		pgc::Connection c = _db.allocConnection();
-		pgc::Result res = c.query("UPDATE page SET status=NULL WHERE status='pend AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
+		pgc::Result res = c.query("UPDATE page SET http_status=NULL WHERE http_status='pend' AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
 		IF_PGRES_ERROR(return false, res);
 
 		return false;
@@ -409,7 +439,7 @@ namespace scom { namespace impl
 	bool Service::workerHostDeleteOld()
 	{
 		pgc::Connection c = _db.allocConnection();
-		pgc::Result res = c.query("DELETE active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_activeHostTimeout));
+		pgc::Result res = c.query("DELETE FROM active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_activeHostTimeout));
 		IF_PGRES_ERROR(return false, res);
 
 		return false;

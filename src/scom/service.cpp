@@ -72,4 +72,11 @@ namespace scom
 		return _impl->stop(auth);
 	}
 
+	///////////////////////////////////////////////////////////////////
+	EError Service::destroy(
+		const Auth &auth)
+	{
+		return _impl->destroy(auth);
+	}
+
 }

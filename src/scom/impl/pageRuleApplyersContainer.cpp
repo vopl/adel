@@ -33,11 +33,20 @@ namespace scom { namespace impl
 	////////////////////////////////////////////////////////////////////
 	void PageRuleApplyersContainer::stop()
 	{
-		async::Mutex::ScopedLock sl(_mtx);
+		if(async::workerExists())
+		{
+			async::Mutex::ScopedLock sl(_mtx);
 
-		_db.reset();
-		_cacheTimeout = boost::posix_time::minutes(10);
-		_instances.clear();
+			_db.reset();
+			_cacheTimeout = boost::posix_time::minutes(10);
+			_instances.clear();
+		}
+		else
+		{
+			assert(!_db);
+			assert(_cacheTimeout == boost::posix_time::minutes(10));
+			assert(_instances.empty());
+		}
 	}
 
 	////////////////////////////////////////////////////////////////////

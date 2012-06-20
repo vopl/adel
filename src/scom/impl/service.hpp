@@ -40,6 +40,8 @@ namespace scom { namespace impl
 		EError stop(
 			const Auth &auth);
 
+		EError destroy(
+			const Auth &auth);
 
 	private:
 		bool		_isWork;

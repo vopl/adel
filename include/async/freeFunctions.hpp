@@ -14,6 +14,7 @@ namespace async
 	void yield();
 	boost::asio::io_service &io();
 	bool serviceExists();
+	bool workerExists();
 	Service service();
 }
 
