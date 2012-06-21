@@ -130,8 +130,18 @@ namespace scom { namespace impl
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
-		assert(0);
-		return false;
+		pgc::Result res = c.query(
+			"SELECT "
+			"id, uri, is_allowed "
+			"FROM page WHERE instance_id=$1 AND id>$2", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
+
+		IF_PGRES_ERROR(
+			return false,
+			res);
+
+		prap->loadPages(res);
+
+		return true;
 	}
 
 	////////////////////////////////////////////////////////////////////

@@ -13,6 +13,7 @@ namespace scom { namespace impl
 	PageRuleApplyer::PageRuleApplyer(boost::int64_t instanceId, const boost::posix_time::ptime &accessTime)
 		: _instanceId(instanceId)
 		, _accessTime(accessTime)
+		, _maxLoadedPageId(0)
 	{
 	}
 
@@ -174,6 +175,38 @@ namespace scom { namespace impl
 		return amount;
 	}
 
-	
+	//////////////////////////////////////////////////////////////////////////
+	boost::int64_t PageRuleApplyer::maxLoadedPageId()
+	{
+		return _maxLoadedPageId;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	size_t PageRuleApplyer::loadPages(pgc::Result pgr)
+	{
+		size_t amount = 0;
+
+		for(size_t i(0); i<pgr.rows(); i++)
+		{
+			utils::Variant row;
+			bool b = pgr.fetchRowList(row, i);
+			assert(b);
+
+			//id, uri, is_allowed
+			_maxLoadedPageId = std::max(_maxLoadedPageId, row[0].to<boost::int64_t>());
+
+			_pages.push_back(Page());
+			Page &p = _pages.back();
+			p._uriStr = row[1].to<std::string>();
+			p._uri = htmlcxx::Uri(p._uriStr);
+
+			utils::Variant isAllowed = row[2];
+			p._isAllowed = isAllowed.isNull()?false:isAllowed.to<bool>();
+
+			amount++;
+		}
+		return amount;
+	}
+
 
 }}

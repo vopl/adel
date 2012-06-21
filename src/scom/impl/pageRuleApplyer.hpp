@@ -3,6 +3,7 @@
 
 #include "pgc/result.hpp"
 #include "scom/service.hpp"
+#include "htmlcxx/html/Uri.h"
 
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -29,6 +30,8 @@ namespace scom { namespace impl
 		void update();
 		
 		size_t loadRules(pgc::Result pgr);
+		boost::int64_t maxLoadedPageId();
+		size_t loadPages(pgc::Result pgr);
 
 	private:
 		boost::int64_t				_instanceId;
@@ -77,6 +80,14 @@ namespace scom { namespace impl
 		std::vector<RulePath>		_rulesPath;
 		std::vector<RuleReference>	_rulesReference;
 
+		struct Page
+		{
+			std::string		_uriStr;
+			htmlcxx::Uri	_uri;
+			bool			_isAllowed;
+		};
+		std::deque<Page>	_pages;
+		boost::int64_t		_maxLoadedPageId;
 	};
 	typedef boost::shared_ptr<PageRuleApplyer> PageRuleApplyerPtr;
 }}
