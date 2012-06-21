@@ -74,6 +74,7 @@ namespace scom { namespace impl
 		bool workerPageRestatusPend();
 		bool workerHostDeleteOld();
 
+		void uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &uri, int access);
 	private:
 		bool insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri);
 	};

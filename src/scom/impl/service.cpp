@@ -89,7 +89,7 @@ namespace scom { namespace impl
 			_pgc_connectionString.data(),
 			_pgc_maxConnections);
 
-		runWorker(&Service::workerMain);
+		runWorker(&Service::workerMain, 1000);
 		runWorker(&Service::workerInstancesDeleteOld, 1000);
 		runWorker(&Service::workerPageRestatusPend, 1000);
 		runWorker(&Service::workerHostDeleteOld, 1000);
@@ -194,6 +194,9 @@ namespace scom { namespace impl
 		status._stage		= (Status::EStage)(int)row[0];
 		status._isStarted	= row[1];
 		status._destroyTime	= row[2];
+
+		status._workProcessed = 0;
+		status._workVolume = 0;
 
 		_evtIface.set(true);
 
@@ -524,7 +527,74 @@ namespace scom { namespace impl
 	{
 		//выбрать  незагруженные страницы джоин инстанс, состояние лоад и запущенный
 		//инициировать загрузку этих страниц
-		_evtIface.wait();
+
+		pgc::Connection c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return true, c.query("BEGIN"));
+		IF_PGRES_ERROR(return true, c.query("LOCK page"));
+		IF_PGRES_ERROR(return true, c.query("LOCK active_host"));
+
+		pgc::Result res;
+		res = c.query("SELECT p.id, ah.id, p.uri, p.access FROM page AS p "
+			"INNER JOIN instance AS i ON(p.instance_id=i.id) "
+			"LEFT JOIN active_host AS ah ON(p.active_host_id=ah.id) "
+			"WHERE "
+			"	(ah.atime IS NULL OR ah.atime<CURRENT_TIMESTAMP-$1::INTERVAL) AND "
+			"	p.http_status IS NULL AND "
+			"	p.access IN(x'2'::int, x'4'::int, x'6'::int) AND "
+			"	i.stage=10 AND i.is_started AND "
+			"	1=1 "
+			"LIMIT 10 ", _net_defaultHostDelay);
+		IF_PGRES_ERROR(return true, res);
+
+		if(!res.rows())
+		{
+			//нет нагрузки
+			IF_PGRES_ERROR(return true, c.query("ROLLBACK"));
+			return false;
+		}
+
+		for(size_t i(0); i<res.rows(); i++)
+		{
+
+			utils::Variant pageId, hostId, uri, access;
+			bool b = res.fetch(pageId, 0, i);
+			assert(b);
+			b = res.fetch(hostId, 1, i);
+			assert(b);
+			b = res.fetch(uri, 2, i);
+			assert(b);
+			b = res.fetch(access, 3, i);
+			assert(b);
+			
+
+
+			//обновить активный хост
+			if(hostId.isNull())
+			{
+				//добавить 
+				htmlcxx::Uri u(uri);
+
+				pgc::Result res = c.query("INSERT INTO active_host (name, atime) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id", u.hostname());
+				IF_PGRES_ERROR(return true, res);
+				res.fetch(hostId, 0, 0);
+			}
+			else
+			{
+				//обновить
+				IF_PGRES_ERROR(return true, c.query("UPDATE active_host SET atime=CURRENT_TIMESTAMP WHERE id=$1", hostId));
+			}
+
+			//обновить статус на 'pend'
+			IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET http_status='pend', active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
+
+			//грузить
+			async::Mutex::ScopedLock sl(_mtxWorkers);
+			_numWorkers++;
+			async::spawn(boost::bind(&Service::uriLoader, this, pageId, hostId, uri, access.to<int>()));
+		}
+		IF_PGRES_ERROR(return true, c.query("COMMIT"));
+
 		return true;
 	}
 
@@ -558,6 +628,17 @@ namespace scom { namespace impl
 		return false;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	void Service::uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &uri, int access)
+	{
+		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
+
+		assert(access&PageRule::ea_useLinks || access&PageRule::ea_useWords);
+
+		assert(0);
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	bool Service::insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri)
 	{
 		pgc::Result res = c.query("SELECT id FROM page WHERE instance_id=$1 AND uri=$2", utils::MVA(instanceId, uri));

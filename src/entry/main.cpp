@@ -85,6 +85,21 @@ void testScomClient(scom::Service *scom)
 	}
 
     //ping-ping
+	{
+		for(;;)
+		{
+			scom::Status status;
+			err = scom->ping(status, auth);
+			CHECK_ERR(err);
+
+			if(status._stage == scom::Status::es_report)
+			{
+				std::cout<<"scom complete"<<std::endl;
+				break;
+			}
+			async::timeout(100).wait();
+		}
+	}
     //getResult
 
     //delete
