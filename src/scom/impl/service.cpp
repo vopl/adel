@@ -250,6 +250,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_domain:
 				{
+					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					{
+						validator = ee_badRange;
+						break;
+					}
 					htmlcxx::Uri test("http://"+pr._value+"/");
 					if(!test.isOk() || test.hostname() != pr._value)
 					{
@@ -259,6 +264,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_path:
 				{
+					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					{
+						validator = ee_badRange;
+						break;
+					}
 					htmlcxx::Uri test(pr._value);
 					if(
 						!test.isOk() ||
@@ -281,6 +291,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_reference:
 				{
+					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					{
+						validator = ee_badRange;
+						break;
+					}
 					htmlcxx::Uri test(pr._value);
 					if(
 						!test.isOk() ||

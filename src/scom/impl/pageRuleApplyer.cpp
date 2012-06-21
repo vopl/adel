@@ -405,6 +405,11 @@ namespace scom { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	void PageRuleApplyer::updateReferences(const RuleReference &r, size_t updateReferencesMarker)
 	{
+		assert(r._levelMin <= r._levelMax);
+		if(0 > r._levelMax)
+		{
+			return;
+		}
 		std::deque<UpdateReferencesFrame> buffer;
 		buffer.push_back(UpdateReferencesFrame(&_pages[r._sourcePageIdx], 0));
 
@@ -425,26 +430,30 @@ namespace scom { namespace impl
 				{
 					assert(_pages.size() > f._page->_refereces[i]);
 					Page &child = _pages[f._page->_refereces[i]];
+					int level = f._level+1;
 					if(child._refereces.empty())
 					{
 						//сам
 						child._updateReferencesMarker = updateReferencesMarker;
-						if(f._level+1 >= r._levelMin && f._level+1 <= r._levelMax)
+						if(level >= r._levelMin)
 						{
 							child._accessRefs |= r._access;
 						}
 					}
 					else
 					{
-						//в буфер, на следующий шаг
-						nextBuffer.push_back(UpdateReferencesFrame(&child, f._level+1));
+						if(level <= r._levelMax)
+						{
+							//в буфер, на следующий шаг
+							nextBuffer.push_back(UpdateReferencesFrame(&child, level));
+						}
 					}
 
 				}
 
 				//сам
 				f._page->_updateReferencesMarker = updateReferencesMarker;
-				if(f._level >= r._levelMin && f._level <= r._levelMax)
+				if(f._level >= r._levelMin)
 				{
 					f._page->_accessRefs |= r._access;
 				}
