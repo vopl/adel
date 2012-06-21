@@ -56,8 +56,8 @@ namespace scom { namespace impl
 				return true;
 			}
 
-			int mustMatchMin = pattern.size()-1 + patternMin;
-			int mustMatchMax = pattern.size() + patternMax;
+			int mustMatchMin = ((int)pattern.size())-1 + patternMin;
+			int mustMatchMax = ((int)pattern.size()) + patternMax;
 
 			if(mustMatchMin < 0)
 			{
@@ -66,7 +66,7 @@ namespace scom { namespace impl
 
 			if(mustMatchMax > pattern.size())
 			{
-				mustMatchMax = pattern.size();
+				mustMatchMax = (int)pattern.size();
 			}
 
 			if(mustMatchMax <= mustMatchMin)
@@ -76,7 +76,7 @@ namespace scom { namespace impl
 
 			if(mustMatchMax > sample.size())
 			{
-				mustMatchMax = sample.size();
+				mustMatchMax = (int)sample.size();
 			}
 
 			for(int i(mustMatchMin); i<mustMatchMax; i++)
