@@ -66,7 +66,7 @@ namespace scom { namespace impl
 		else
 		{
 			prap.reset(new PageRuleApplyer(instanceId, posix_time::second_clock::local_time()));
-			idIndex.insert(prap);
+			iter = idIndex.insert(prap).first;
 
 			if(!loadRules(c, prap))
 			{
@@ -82,6 +82,7 @@ namespace scom { namespace impl
 
 		if(!storePages(c, prap))
 		{
+			_instances.get<0>().erase(iter);
 			return false;
 		}
 		return true;
@@ -162,8 +163,19 @@ namespace scom { namespace impl
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::storePages(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
-		assert(0);
-		return false;
+		std::vector<utils::Variant> rows;
+		prap->storePages(rows);
+
+		for(size_t i(0); i<rows.size(); i++)
+		{
+			pgc::Result res = c.query(
+				"UPDATE page SET access=$2 WHERE id=$1", rows[i]);
+
+			IF_PGRES_ERROR(
+				return false,
+				res);
+		}
+		return true;
 	}
 
 }}

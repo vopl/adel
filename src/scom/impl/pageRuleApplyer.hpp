@@ -33,6 +33,9 @@ namespace scom { namespace impl
 		boost::int64_t maxLoadedPageId();
 		size_t loadPages(pgc::Result pgrPages, pgc::Result pgrReferences);
 
+		void storePages(std::vector<utils::Variant> &rows);
+
+
 	private:
 		boost::int64_t				_instanceId;
 		boost::posix_time::ptime	_accessTime;
@@ -82,12 +85,20 @@ namespace scom { namespace impl
 
 		struct Page
 		{
+			boost::int64_t		_id;
 			std::string			_uriStr;
 			htmlcxx::Uri		_uri;
+			//формируется при обновлении простых правил
+			int					_accessSimple;//PageRule::EAccess bits
+			//формируется при обновлении правил ссылочности
+			int					_accessRefs;//PageRule::EAccess bits
+			//исходный берется при добавлении страницы, итоговый формируется при сохранении таблицы
 			int					_access;//PageRule::EAccess bits
 
 			//индексы страниц, ссылки на которые есть в даной странице
 			std::deque<size_t>	_refereces;
+
+			//поколение обхода при просчете ссылочности, формируется заново и используется при каждом просчете
 			size_t				_updateReferencesMarker;
 		};
 		std::deque<Page>	_pages;

@@ -98,7 +98,11 @@ namespace scom { namespace impl
 		for(size_t pageIdx(0); pageIdx<_pages.size(); pageIdx++)
 		{
 			Page &p = _pages[pageIdx];
-			p._access = 0;
+			if(p._accessSimple & PageRule::ea_ignore)
+			{
+				continue;
+			}
+			p._accessRefs = 0;
 			p._updateReferencesMarker = 0;
 
 			//regex
@@ -108,15 +112,15 @@ namespace scom { namespace impl
 					RuleRegex &r = _rulesRegex[ruleIdx];
 					if(boost::regex_match(p._uriStr, r._regex))
 					{
-						p._access |= r._access;
-						if(p._access & PageRule::ea_ignore)
+						p._accessSimple |= r._access;
+						if(p._accessSimple & PageRule::ea_ignore)
 						{
 							break;
 						}
 					}
 				}
 			}
-			if(p._access & PageRule::ea_ignore)
+			if(p._accessSimple & PageRule::ea_ignore)
 			{
 				continue;
 			}
@@ -133,15 +137,15 @@ namespace scom { namespace impl
 
 					if(levelMatched(r._domain, r._levelMin, r._levelMax, sample))
 					{
-						p._access |= r._access;
-						if(p._access & PageRule::ea_ignore)
+						p._accessSimple |= r._access;
+						if(p._accessSimple & PageRule::ea_ignore)
 						{
 							break;
 						}
 					}
 				}
 			}
-			if(p._access & PageRule::ea_ignore)
+			if(p._accessSimple & PageRule::ea_ignore)
 			{
 				continue;
 			}
@@ -167,8 +171,8 @@ namespace scom { namespace impl
 
 					if(levelMatched(r._path, r._levelMin, r._levelMax, sample))
 					{
-						p._access |= r._access;
-						if(p._access & PageRule::ea_ignore)
+						p._accessSimple |= r._access;
+						if(p._accessSimple & PageRule::ea_ignore)
 						{
 							break;
 						}
@@ -337,9 +341,12 @@ namespace scom { namespace impl
 
 			_pages.push_back(Page());
 			Page &p = _pages.back();
+			p._id = row[0];
 			p._uriStr = row[1].to<std::string>();
 			p._uri = htmlcxx::Uri(p._uriStr);
 			p._access = row[2];
+			p._accessSimple = 0;
+			p._accessRefs = 0;
 
 			//проиндексировать id
 			assert(_pageId2Idx.end() == _pageId2Idx.find(row[0]));//такая страница раньше не встречалась
@@ -379,6 +386,21 @@ namespace scom { namespace impl
 		return amount;
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	void PageRuleApplyer::storePages(std::vector<utils::Variant> &rows)
+	{
+		for(size_t i(0); i<_pages.size(); i++)
+		{
+			Page &p = _pages[i];
+			int access = p._accessSimple | p._accessRefs;
+
+			if(access != p._access)
+			{
+				p._access = access;
+				rows.push_back(utils::MVA(p._id, p._access));
+			}
+		}
+	}
 
 	//////////////////////////////////////////////////////////////////////////
 	void PageRuleApplyer::updateReferences(const RuleReference &r, size_t updateReferencesMarker)
@@ -409,7 +431,7 @@ namespace scom { namespace impl
 						child._updateReferencesMarker = updateReferencesMarker;
 						if(f._level+1 >= r._levelMin && f._level+1 <= r._levelMax)
 						{
-							child._access |= r._access;
+							child._accessRefs |= r._access;
 						}
 					}
 					else
@@ -424,7 +446,7 @@ namespace scom { namespace impl
 				f._page->_updateReferencesMarker = updateReferencesMarker;
 				if(f._level >= r._levelMin && f._level <= r._levelMax)
 				{
-					f._page->_access |= r._access;
+					f._page->_accessRefs |= r._access;
 				}
 			}
 			nextBuffer.swap(buffer);
