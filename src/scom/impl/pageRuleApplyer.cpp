@@ -3,6 +3,9 @@
 #include "scom/log.hpp"
 #include "htmlcxx/html/Uri.h"
 
+#include <boost/algorithm/string/split.hpp>
+#include <boost/algorithm/string/classification.hpp>
+
 namespace scom { namespace impl
 {
 
@@ -77,17 +80,9 @@ namespace scom { namespace impl
 						r._levelMin = row[4];
 						r._levelMax = row[5];
 
-						const std::string &hostname = uri.hostname();
-						std::string::size_type prevPos = 0;
-						std::string::size_type pos = hostname.find('/');
-						while(std::string::npos != prevPos)
-						{
-							r._domain.push_back(
-								hostname.substr(prevPos, std::string::npos==pos?std::string::npos:pos - prevPos)
-							);
-							prevPos = pos;
-							pos = hostname.find('/', pos);
-						}
+						boost::split(r._domain, uri.hostname(), boost::algorithm::is_any_of("."));
+						std::reverse(r._domain.begin(), r._domain.end());
+						amount++;
 					}
 					else
 					{
@@ -96,10 +91,80 @@ namespace scom { namespace impl
 				}
 				break;
 			case PageRule::ek_regex:
+				{
+					try
+					{
+						boost::regex regex(row[2].to<std::string>());
+
+						_rulesRegex.push_back(RuleRegex());
+						RuleRegex &r = _rulesRegex.back();
+						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
+						r._regex = regex;
+						amount++;
+					}
+					catch(...)
+					{
+						WLOG("regex page rule has bad value: "<<row[2].to<std::string>());
+					}
+				}
 				break;
 			case PageRule::ek_path:
+				{
+					htmlcxx::Uri uri(row[2].to<std::string>());
+					if(uri.isOk())
+					{
+						_rulesPath.push_back(RulePath());
+						RulePath &r = _rulesPath.back();
+						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
+						r._host = uri.hostnameWithPort();
+						r._levelMin = row[4];
+						r._levelMax = row[5];
+
+						boost::split(r._path, uri.path(), boost::algorithm::is_any_of("/"));
+
+						//корень всегда пустой
+						if(!r._path.empty())
+						{
+							if(r._path[0].empty())
+							{
+								r._path.erase(r._path.begin());
+							}
+						}
+
+						//последний нод всегда файл, если путь оканчивается на / то он пустой. В любом случае его надо удалить
+						if(!r._path.empty())
+						{
+							r._path.erase(r._path.begin()+r._path.size()-1);
+						}
+						amount++;
+					}
+					else
+					{
+						WLOG("path page rule has bad value: "<<row[2].to<std::string>());
+					}
+				}
 				break;
 			case PageRule::ek_reference:
+				{
+					htmlcxx::Uri uri(row[2].to<std::string>());
+					if(uri.isOk())
+					{
+						_rulesReference.push_back(RuleReference());
+						RuleReference &r = _rulesReference.back();
+						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
+						r._source = uri.unparse(htmlcxx::Uri::REMOVE_FRAGMENT);
+						r._levelMin = row[4];
+						r._levelMax = row[5];
+						amount++;
+					}
+					else
+					{
+						WLOG("path page rule has bad value: "<<row[2].to<std::string>());
+					}
+				}
 				break;
 			default:
 				assert(!"unknown page rule kind");

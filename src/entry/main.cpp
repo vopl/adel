@@ -21,7 +21,7 @@ using namespace std;
 namespace po = boost::program_options;
 
 //////////////////////////////////////////////////////////////////////
-#define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__;}
+#define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__<<std::endl;}
 void testScomClient(scom::Service *scom)
 {
 	scom::Auth auth;
@@ -38,13 +38,25 @@ void testScomClient(scom::Service *scom)
 		std::vector<scom::PageRule> rules;
 
 		scom::PageRule r1 = {
-			"127.0.0.1:8080",
+			"127.0.0.1",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
 			0, 10,
 			50};
 
 		scom::PageRule r2 = {
 			"http://127.0.0.1:8080/libs/index.html",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+			-1, 3,
+			20};
+
+		scom::PageRule r2_1 = {
+			"http://127.0.0.1:8080/libs/",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+			-1, 3,
+			20};
+
+		scom::PageRule r2_2 = {
+			"http://127.0.0.1:8080/libs",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
 			-1, 3,
 			20};
@@ -63,6 +75,8 @@ void testScomClient(scom::Service *scom)
 
 		rules.push_back(r1);
 		rules.push_back(r2);
+		rules.push_back(r2_1);
+		rules.push_back(r2_2);
 		rules.push_back(r3);
 		rules.push_back(r4);
 

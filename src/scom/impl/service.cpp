@@ -260,12 +260,18 @@ namespace scom { namespace impl
 			case PageRule::ek_path:
 				{
 					htmlcxx::Uri test(pr._value);
-					if(!test.isOk())
+					if(
+						!test.isOk() ||
+						test.scheme().empty() ||
+						(test.scheme()!="http" && test.scheme()!="https") ||
+						test.hostname().empty() ||
+						test.path().empty() ||
+						!test.fragment().empty())
 					{
 						validator = ee_badUri;
 					}
 				}
-				if(pr._kindAndAccess & (PageRule::ea_useWords || PageRule::ea_useLinks))
+				if(pr._kindAndAccess & (PageRule::ea_useWords | PageRule::ea_useLinks))
 				{
 					if(!insertPageIfAbsent(c, auth._id, pr._value))
 					{
@@ -276,12 +282,18 @@ namespace scom { namespace impl
 			case PageRule::ek_reference:
 				{
 					htmlcxx::Uri test(pr._value);
-					if(!test.isOk())
+					if(
+						!test.isOk() ||
+						test.scheme().empty() ||
+						(test.scheme()!="http" && test.scheme()!="https") ||
+						test.hostname().empty() ||
+						test.path().empty() ||
+						!test.fragment().empty())
 					{
 						validator = ee_badUri;
 					}
 				}
-				if(pr._kindAndAccess & (PageRule::ea_useWords || PageRule::ea_useLinks))
+				if(pr._kindAndAccess & (PageRule::ea_useWords | PageRule::ea_useLinks))
 				{
 					if(!insertPageIfAbsent(c, auth._id, pr._value))
 					{
@@ -522,7 +534,7 @@ namespace scom { namespace impl
 
 	bool Service::insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri)
 	{
-		pgc::Result res = c.query("SELECT id FROM page WHERE instance_id=$1 AND uri=$1", utils::MVA(instanceId, uri));
+		pgc::Result res = c.query("SELECT id FROM page WHERE instance_id=$1 AND uri=$2", utils::MVA(instanceId, uri));
 		IF_PGRES_ERROR(return false, res);
 		
 		if(res.rows())
@@ -530,7 +542,7 @@ namespace scom { namespace impl
 			return true;
 		}
 		
-		res = c.query("INSERT INTO page (instance_id, uri)", utils::MVA(instanceId, uri));
+		res = c.query("INSERT INTO page (instance_id, uri) VALUES ($1,$2)", utils::MVA(instanceId, uri));
 		IF_PGRES_ERROR(return false, res);
 		return true;
 	}
