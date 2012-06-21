@@ -141,13 +141,14 @@ namespace scom { namespace impl
 
 		pgc::Result resReference = c.query(
 			"SELECT "
-			"referrer_page_id, referenced_page_id "
+			"src_page_id, dst_page_id "
 			"FROM page_ref "
-			"INNER JOIN page AS p1 ON(referrer_page_id=p1.id) "
-			"INNER JOIN page AS p2 ON(referrer_page_id=p2.id) "
+			"INNER JOIN page AS p1 ON(src_page_id=p1.id) "
+			//"INNER JOIN page AS p2 ON(dst_page_id=p2.id) "
 			"WHERE "
-			"	p1.instance_id=$1 AND p2.instance_id=$1 AND "
-			"	referrer_page_id=$2 OR referenced_page_id>$2", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
+			"	p1.instance_id=$1 AND "
+			//"	p2.instance_id=$1 AND "
+			"	(src_page_id=$2 OR src_page_id>$2)", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
 
 		IF_PGRES_ERROR(
 			return false,

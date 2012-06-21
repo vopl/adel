@@ -72,6 +72,7 @@ namespace scom { namespace impl
 			std::string		_source;
 			int				_levelMin;
 			int				_levelMax;
+			size_t			_sourcePageIdx;
 		};
 
 		std::vector<RuleRegex>		_rulesRegex;
@@ -81,12 +82,32 @@ namespace scom { namespace impl
 
 		struct Page
 		{
-			std::string		_uriStr;
-			htmlcxx::Uri	_uri;
-			int				_access;//PageRule::EAccess bits
+			std::string			_uriStr;
+			htmlcxx::Uri		_uri;
+			int					_access;//PageRule::EAccess bits
+
+			//индексы страниц, ссылки на которые есть в даной странице
+			std::deque<size_t>	_refereces;
+			size_t				_updateReferencesMarker;
 		};
 		std::deque<Page>	_pages;
 		boost::int64_t		_maxLoadedPageId;
+		typedef std::map<boost::int64_t, size_t> TPageId2Idx;
+		TPageId2Idx _pageId2Idx;
+
+	private:
+			struct UpdateReferencesFrame
+			{
+				Page	*_page;
+				int		_level;
+				UpdateReferencesFrame(Page *page, int level)
+					: _page(page)
+					, _level(level)
+				{
+				}
+			};
+
+		void updateReferences(const RuleReference &r, size_t updateReferencesMarker);
 	};
 	typedef boost::shared_ptr<PageRuleApplyer> PageRuleApplyerPtr;
 }}
