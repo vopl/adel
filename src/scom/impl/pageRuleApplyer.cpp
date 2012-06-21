@@ -104,6 +104,7 @@ namespace scom { namespace impl
 			}
 			p._accessRefs = 0;
 			p._updateReferencesMarker = 0;
+			//p._levelInCurrentUpdate = 0;
 
 			//regex
 			{
@@ -419,10 +420,27 @@ namespace scom { namespace impl
 			for(size_t i(0); i<buffer.size(); i++)
 			{
 				UpdateReferencesFrame &f = buffer[i];
-				if(f._page->_updateReferencesMarker == updateReferencesMarker)
+
+				//сам
+				if(f._page->_updateReferencesMarker != updateReferencesMarker)
 				{
-					//уже обработан со всеми дочерними
+					//еще не обрабатывался
+					f._page->_updateReferencesMarker = updateReferencesMarker;
+					f._page->_levelInCurrentUpdate = f._level;
+				}
+				else if(f._page->_levelInCurrentUpdate >= f._level)
+				{
+					//уже обработан со всеми дочерними и уровень не понизился
 					continue;
+				}
+				else
+				{
+					//уже обрабатывался, но уровень понизился, надо по новой
+				}
+
+				if(f._level >= r._levelMin)
+				{
+					f._page->_accessRefs |= r._access;
 				}
 
 				//дочерние
@@ -433,8 +451,9 @@ namespace scom { namespace impl
 					int level = f._level+1;
 					if(child._refereces.empty())
 					{
+						//лист
+
 						//сам
-						child._updateReferencesMarker = updateReferencesMarker;
 						if(level >= r._levelMin)
 						{
 							child._accessRefs |= r._access;
@@ -442,20 +461,13 @@ namespace scom { namespace impl
 					}
 					else
 					{
+						//не лист, есть дочерние
 						if(level <= r._levelMax)
 						{
 							//в буфер, на следующий шаг
 							nextBuffer.push_back(UpdateReferencesFrame(&child, level));
 						}
 					}
-
-				}
-
-				//сам
-				f._page->_updateReferencesMarker = updateReferencesMarker;
-				if(f._level >= r._levelMin)
-				{
-					f._page->_accessRefs |= r._access;
 				}
 			}
 			nextBuffer.swap(buffer);

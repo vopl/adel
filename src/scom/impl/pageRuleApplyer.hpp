@@ -100,6 +100,7 @@ namespace scom { namespace impl
 
 			//поколение обхода при просчете ссылочности, формируется заново и используется при каждом просчете
 			size_t				_updateReferencesMarker;
+			int					_levelInCurrentUpdate;
 		};
 		std::deque<Page>	_pages;
 		boost::int64_t		_maxLoadedPageId;
