@@ -57,8 +57,6 @@ namespace scom
 		int				_kindAndAccess;
 		int				_kindAndAccessMin;
 		int				_kindAndAccessMax;
-
-		int				_maxAmount;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////

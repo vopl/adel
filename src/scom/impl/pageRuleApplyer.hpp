@@ -40,7 +40,6 @@ namespace scom { namespace impl
 		struct Rule
 		{
 			int					_access;//PageRule::EAccess bits
-			int					_amount;
 		};
 		
 		struct RuleRegex
@@ -84,7 +83,7 @@ namespace scom { namespace impl
 		{
 			std::string		_uriStr;
 			htmlcxx::Uri	_uri;
-			bool			_isAllowed;
+			int				_access;//PageRule::EAccess bits
 		};
 		std::deque<Page>	_pages;
 		boost::int64_t		_maxLoadedPageId;

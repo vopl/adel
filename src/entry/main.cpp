@@ -40,38 +40,32 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r1 = {
 			"127.0.0.1",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
-			0, 10,
-			50};
+			0, 10};
 
 		scom::PageRule r2 = {
 			"http://127.0.0.1:8080/libs/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3,
-			20};
+			-1, 3};
 
 		scom::PageRule r2_1 = {
 			"http://127.0.0.1:8080/libs/",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3,
-			20};
+			-1, 3};
 
 		scom::PageRule r2_2 = {
 			"http://127.0.0.1:8080/libs",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3,
-			20};
+			-1, 3};
 
 		scom::PageRule r3 = {
 			"[xyz]{2}",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_regex,
-			0, 0,
-			20};
+			0, 0};
 
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 3,
-			20};
+			0, 3};
 
 		rules.push_back(r1);
 		rules.push_back(r2);

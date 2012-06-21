@@ -115,7 +115,7 @@ namespace scom { namespace impl
 	{
 		pgc::Result res = c.query(
 			"SELECT "
-			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, max_amount "
+			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max "
 			"FROM page_rule WHERE instance_id=$1", utils::Variant(prap->instanceId()));
 
 		IF_PGRES_ERROR(
@@ -132,7 +132,7 @@ namespace scom { namespace impl
 	{
 		pgc::Result resPage = c.query(
 			"SELECT "
-			"id, uri, is_allowed "
+			"id, uri, access "
 			"FROM page WHERE instance_id=$1 AND id>$2", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
 
 		IF_PGRES_ERROR(

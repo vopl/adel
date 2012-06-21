@@ -43,9 +43,108 @@ namespace scom { namespace impl
 
 
 	/////////////////////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		bool levelMatched(
+			const std::vector<std::string> &pattern,
+			int patternMin,
+			int patternMax,
+			const std::vector<std::string> &sample)
+		{
+			if(pattern.empty())
+			{
+				return true;
+			}
+
+			int mustMatchMin = pattern.size()-1 + patternMin;
+			int mustMatchMax = pattern.size() + patternMax;
+
+			if(mustMatchMin < 0)
+			{
+				mustMatchMin = 0;
+			}
+
+			if(mustMatchMax > pattern.size())
+			{
+				mustMatchMax = pattern.size();
+			}
+
+			if(mustMatchMax <= mustMatchMin)
+			{
+				return true;
+			}
+
+			if(mustMatchMax > sample.size())
+			{
+				mustMatchMax = sample.size();
+			}
+
+			for(int i(mustMatchMin); i<mustMatchMax; i++)
+			{
+				if(pattern[i] != sample[i])
+				{
+					return false;
+				}
+			}
+
+			return true;
+		}
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////////
 	void PageRuleApplyer::update()
 	{
-		assert(0);
+		//перебрать все страницы, применить к ним простые правила
+		for(size_t pageIdx(0); pageIdx<_pages.size(); pageIdx++)
+		{
+			Page &p = _pages[pageIdx];
+			p._access = 0;
+
+			//regex
+			for(size_t ruleIdx(0); ruleIdx<_rulesRegex.size(); ruleIdx++)
+			{
+				RuleRegex &r = _rulesRegex[ruleIdx];
+				if(boost::regex_match(p._uriStr, r._regex))
+				{
+					p._access |= r._access;
+				}
+			}
+
+			//domain
+			for(size_t ruleIdx(0); ruleIdx<_rulesDomain.size(); ruleIdx++)
+			{
+				RuleDomain &r = _rulesDomain[ruleIdx];
+
+				std::vector<std::string> sample;
+				boost::split(sample, p._uri.hostname(), boost::algorithm::is_any_of("."));
+				std::reverse(sample.begin(), sample.end());
+
+				if(levelMatched(r._domain, r._levelMin, r._levelMax, sample))
+				{
+					p._access |= r._access;
+				}
+			}
+
+			//path
+			for(size_t ruleIdx(0); ruleIdx<_rulesPath.size(); ruleIdx++)
+			{
+				RulePath &r = _rulesPath[ruleIdx];
+
+				std::vector<std::string> sample;
+				boost::split(sample, p._uri.path(), boost::algorithm::is_any_of("/"));
+				//последний нод всегда файл, если путь оканчивается на / то он пустой. В любом случае его надо удалить
+				if(!sample.empty())
+				{
+					sample.pop_back();
+				}
+
+				if(levelMatched(r._path, r._levelMin, r._levelMax, sample))
+				{
+					p._access |= r._access;
+				}
+			}
+		}
+		assert(!"где граф?");
 	}
 
 	//////////////////////////////////////////////////////////////////////////
@@ -63,7 +162,7 @@ namespace scom { namespace impl
 			bool b = pgr.fetchRowList(row, i);
 			assert(b);
 
-			//id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, max_amount
+			//id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max
 
 			int kindAndAccess = row[3];
 
@@ -77,7 +176,6 @@ namespace scom { namespace impl
 						_rulesDomain.push_back(RuleDomain());
 						RuleDomain &r = _rulesDomain.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
-						r._amount = row[6];
 						r._levelMin = row[4];
 						r._levelMax = row[5];
 
@@ -100,7 +198,6 @@ namespace scom { namespace impl
 						_rulesRegex.push_back(RuleRegex());
 						RuleRegex &r = _rulesRegex.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
-						r._amount = row[6];
 						r._regex = regex;
 						amount++;
 					}
@@ -118,26 +215,16 @@ namespace scom { namespace impl
 						_rulesPath.push_back(RulePath());
 						RulePath &r = _rulesPath.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
-						r._amount = row[6];
 						r._host = uri.hostnameWithPort();
 						r._levelMin = row[4];
 						r._levelMax = row[5];
 
 						boost::split(r._path, uri.path(), boost::algorithm::is_any_of("/"));
 
-						//корень всегда пустой
-						if(!r._path.empty())
-						{
-							if(r._path[0].empty())
-							{
-								r._path.erase(r._path.begin());
-							}
-						}
-
 						//последний нод всегда файл, если путь оканчивается на / то он пустой. В любом случае его надо удалить
 						if(!r._path.empty())
 						{
-							r._path.erase(r._path.begin()+r._path.size()-1);
+							r._path.pop_back();
 						}
 						amount++;
 					}
@@ -155,7 +242,6 @@ namespace scom { namespace impl
 						_rulesReference.push_back(RuleReference());
 						RuleReference &r = _rulesReference.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
-						r._amount = row[6];
 						r._source = uri.unparse(htmlcxx::Uri::REMOVE_FRAGMENT);
 						r._levelMin = row[4];
 						r._levelMax = row[5];
@@ -192,22 +278,21 @@ namespace scom { namespace impl
 			bool b = pgrPages.fetchRowList(row, i);
 			assert(b);
 
-			//id, uri, is_allowed
+			//id, uri, access
 			_maxLoadedPageId = std::max(_maxLoadedPageId, row[0].to<boost::int64_t>());
 
 			_pages.push_back(Page());
 			Page &p = _pages.back();
 			p._uriStr = row[1].to<std::string>();
 			p._uri = htmlcxx::Uri(p._uriStr);
-
-			utils::Variant isAllowed = row[2];
-			p._isAllowed = isAllowed.isNull()?false:isAllowed.to<bool>();
+			p._access = row[2];
 
 			amount++;
 		}
 
 		for(size_t i(0); i<pgrReferences.rows(); i++)
 		{
+			assert(!"где граф?");
 		}
 		return amount;
 	}

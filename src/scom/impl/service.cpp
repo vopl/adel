@@ -318,16 +318,15 @@ namespace scom { namespace impl
 						"value,"
 						"kind_and_access,"
 						"kind_and_access_min,"
-						"kind_and_access_max,"
-						"max_amount) VALUES ("
-						"$1,$2,$3,$4,$5,$6)",
+						"kind_and_access_max"
+						") VALUES ("
+						"$1,$2,$3,$4,$5)",
 					utils::MVA(
 						auth._id,
 						pr._value,
 						pr._kindAndAccess,
 						pr._kindAndAccessMin,
-						pr._kindAndAccessMax,
-						pr._maxAmount)
+						pr._kindAndAccessMax)
 				)
 			);
 		}

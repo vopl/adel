@@ -21,8 +21,7 @@ CREATE TABLE page_rule
     value varchar NOT NULL,
     kind_and_access int4 NOT NULL,
     kind_and_access_min int4 NOT NULL,
-    kind_and_access_max int4 NOT NULL,
-    max_amount int4 NOT NULL
+    kind_and_access_max int4 NOT NULL
 );
 
 
@@ -46,7 +45,7 @@ CREATE TABLE page
     instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
     active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
     uri varchar NOT NULL,
-    is_allowed boolean,
+    access int4 NOT NULL DEFAULT 0,
 
     http_status varchar,
     http_headers varchar,
