@@ -130,16 +130,30 @@ namespace scom { namespace impl
 	////////////////////////////////////////////////////////////////////
 	bool PageRuleApplyersContainer::loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
-		pgc::Result res = c.query(
+		pgc::Result resPage = c.query(
 			"SELECT "
 			"id, uri, is_allowed "
 			"FROM page WHERE instance_id=$1 AND id>$2", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
 
 		IF_PGRES_ERROR(
 			return false,
-			res);
+				resPage);
 
-		prap->loadPages(res);
+		pgc::Result resReference = c.query(
+			"SELECT "
+			"referrer_page_id, referenced_page_id "
+			"FROM page_ref "
+			"INNER JOIN page AS p1 ON(referrer_page_id=p1.id) "
+			"INNER JOIN page AS p2 ON(referrer_page_id=p2.id) "
+			"WHERE "
+			"	p1.instance_id=$1 AND p2.instance_id=$1 AND "
+			"	referrer_page_id=$2 OR referenced_page_id>$2", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
+
+		IF_PGRES_ERROR(
+			return false,
+				resReference);
+
+		prap->loadPages(resPage, resReference);
 
 		return true;
 	}

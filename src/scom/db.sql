@@ -56,8 +56,8 @@ CREATE TABLE page
 );
 
 --------------------------------------------------------
-DROP TABLE IF EXISTS page_refs CASCADE;
-CREATE TABLE page_refs
+DROP TABLE IF EXISTS page_ref CASCADE;
+CREATE TABLE page_ref
 (
     referrer_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
     referenced_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE

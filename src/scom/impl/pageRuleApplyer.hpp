@@ -31,7 +31,7 @@ namespace scom { namespace impl
 		
 		size_t loadRules(pgc::Result pgr);
 		boost::int64_t maxLoadedPageId();
-		size_t loadPages(pgc::Result pgr);
+		size_t loadPages(pgc::Result pgrPages, pgc::Result pgrReferences);
 
 	private:
 		boost::int64_t				_instanceId;

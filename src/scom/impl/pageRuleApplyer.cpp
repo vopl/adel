@@ -182,14 +182,14 @@ namespace scom { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	size_t PageRuleApplyer::loadPages(pgc::Result pgr)
+	size_t PageRuleApplyer::loadPages(pgc::Result pgrPages, pgc::Result pgrReferences)
 	{
 		size_t amount = 0;
 
-		for(size_t i(0); i<pgr.rows(); i++)
+		for(size_t i(0); i<pgrPages.rows(); i++)
 		{
 			utils::Variant row;
-			bool b = pgr.fetchRowList(row, i);
+			bool b = pgrPages.fetchRowList(row, i);
 			assert(b);
 
 			//id, uri, is_allowed
@@ -204,6 +204,10 @@ namespace scom { namespace impl
 			p._isAllowed = isAllowed.isNull()?false:isAllowed.to<bool>();
 
 			amount++;
+		}
+
+		for(size_t i(0); i<pgrReferences.rows(); i++)
+		{
 		}
 		return amount;
 	}
