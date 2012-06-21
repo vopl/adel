@@ -103,8 +103,6 @@ namespace scom { namespace impl
 				continue;
 			}
 			p._accessRefs = 0;
-			p._updateReferencesMarker = 0;
-			//p._levelInCurrentUpdate = 0;
 
 			//regex
 			{
@@ -200,7 +198,7 @@ namespace scom { namespace impl
 					continue;
 				}
 
-				updateReferences(r, ruleIdx+1);
+				updateReferences(r);
 			}
 		}
 }
@@ -348,6 +346,7 @@ namespace scom { namespace impl
 			p._access = row[2];
 			p._accessSimple = 0;
 			p._accessRefs = 0;
+			p._levelInCurrentUpdate = INT_MAX;
 
 			//проиндексировать id
 			assert(_pageId2Idx.end() == _pageId2Idx.find(row[0]));//такая страница раньше не встречалась
@@ -404,7 +403,7 @@ namespace scom { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void PageRuleApplyer::updateReferences(const RuleReference &r, size_t updateReferencesMarker)
+	void PageRuleApplyer::updateReferences(const RuleReference &r)
 	{
 		assert(r._levelMin <= r._levelMax);
 		if(0 > r._levelMax)
@@ -422,55 +421,43 @@ namespace scom { namespace impl
 				UpdateReferencesFrame &f = buffer[i];
 
 				//сам
-				if(f._page->_updateReferencesMarker != updateReferencesMarker)
+				if(f._page->_levelInCurrentUpdate > f._level)
 				{
-					//еще не обрабатывался
-					f._page->_updateReferencesMarker = updateReferencesMarker;
+					//но уровень понизился, надо обработать
 					f._page->_levelInCurrentUpdate = f._level;
-				}
-				else if(f._page->_levelInCurrentUpdate >= f._level)
-				{
-					//уже обработан со всеми дочерними и уровень не понизился
-					continue;
 				}
 				else
 				{
-					//уже обрабатывался, но уровень понизился, надо по новой
+					//уже обработан со всеми дочерними и уровень не понизился, пропустить такой узел
+					continue;
 				}
 
-				if(f._level >= r._levelMin)
+				//дочерние в буфер, на следующий шаг
+				if(f._level < r._levelMax)
 				{
-					f._page->_accessRefs |= r._access;
-				}
-
-				//дочерние
-				for(size_t i(0); i<f._page->_refereces.size(); i++)
-				{
-					assert(_pages.size() > f._page->_refereces[i]);
-					Page &child = _pages[f._page->_refereces[i]];
-					int level = f._level+1;
-					if(child._refereces.empty())
+					for(size_t i(0); i<f._page->_refereces.size(); i++)
 					{
-						//лист
-
-						//сам
-						if(level >= r._levelMin)
-						{
-							child._accessRefs |= r._access;
-						}
-					}
-					else
-					{
-						//не лист, есть дочерние
-						if(level <= r._levelMax)
-						{
-							//в буфер, на следующий шаг
-							nextBuffer.push_back(UpdateReferencesFrame(&child, level));
-						}
+						assert(_pages.size() > f._page->_refereces[i]);
+						Page &child = _pages[f._page->_refereces[i]];
+						nextBuffer.push_back(UpdateReferencesFrame(&child, f._level+1));
 					}
 				}
 			}
 			nextBuffer.swap(buffer);
+		}
+
+		//плохо если страниц много а выбираемая область маленькая
+		for(size_t i(0); i<_pages.size(); i++)
+		{
+			Page &p = _pages[i];
+			if(
+				p._levelInCurrentUpdate >= r._levelMin &&
+				p._levelInCurrentUpdate <= r._levelMax &&
+				true)
+			{
+				p._accessRefs |= r._access;
+			}
+			p._levelInCurrentUpdate = INT_MAX;
 		}
 	}
 

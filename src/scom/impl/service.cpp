@@ -250,7 +250,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_domain:
 				{
-					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					if(
+						pr._kindAndAccessMin > pr._kindAndAccessMax ||
+						pr._kindAndAccessMin < -100 ||
+						pr._kindAndAccessMax > 100
+					)
 					{
 						validator = ee_badRange;
 						break;
@@ -264,7 +268,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_path:
 				{
-					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					if(
+						pr._kindAndAccessMin > pr._kindAndAccessMax ||
+						pr._kindAndAccessMin < -100 ||
+						pr._kindAndAccessMax > 100
+					)
 					{
 						validator = ee_badRange;
 						break;
@@ -291,7 +299,11 @@ namespace scom { namespace impl
 				break;
 			case PageRule::ek_reference:
 				{
-					if(pr._kindAndAccessMin > pr._kindAndAccessMax)
+					if(
+						pr._kindAndAccessMin > pr._kindAndAccessMax ||
+						pr._kindAndAccessMin < 0 ||
+						pr._kindAndAccessMax > 100
+					)
 					{
 						validator = ee_badRange;
 						break;

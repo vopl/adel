@@ -99,7 +99,6 @@ namespace scom { namespace impl
 			std::deque<size_t>	_refereces;
 
 			//поколение обхода при просчете ссылочности, формируется заново и используется при каждом просчете
-			size_t				_updateReferencesMarker;
 			int					_levelInCurrentUpdate;
 		};
 		std::deque<Page>	_pages;
@@ -119,7 +118,7 @@ namespace scom { namespace impl
 				}
 			};
 
-		void updateReferences(const RuleReference &r, size_t updateReferencesMarker);
+		void updateReferences(const RuleReference &r);
 	};
 	typedef boost::shared_ptr<PageRuleApplyer> PageRuleApplyerPtr;
 }}
