@@ -21,6 +21,7 @@ namespace utils
 		void addOption(const char *name, const char *descr);
 		void addOption(const char *name, const boost::program_options::value_semantic *sem);
 		void addOption(const char *name, const boost::program_options::value_semantic *sem, const char *descr);
+		void addOptions(Options &other);
 
 		void store(boost::program_options::parsed_options *po1, boost::program_options::parsed_options *po2=NULL);
 

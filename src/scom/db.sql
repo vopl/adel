@@ -47,9 +47,11 @@ CREATE TABLE page
     uri varchar NOT NULL,
     access int4 NOT NULL DEFAULT 0,
 
-    http_status varchar,
+    status varchar,
     http_headers varchar,
-    http_body varchar,
+    text varchar,
+    ip varchar,
+    fetch_time int4,
 
     atime timestamp without time zone
 );

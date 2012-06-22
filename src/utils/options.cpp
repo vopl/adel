@@ -37,6 +37,13 @@ namespace utils
 		_desc.add_options() (wrap(name).c_str(), sem, descr);
 	}
 
+	//////////////////////////////////////////////////////////////////////////
+	void Options::addOptions(Options &other)
+	{
+		_desc.add(other.desc());
+	}
+
+
 	//////////////////////////////////////////////////////////////////
 	void Options::store(boost::program_options::parsed_options *po1, boost::program_options::parsed_options *po2)
 	{

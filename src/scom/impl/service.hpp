@@ -6,8 +6,15 @@
 #include "pgc/db.hpp"
 #include "async/mutex.hpp"
 #include "async/event.hpp"
+#include "http/client.hpp"
 
 #include "scom/impl/pageRuleApplyersContainer.hpp"
+#include "scom/impl/wordBucket.hpp"
+
+#ifdef near
+#	undef near
+#endif
+#include <hunspell.hxx>
 
 namespace scom { namespace impl
 {
@@ -64,6 +71,9 @@ namespace scom { namespace impl
 
 		PageRuleApplyersContainer	_prac;
 
+		http::Client	_htc;
+		Hunspell		*_hunspell;
+
 	private:
 		typedef bool (Service::* TWorker)();
 		void runWorker(TWorker worker, size_t idleTimeout=0);
@@ -74,7 +84,13 @@ namespace scom { namespace impl
 		bool workerPageRestatusPend();
 		bool workerHostDeleteOld();
 
-		void uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &uri, int access);
+		void uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &instanceId, const utils::Variant &uri, int access);
+		void Service::parse(
+			http::client::Response resp,
+			const std::string &baseUriString,
+			std::deque<htmlcxx::Uri> *uris,
+			std::string *text);
+
 	private:
 		bool insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri);
 	};

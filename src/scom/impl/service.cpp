@@ -2,11 +2,19 @@
 #include "scom/impl/service.hpp"
 #include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
-#include "htmlcxx/html/Uri.h"
+#include "scom/impl/textParser.hpp"
+
+#include "htmlcxx/html/ParserDom.h"
+#include "htmlcxx/html/CharsetConverter.h"
+#include "htmlcxx/html/utils.h"
+
+#include "utils/htmlEntities.hpp"
 
 #include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/regex.hpp>
+#include <boost/chrono.hpp>
+#include <boost/algorithm/string.hpp>
 
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {ELOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
@@ -47,6 +55,8 @@ namespace scom { namespace impl
 			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.dic"),
 			"hunspell dic path");
 
+		options->addOptions(*http::Client::prepareOptions(prefix));
+
 		return options;
 
 	}
@@ -62,17 +72,28 @@ namespace scom { namespace impl
 		, _numWorkers(0)
 		, _pageRestatusPentTimeout(boost::posix_time::minutes(60))
 		, _activeHostTimeout(boost::posix_time::minutes(10))
+		, _htc(optionsPtr)
+		, _hunspell(NULL)
 	{
 		utils::Options &o = *optionsPtr;
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
 		_net_defaultHostDelay = boost::posix_time::seconds((long)o["net.defaultHostDelay"].as<size_t>());
 		_net_concurrency = o["net.concurrency"].as<size_t>();
+
+		_hunspell = new Hunspell(
+			o["hunspell.affpath"].as<std::string>().c_str(),
+			o["hunspell.dicpath"].as<std::string>().c_str());
+
 	}
 
 	///////////////////////////////////////////////////////////////////
 	Service::~Service()
 	{
+		if(_hunspell)
+		{
+			delete _hunspell;
+		}
 	}
 
 	///////////////////////////////////////////////////////////////////
@@ -535,12 +556,12 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return true, c.query("LOCK active_host"));
 
 		pgc::Result res;
-		res = c.query("SELECT p.id, ah.id, p.uri, p.access FROM page AS p "
+		res = c.query("SELECT p.id, ah.id, i.id, p.uri, p.access FROM page AS p "
 			"INNER JOIN instance AS i ON(p.instance_id=i.id) "
 			"LEFT JOIN active_host AS ah ON(p.active_host_id=ah.id) "
 			"WHERE "
 			"	(ah.atime IS NULL OR ah.atime<CURRENT_TIMESTAMP-$1::INTERVAL) AND "
-			"	p.http_status IS NULL AND "
+			"	p.status IS NULL AND "
 			"	p.access IN(x'2'::int, x'4'::int, x'6'::int) AND "
 			"	i.stage=10 AND i.is_started AND "
 			"	1=1 "
@@ -557,14 +578,16 @@ namespace scom { namespace impl
 		for(size_t i(0); i<res.rows(); i++)
 		{
 
-			utils::Variant pageId, hostId, uri, access;
+			utils::Variant pageId, hostId, instanceId, uri, access;
 			bool b = res.fetch(pageId, 0, i);
 			assert(b);
 			b = res.fetch(hostId, 1, i);
 			assert(b);
-			b = res.fetch(uri, 2, i);
+			b = res.fetch(instanceId, 2, i);
 			assert(b);
-			b = res.fetch(access, 3, i);
+			b = res.fetch(uri, 3, i);
+			assert(b);
+			b = res.fetch(access, 4, i);
 			assert(b);
 			
 
@@ -586,12 +609,12 @@ namespace scom { namespace impl
 			}
 
 			//обновить статус на 'pend'
-			IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET http_status='pend', active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
+			IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET status='pend', active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
 
 			//грузить
 			async::Mutex::ScopedLock sl(_mtxWorkers);
 			_numWorkers++;
-			async::spawn(boost::bind(&Service::uriLoader, this, pageId, hostId, uri, access.to<int>()));
+			async::spawn(boost::bind(&Service::uriLoader, this, pageId, hostId, instanceId, uri, access.to<int>()));
 		}
 		IF_PGRES_ERROR(return true, c.query("COMMIT"));
 
@@ -612,7 +635,7 @@ namespace scom { namespace impl
 	bool Service::workerPageRestatusPend()
 	{
 		pgc::Connection c = _db.allocConnection();
-		pgc::Result res = c.query("UPDATE page SET http_status=NULL WHERE http_status='pend' AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
+		pgc::Result res = c.query("UPDATE page SET status=NULL WHERE status='pend' AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
 		IF_PGRES_ERROR(return false, res);
 
 		return false;
@@ -629,14 +652,376 @@ namespace scom { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void Service::uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &uri, int access)
+	namespace
+	{
+		//////////////////////////////////////////////////////////////////////////
+		bool isGoodContentType(const http::client::Response::Segment *seg)
+		{
+			if(!seg)
+			{
+				return false;
+			}
+
+			http::client::Response::Segment s;
+			s = boost::algorithm::find_first(*seg, "html");
+			if(s)
+			{
+				return true;
+			}
+			s = boost::algorithm::find_first(*seg, "text");
+			if(s)
+			{
+				return true;
+			}
+			s = boost::algorithm::find_first(*seg, "xml");
+			if(s)
+			{
+				return true;
+			}
+			return false;
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &instanceId, const utils::Variant &uri, int access)
 	{
 		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
-
 		assert(access&PageRule::ea_useLinks || access&PageRule::ea_useWords);
 
-		assert(0);
+
+		//TODO
+		pgc::Statement _stUpdatePageStatus;
+		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
+
+
+		boost::chrono::time_point<boost::chrono::system_clock> start = 
+			boost::chrono::system_clock::now();
+
+		http::client::Response resp;
+		boost::system::error_code ec = _htc.get(resp, uri.as<std::string>().data());
+
+		boost::chrono::milliseconds getTime = boost::chrono::duration_cast<boost::chrono::milliseconds>(boost::chrono::system_clock::now() - start);
+
+		if(ec)
+		{
+			WLOG("get: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "get failed")));
+			return;
+		}
+		ec = resp.readFirstLine();
+		if(ec)
+		{
+			WLOG("read first line: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read first line failed")));
+			return;
+		}
+
+		ec = resp.readHeaders();
+		if(ec)
+		{
+
+			WLOG("read headers: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read headers failed")));
+			return;
+		}
+
+		htmlcxx::Uri redirectUri;
+		switch(resp.status())
+		{
+		case http::esc_200:
+			//ok
+			break;
+		case http::esc_301:
+		case http::esc_302:
+			{
+				if(const http::client::Response::Segment *locs = resp.header(http::hn::location))
+				{
+					redirectUri = htmlcxx::Uri(std::string(locs->begin(), locs->end()));
+				}
+				if(redirectUri.isOk())
+				{
+					//ok
+					break;
+				}
+			}
+			//err, no break
+		default:
+			WLOG("bad status: "<<std::string(resp.firstLine().begin(), resp.firstLine().end())<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad status")));
+			return;
+		}
+
+		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
+		if(length.isCorrect() && length.value() > 1024*1024)
+		{
+			WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "too big")));
+			return;
+		}
+
+		const http::client::Response::Segment *contentType = resp.header(http::hn::contentType);
+		if(!isGoodContentType(contentType) && !redirectUri.isOk())
+		{
+			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad content type")));
+			return;
+		}
+
+		ec = resp.readBody();
+		if(ec)
+		{
+
+			WLOG("read body: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			pgc::Connection c = _db.allocConnection();
+			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read body failed")));
+			return;
+		}
+
+
+		//parse
+		std::deque<htmlcxx::Uri> uris;
+		std::string text;
+		parse(
+			resp, 
+			uri.as<std::string>(), 
+			access&PageRule::ea_useLinks?&uris:NULL, 
+			access&PageRule::ea_useWords?&text:NULL);
+		if(redirectUri.isOk())
+		{
+			uris.push_back(redirectUri);
+		}
+
+		//применить статус и текст
+		pgc::Connection c = _db.allocConnection();
+		pgc::Result res;
+
+		IF_PGRES_ERROR(return, c.query("BEGIN"));
+		IF_PGRES_ERROR(return, c.query("LOCK page"));
+		res = c.query(
+			"UPDATE page SET status=$2, text=$3, http_headers=$4, ip=$5, fetch_time=$6 WHERE id=$1", 
+			utils::MVA(
+				pageId, 
+				std::string(resp.firstLine().begin(), resp.firstLine().begin()),
+				text,
+				std::string(resp.headers().begin(), resp.headers().begin()),
+				resp.channel().endpointRemote().address().to_string(),
+				getTime.count()
+			)
+		);
+
+		//TODO utf8 глючно разобрался
+		IF_PGRES_ERROR(return, res);
+
+		//применить ссылки
+		BOOST_FOREACH(htmlcxx::Uri &uri2, uris)
+		{
+			if(uri2.scheme()!="http" && uri2.scheme()!="https")
+			{
+				continue;
+			}
+
+			res = c.query(
+				"INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id", 
+				utils::MVA(instanceId, htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT))))
+			);
+			IF_PGRES_ERROR(return, res);
+
+			utils::Variant page2Id;
+			bool b = res.fetch(page2Id, 0,0);
+			assert(b);
+
+			res = c.query(
+				"INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)", 
+				utils::MVA(pageId, page2Id)
+			);
+			IF_PGRES_ERROR(return, res);
+		}
+		IF_PGRES_ERROR(return, c.query("COMMIT"));
+
+		TLOG(uri);
+
 	}
+
+	//////////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentType(const std::string &contentType)
+		{
+			boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+
+			std::string::size_type pos = contentType.find("charset=");
+			if(std::string::npos != pos)
+			{
+				std::string charset(contentType.begin()+pos+8, contentType.end());
+
+				charset = iconv_canonicalize(charset.data());
+
+				cc.reset(new htmlcxx::CharsetConverter(charset, "UTF-8//IGNORE"));
+
+				if(!cc->isOk())
+				{
+					cc.reset();
+				}
+
+				return cc;
+			}
+			return cc;
+		}
+
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentTypeOrDom(
+			const http::InputMessage::Segment *cts,
+			const tree<htmlcxx::HTML::Node> &tr)
+		{
+			if(cts)
+			{
+				boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+				cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
+				if(cc && cc->isOk())
+				{
+					return cc;
+				}
+			}
+
+			tree<htmlcxx::HTML::Node>::iterator iter = tr.begin();
+			tree<htmlcxx::HTML::Node>::iterator end = tr.end();
+			for(; iter!=end; ++iter)
+			{
+				htmlcxx::HTML::Node &n = *iter;
+				if(n.isTag())
+				{
+					if(boost::algorithm::iequals(n.tagName(), "meta"))
+					{
+						n.parseAttributes();
+						if(boost::algorithm::iequals(n.attribute("http-equiv").second, "Content-Type"))
+						{
+							boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+							cc = convertorFromContentType(n.attribute("content").second);
+							if(cc && cc->isOk())
+							{
+								return cc;
+							}
+						}
+					}
+				}
+			}
+			return boost::shared_ptr<htmlcxx::CharsetConverter>();
+		}
+
+
+
+		std::map<std::string, bool> init_skipTextInTag()
+		{
+			std::map<std::string, bool> res;
+			res["script"] = true;
+			res["style"] = true;
+			res["meta"] = true;
+
+			return res;
+		}
+		std::map<std::string, bool> map_skipTextInTag = init_skipTextInTag();
+
+		bool skipTextInTag(const std::string &tagName)
+		{
+			std::string lowerTagName = tagName;
+			boost::algorithm::to_lower(lowerTagName);
+			return map_skipTextInTag.end() != map_skipTextInTag.find(lowerTagName);
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	void Service::parse(
+		http::client::Response resp,
+		const std::string &baseUriString,
+		std::deque<htmlcxx::Uri> *uris,
+		std::string *text)
+	{
+
+		//подготовить базовый урл
+		htmlcxx::Uri base(baseUriString);
+		if(!base.isOk())
+		{
+			assert(0);
+			return;
+		}
+
+		//парсить dom
+		htmlcxx::HTML::ParserDom parser;
+		parser.parse(resp.body().begin(), resp.body().end());
+		const tree<htmlcxx::HTML::Node> &tr = parser.getTree();
+
+		//выявить кодировку из заголовков, meta html
+		//сформировать конвертор в utf-8 если нужен
+		boost::shared_ptr<htmlcxx::CharsetConverter> cc =
+			convertorFromContentTypeOrDom(resp.header(http::hn::contentType), tr);
+
+		//перебирать ноды, перерабатывать каждую
+		if(uris)
+		{
+			tree<htmlcxx::HTML::Node>::iterator iter = tr.begin();
+			tree<htmlcxx::HTML::Node>::iterator end = tr.end();
+
+			for(; iter!=end; ++iter)
+			{
+				htmlcxx::HTML::Node &n = *iter;
+				if(n.isTag() && boost::algorithm::iequals(n.tagName(), "a"))
+				{
+					n.parseAttributes();
+					std::pair<bool, std::string> p = n.attribute("href");
+					if(p.first)
+					{
+
+						htmlcxx::Uri uri(htmlcxx::HTML::convert_link(p.second, base));
+						if(uri.isOk())
+						{
+							uris->push_back(uri);
+						}
+					}
+				}
+			}
+		}
+
+		if(text)
+		{
+			tree<htmlcxx::HTML::Node>::iterator iter = tr.begin();
+			tree<htmlcxx::HTML::Node>::iterator end = tr.end();
+			tree<htmlcxx::HTML::Node>::iterator parent;
+
+			for(; iter!=end; ++iter)
+			{
+				htmlcxx::HTML::Node &n = *iter;
+				if(!n.isTag() && !n.isComment())
+				{
+					if(!n.text().empty())
+					{
+						parent = tr.parent(iter);
+						if(parent != tr.end() && parent->isTag() && skipTextInTag(parent->tagName()))
+						{
+							continue;
+						}
+
+						//конвертировать в utf-8 если есть конвертор
+						//декодировать html-entities
+						if(cc)
+						{
+							*text += utils::htmlEntitiesDecode(cc->convert(n.text()));
+						}
+						else
+						{
+							*text += utils::htmlEntitiesDecode(n.text());
+						}
+						*text += " ";
+					}
+				}
+			}
+		}
+	}
+
 
 	//////////////////////////////////////////////////////////////////////////
 	bool Service::insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri)
@@ -654,6 +1039,7 @@ namespace scom { namespace impl
 		return true;
 	}
 			
+	//////////////////////////////////////////////////////////////////////////
 
 
 }}

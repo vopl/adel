@@ -14,6 +14,13 @@
 #include "http/client/log.hpp"
 #include "scom/log.hpp"
 
+
+
+
+#include "http/server.hpp"
+#include "http/server/handlerFs.hpp"
+
+
 #include <boost/program_options.hpp>
 #include <boost/program_options/parsers.hpp>
 
@@ -146,6 +153,12 @@ int main(int argc, const char **argv)
 		utils::OptionsPtr oscom = scom::Service::prepareOptions("scom");
 		desc.add(oscom->desc());
 
+		utils::OptionsPtr s_opts = http::Server::prepareOptions("http.server");
+		desc.add(s_opts->desc());
+		utils::OptionsPtr sh_opts = http::server::HandlerFs::prepareOptions("http.server.fs");
+		desc.add(sh_opts->desc());
+
+
 		if(varsGeneral.count("help"))
 		{
 		    cout << desc << std::endl;
@@ -246,6 +259,10 @@ int main(int argc, const char **argv)
 		omanager->store(&parsedOptions1, &parsedOptions2);
 		oscom->store(&parsedOptions1, &parsedOptions2);
 
+		s_opts->store(&parsedOptions1, &parsedOptions2);
+		sh_opts->store(&parsedOptions1, &parsedOptions2);
+
+
 		if(varsGeneral.count("run"))
 		{
 			async::initLog(oasyncLog);
@@ -260,6 +277,14 @@ int main(int argc, const char **argv)
 			async::Manager manager(omanager);
 			manager.asrv().setAsGlobal(true);
 			{
+				http::Server s(s_opts);
+				http::server::HandlerFs sh(sh_opts);
+
+				manager.asrv().onStart(boost::bind(&http::Server::start, s));
+				manager.asrv().onStop(boost::bind(&http::Server::stop, s));
+				s.onRequest(boost::bind(&http::server::HandlerFs::onRequest, sh, _1));
+
+				////////////////////////////////
 				scom::Service *scom = NULL;
 				if(runScom)
 				{

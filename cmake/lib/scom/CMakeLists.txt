@@ -42,6 +42,12 @@ set(IMPL_INC
 	${PSRC}/impl/workerRaii.hpp
 	${PSRC}/impl/pageRuleApplyer.hpp
 	${PSRC}/impl/pageRuleApplyersContainer.hpp
+	${PSRC}/impl/phrase.hpp
+	${PSRC}/impl/phraseStreamer.hpp
+	${PSRC}/impl/textParser.hpp
+	${PSRC}/impl/word.hpp
+	${PSRC}/impl/wordBucket.hpp
+
 )
 source_group(src/impl FILES ${IMPL_INC})
 
@@ -49,6 +55,11 @@ set(IMPL_SRC
 	${PSRC}/impl/service.cpp
 	${PSRC}/impl/pageRuleApplyer.cpp
 	${PSRC}/impl/pageRuleApplyersContainer.cpp
+	${PSRC}/impl/phrase.cpp
+	${PSRC}/impl/phraseStreamer.cpp
+	${PSRC}/impl/textParser.cpp
+	${PSRC}/impl/word.cpp
+	${PSRC}/impl/wordBucket.cpp
 )
 source_group(src/impl FILES ${IMPL_SRC})
 
