@@ -149,7 +149,7 @@ namespace scom { namespace impl
 			"WHERE "
 			"	p1.instance_id=$1 AND "
 			//"	p2.instance_id=$1 AND "
-			"	(src_page_id=$2 OR src_page_id>$2)", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
+			"	(src_page_id>$2 OR dst_page_id>$2)", utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
 
 		IF_PGRES_ERROR(
 			return false,
