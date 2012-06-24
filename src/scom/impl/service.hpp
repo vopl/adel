@@ -62,13 +62,18 @@ namespace scom { namespace impl
 		std::string						_pgc_connectionString;
 		size_t							_pgc_maxConnections;
 		utils::Variant::TimeDuration	_net_defaultHostDelay;
-		size_t							_net_concurrency;
+
+		utils::Variant::TimeDuration	_workerIdleTimeoutMain;
+		utils::Variant::TimeDuration	_workerIdleTimeoutCleanupper;
+		utils::Variant::TimeDuration	_ruleApplyerCacheTimeout;
+
+		size_t							_pagesToLoadGranula;
+		size_t							_maxHttpBodySize;
+
+		utils::Variant::TimeDuration	_pageRestatusPentTimeout;
+		utils::Variant::TimeDuration	_activeHostTimeout;
 
 		pgc::Db		_db;
-
-		utils::Variant::TimeDuration _pageRestatusPentTimeout;
-		utils::Variant::TimeDuration _activeHostTimeout;
-
 		PageRuleApplyersContainer	_prac;
 
 		http::Client	_htc;
@@ -76,8 +81,8 @@ namespace scom { namespace impl
 
 	private:
 		typedef bool (Service::* TWorker)();
-		void runWorker(TWorker worker, size_t idleTimeout=0);
-		void workerWrapper(TWorker worker, size_t idleTimeout);
+		void runWorker(TWorker worker, utils::Variant::TimeDuration idleTimeout);
+		void workerWrapper(TWorker worker, utils::Variant::TimeDuration idleTimeout);
 
 		bool workerMain();
 		bool workerInstancesDeleteOld();

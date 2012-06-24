@@ -36,14 +36,52 @@ namespace scom { namespace impl
 			"maximum number of connections to postgres database");
 
 		options->addOption(
-			"net.concurrency",
-			boost::program_options::value<size_t>()->default_value(50),
-			"maximum number of parallel network connections");
-
-		options->addOption(
 			"net.defaultHostDelay",
 			boost::program_options::value<size_t>()->default_value(1),
 			"delay between requests to one host, seconds");
+
+
+
+
+
+
+		options->addOption(
+			"workerIdleTimeoutMain",
+			boost::program_options::value<size_t>()->default_value(1),
+			"main worker idle timeout, seconds");
+
+		options->addOption(
+			"workerIdleTimeoutCleanupper",
+			boost::program_options::value<size_t>()->default_value(10),
+			"cleanup worker idle timeout, seconds");
+
+		options->addOption(
+			"ruleApplyerCacheTimeout",
+			boost::program_options::value<size_t>()->default_value(10),
+			"page rule applyer cache lifetime, seconds");
+
+
+		options->addOption(
+			"pagesToLoadGranula",
+			boost::program_options::value<size_t>()->default_value(50),
+			"amount of pages, selected for load from database per one worker iteration");
+
+		options->addOption(
+			"httpBodyMaxSize",
+			boost::program_options::value<size_t>()->default_value(1024*1024),
+			"maximus size for http body during load page from network, bytes");
+
+		options->addOption(
+			"pageRestatusPentTimeout",
+			boost::program_options::value<size_t>()->default_value(60*60),
+			"pended page timeout, seconds");
+
+		options->addOption(
+			"activeHostTimeout",
+			boost::program_options::value<size_t>()->default_value(10),
+			"delay betwen http requests for same host, seconds");
+
+
 
 		options->addOption(
 			"hunspell.affpath",
@@ -68,8 +106,12 @@ namespace scom { namespace impl
 		, _evtIface(true)
 		, _pgc_maxConnections(10)
 		, _net_defaultHostDelay(boost::posix_time::seconds(10))
-		, _net_concurrency(1000)
+		, _workerIdleTimeoutMain(boost::posix_time::seconds(1))
+		, _workerIdleTimeoutCleanupper(boost::posix_time::seconds(10))
+		, _ruleApplyerCacheTimeout(boost::posix_time::seconds(10))
 		, _numWorkers(0)
+		, _pagesToLoadGranula(50)
+		, _maxHttpBodySize(1024*1024)
 		, _pageRestatusPentTimeout(boost::posix_time::minutes(60))
 		, _activeHostTimeout(boost::posix_time::minutes(10))
 		, _htc(optionsPtr)
@@ -79,7 +121,15 @@ namespace scom { namespace impl
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
 		_net_defaultHostDelay = boost::posix_time::seconds((long)o["net.defaultHostDelay"].as<size_t>());
-		_net_concurrency = o["net.concurrency"].as<size_t>();
+
+		_workerIdleTimeoutMain = boost::posix_time::seconds((long)o["workerIdleTimeoutMain"].as<size_t>());
+		_workerIdleTimeoutCleanupper = boost::posix_time::seconds((long)o["workerIdleTimeoutCleanupper"].as<size_t>());
+		_ruleApplyerCacheTimeout = boost::posix_time::seconds((long)o["ruleApplyerCacheTimeout"].as<size_t>());
+
+		_pagesToLoadGranula = o["pagesToLoadGranula"].as<size_t>();
+		_maxHttpBodySize = o["httpBodyMaxSize"].as<size_t>();
+		_pageRestatusPentTimeout = boost::posix_time::seconds((long)o["pageRestatusPentTimeout"].as<size_t>());
+		_activeHostTimeout = boost::posix_time::seconds((long)o["activeHostTimeout"].as<size_t>());
 
 		_hunspell = new Hunspell(
 			o["hunspell.affpath"].as<std::string>().c_str(),
@@ -110,13 +160,13 @@ namespace scom { namespace impl
 			_pgc_connectionString.data(),
 			_pgc_maxConnections);
 
-		runWorker(&Service::workerMain, 100);
-		runWorker(&Service::workerInstancesDeleteOld, 5*1000);
-		runWorker(&Service::workerPageRestatusPend, 5*1000);
-		runWorker(&Service::workerHostDeleteOld, 5*1000);
-		runWorker(&Service::workerPageRuleApplyer, 5*1000);
+		runWorker(&Service::workerMain, _workerIdleTimeoutMain);
+		runWorker(&Service::workerInstancesDeleteOld, _workerIdleTimeoutCleanupper);
+		runWorker(&Service::workerPageRestatusPend, _workerIdleTimeoutCleanupper);
+		runWorker(&Service::workerHostDeleteOld, _workerIdleTimeoutCleanupper);
+		runWorker(&Service::workerPageRuleApplyer, _workerIdleTimeoutCleanupper);
 
-		_prac.start(boost::posix_time::minutes(10));
+		_prac.start(_ruleApplyerCacheTimeout);
 		_evtIface.set(true);
 	}
 
@@ -514,7 +564,7 @@ namespace scom { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	void Service::runWorker(TWorker worker, size_t idleTimeout)
+	void Service::runWorker(TWorker worker, utils::Variant::TimeDuration idleTimeout)
 	{
 		async::Mutex::ScopedLock sl(_mtxWorkers);
 		_numWorkers++;
@@ -522,7 +572,7 @@ namespace scom { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////////
-	void Service::workerWrapper(TWorker worker, size_t idleTimeout)
+	void Service::workerWrapper(TWorker worker, utils::Variant::TimeDuration idleTimeout)
 	{
 		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
 
@@ -539,7 +589,7 @@ namespace scom { namespace impl
 
 			if(!(this->*worker)())
 			{
-				async::timeout(idleTimeout).wait();
+				async::timeout(idleTimeout.ticks()*1000/idleTimeout.ticks_per_second()).wait();
 			}
 		}
 	}
@@ -567,7 +617,7 @@ namespace scom { namespace impl
 			"	p.access IN(x'2'::int, x'4'::int, x'6'::int) AND "
 			"	i.stage=10 AND i.is_started AND "
 			"	1=1 "
-			"LIMIT 10 ", _net_defaultHostDelay);
+			"LIMIT $2 ", utils::MVA(_net_defaultHostDelay, _pagesToLoadGranula));
 		IF_PGRES_ERROR(return true, res);
 
 		if(!res.rows())
@@ -725,7 +775,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return false, c.query("BEGIN"));
 		IF_PGRES_ERROR(return false, c.query("LOCK page"));
 
-		pgc::Result res = c.query("SELECT instance_id FROM page WHERE access IS NULL GROUP BY instance_id LIMIT 10");
+		pgc::Result res = c.query("SELECT instance_id FROM page WHERE access IS NULL GROUP BY instance_id LIMIT $1", utils::Variant(_pagesToLoadGranula));
 		IF_PGRES_ERROR(return false, res);
 
 		size_t amount = res.rows();
@@ -922,7 +972,7 @@ namespace scom { namespace impl
 		}
 
 		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
-		if(length.isCorrect() && length.value() > 1024*1024)
+		if(length.isCorrect() && length.value() > _maxHttpBodySize)
 		{
 			WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
