@@ -110,10 +110,11 @@ namespace scom { namespace impl
 			_pgc_connectionString.data(),
 			_pgc_maxConnections);
 
-		runWorker(&Service::workerMain, 1000);
-		runWorker(&Service::workerInstancesDeleteOld, 1000);
-		runWorker(&Service::workerPageRestatusPend, 1000);
-		runWorker(&Service::workerHostDeleteOld, 1000);
+		runWorker(&Service::workerMain, 100);
+		runWorker(&Service::workerInstancesDeleteOld, 5*1000);
+		runWorker(&Service::workerPageRestatusPend, 5*1000);
+		runWorker(&Service::workerHostDeleteOld, 5*1000);
+		runWorker(&Service::workerPageRuleApplyer, 5*1000);
 
 		_prac.start(boost::posix_time::minutes(10));
 		_evtIface.set(true);
@@ -546,6 +547,7 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerMain()
 	{
+		//TLOG(__FUNCTION__<<" start");
 		//выбрать  незагруженные страницы джоин инстанс, состояние лоад и запущенный
 		//инициировать загрузку этих страниц
 
@@ -575,6 +577,9 @@ namespace scom { namespace impl
 			return false;
 		}
 
+		//список активных хостов для данной транзакции - каждый хост должен использоваться не более 1 раза
+		std::set<utils::Variant> usedActiveHosts;
+
 		for(size_t i(0); i<res.rows(); i++)
 		{
 
@@ -595,20 +600,73 @@ namespace scom { namespace impl
 			//обновить активный хост
 			if(hostId.isNull())
 			{
-				//добавить 
 				htmlcxx::Uri u(uri);
 
-				pgc::Result res = c.query("INSERT INTO active_host (name, atime) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id", u.hostname());
+				//выбрать
+				pgc::Result res = c.query("SELECT id, atime<CURRENT_TIMESTAMP-$1::INTERVAL FROM active_host WHERE name=$2", utils::MVA(_net_defaultHostDelay, u.hostname()));
 				IF_PGRES_ERROR(return true, res);
-				res.fetch(hostId, 0, 0);
+
+				if(res.rows())
+				{
+					//хост есть
+
+					//если хост уже использоватся в этой транзакции - пропустить страницу
+					if(usedActiveHosts.end() != usedActiveHosts.find(hostId))
+					{
+						IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
+						continue;
+					}
+
+					//проверить таймаут на хост
+					utils::Variant atimeTooOld;
+					bool b = res.fetch(atimeTooOld, 1, 0);
+					assert(b);
+					b = res.fetch(hostId, 0, 0);
+					assert(b);
+
+					if(atimeTooOld.to<bool>())
+					{
+						//таймаут истек, обновить шамп и отработать страницу
+
+						IF_PGRES_ERROR(return true, c.query("UPDATE active_host SET atime=CURRENT_TIMESTAMP WHERE id=$1", hostId));
+					}
+					else
+					{
+						//таймаут еще не истек, пометить страницу хостом и пока не отрабатывать
+
+						IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
+						continue;
+					}
+				}
+				else
+				{
+					//нет хоста, добавить
+
+					pgc::Result res = c.query("INSERT INTO active_host (name, atime) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id", u.hostname());
+					IF_PGRES_ERROR(return true, res);
+
+					bool b = res.fetch(hostId, 0, 0);
+					assert(b);
+				}
 			}
 			else
 			{
-				//обновить
+				//хост есть
+
+				//если хост уже использоватся в этой транзакции - пропустить страницу
+				if(usedActiveHosts.end() != usedActiveHosts.find(hostId))
+				{
+					continue;
+				}
+
+				//обновить хосту штамп доступа
 				IF_PGRES_ERROR(return true, c.query("UPDATE active_host SET atime=CURRENT_TIMESTAMP WHERE id=$1", hostId));
 			}
 
-			//обновить статус на 'pend'
+			//запомнить использованный хост
+			usedActiveHosts.insert(hostId);
+
+			//обновить статус страницы на 'pend'
 			IF_PGRES_ERROR(return true, c.query("UPDATE PAGE SET status='pend', active_host_id=$2 WHERE id=$1", utils::MVA(pageId, hostId)));
 
 			//грузить
@@ -618,39 +676,73 @@ namespace scom { namespace impl
 		}
 		IF_PGRES_ERROR(return true, c.query("COMMIT"));
 
+		//TLOG(__FUNCTION__<<" stop");
 		return true;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerInstancesDeleteOld()
 	{
+		//TLOG(__FUNCTION__<<" start");
 		pgc::Connection c = _db.allocConnection();
 		pgc::Result res = c.query("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
 		IF_PGRES_ERROR(return false, res);
 
+		//TLOG(__FUNCTION__<<" stop");
 		return false;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerPageRestatusPend()
 	{
+		//TLOG(__FUNCTION__<<" start");
 		pgc::Connection c = _db.allocConnection();
 		pgc::Result res = c.query("UPDATE page SET status=NULL WHERE status='pend' AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_pageRestatusPentTimeout));
 		IF_PGRES_ERROR(return false, res);
 
+		//TLOG(__FUNCTION__<<" start");
 		return false;
 	}
 
 	///////////////////////////////////////////////////////////////////
 	bool Service::workerHostDeleteOld()
 	{
+		//TLOG(__FUNCTION__<<" start");
 		pgc::Connection c = _db.allocConnection();
 		pgc::Result res = c.query("DELETE FROM active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL", utils::Variant(_activeHostTimeout));
 		IF_PGRES_ERROR(return false, res);
 
+		//TLOG(__FUNCTION__<<" stop");
 		return false;
 	}
 
+	///////////////////////////////////////////////////////////////////
+	bool Service::workerPageRuleApplyer()
+	{
+		//TLOG(__FUNCTION__<<" start");
+		pgc::Connection c = _db.allocConnection();
+
+		IF_PGRES_ERROR(return false, c.query("BEGIN"));
+		IF_PGRES_ERROR(return false, c.query("LOCK page"));
+
+		pgc::Result res = c.query("SELECT instance_id FROM page WHERE access IS NULL GROUP BY instance_id LIMIT 10");
+		IF_PGRES_ERROR(return false, res);
+
+		size_t amount = res.rows();
+		for(size_t i(0); i<amount; i++)
+		{
+			utils::Variant instanceId;
+			bool b = res.fetch(instanceId,0,i);
+			assert(b);
+
+			_prac.update(c, instanceId.to<boost::int64_t>());
+		}
+
+		IF_PGRES_ERROR(return false, c.query("COMMIT"));
+
+		//TLOG(__FUNCTION__<<" stop");
+		return amount?true:false;
+	}
 	//////////////////////////////////////////////////////////////////////////
 	namespace
 	{
@@ -679,6 +771,80 @@ namespace scom { namespace impl
 				return true;
 			}
 			return false;
+		}
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	namespace
+	{
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentType(const std::string &contentType)
+		{
+			boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+
+			std::string::size_type pos = contentType.find("charset=");
+			if(std::string::npos != pos)
+			{
+				std::string charset(contentType.begin()+pos+8, contentType.end());
+
+				charset = iconv_canonicalize(charset.data());
+
+				cc.reset(new htmlcxx::CharsetConverter(charset, "UTF-8//IGNORE"));
+
+				if(!cc->isOk())
+				{
+					cc.reset();
+				}
+
+				return cc;
+			}
+			return cc;
+		}
+
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorSimple()
+		{
+			boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+			cc.reset(new htmlcxx::CharsetConverter("UTF-8", "UTF-8//IGNORE"));
+			return cc;
+		}
+
+		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentTypeOrDom(
+			const http::InputMessage::Segment *cts,
+			const tree<htmlcxx::HTML::Node> &tr)
+		{
+			if(cts)
+			{
+				boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+				cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
+				if(cc && cc->isOk())
+				{
+					return cc;
+				}
+			}
+
+			tree<htmlcxx::HTML::Node>::iterator iter = tr.begin();
+			tree<htmlcxx::HTML::Node>::iterator end = tr.end();
+			for(; iter!=end; ++iter)
+			{
+				htmlcxx::HTML::Node &n = *iter;
+				if(n.isTag())
+				{
+					if(boost::algorithm::iequals(n.tagName(), "meta"))
+					{
+						n.parseAttributes();
+						if(boost::algorithm::iequals(n.attribute("http-equiv").second, "Content-Type"))
+						{
+							boost::shared_ptr<htmlcxx::CharsetConverter> cc;
+							cc = convertorFromContentType(n.attribute("content").second);
+							if(cc && cc->isOk())
+							{
+								return cc;
+							}
+						}
+					}
+				}
+			}
+
+			return convertorSimple();
 		}
 	}
 
@@ -801,15 +967,18 @@ namespace scom { namespace impl
 		pgc::Connection c = _db.allocConnection();
 		pgc::Result res;
 
+		boost::shared_ptr<htmlcxx::CharsetConverter> cc = convertorSimple();
+
 		IF_PGRES_ERROR(return, c.query("BEGIN"));
 		IF_PGRES_ERROR(return, c.query("LOCK page"));
+
 		res = c.query(
 			"UPDATE page SET status=$2, text=$3, http_headers=$4, ip=$5, fetch_time=$6 WHERE id=$1", 
 			utils::MVA(
 				pageId, 
-				std::string(resp.firstLine().begin(), resp.firstLine().begin()),
+				cc->convert(std::string(resp.firstLine().begin(), resp.firstLine().end())),
 				text,
-				std::string(resp.headers().begin(), resp.headers().begin()),
+				cc->convert(std::string(resp.headers().begin(), resp.headers().end())),
 				resp.channel().endpointRemote().address().to_string(),
 				getTime.count()
 			)
@@ -826,11 +995,32 @@ namespace scom { namespace impl
 				continue;
 			}
 
+			if(uri2.hostname()!="127.0.0.1")
+			{
+				continue;
+			}
+
+			if(uri2.unparse(0).find("mailto") != -1)
+			{
+				int k=220;
+				continue;
+			}
+
+			utils::Variant uri2v = htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT)));
 			res = c.query(
-				"INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id", 
-				utils::MVA(instanceId, htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT))))
+				"SELECT id FROM page WHERE instance_id=$1 AND uri=$2",
+				utils::MVA(instanceId, uri2v)
 			);
 			IF_PGRES_ERROR(return, res);
+
+			if(!res.rows())
+			{
+				res = c.query(
+					"INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id",
+					utils::MVA(instanceId, uri2v)
+				);
+				IF_PGRES_ERROR(return, res);
+			}
 
 			utils::Variant page2Id;
 			bool b = res.fetch(page2Id, 0,0);
@@ -842,79 +1032,15 @@ namespace scom { namespace impl
 			);
 			IF_PGRES_ERROR(return, res);
 		}
+
 		IF_PGRES_ERROR(return, c.query("COMMIT"));
 
 		TLOG(uri);
-
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	namespace
 	{
-		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentType(const std::string &contentType)
-		{
-			boost::shared_ptr<htmlcxx::CharsetConverter> cc;
-
-			std::string::size_type pos = contentType.find("charset=");
-			if(std::string::npos != pos)
-			{
-				std::string charset(contentType.begin()+pos+8, contentType.end());
-
-				charset = iconv_canonicalize(charset.data());
-
-				cc.reset(new htmlcxx::CharsetConverter(charset, "UTF-8//IGNORE"));
-
-				if(!cc->isOk())
-				{
-					cc.reset();
-				}
-
-				return cc;
-			}
-			return cc;
-		}
-
-		boost::shared_ptr<htmlcxx::CharsetConverter> convertorFromContentTypeOrDom(
-			const http::InputMessage::Segment *cts,
-			const tree<htmlcxx::HTML::Node> &tr)
-		{
-			if(cts)
-			{
-				boost::shared_ptr<htmlcxx::CharsetConverter> cc;
-				cc = convertorFromContentType(std::string(cts->begin(), cts->end()));
-				if(cc && cc->isOk())
-				{
-					return cc;
-				}
-			}
-
-			tree<htmlcxx::HTML::Node>::iterator iter = tr.begin();
-			tree<htmlcxx::HTML::Node>::iterator end = tr.end();
-			for(; iter!=end; ++iter)
-			{
-				htmlcxx::HTML::Node &n = *iter;
-				if(n.isTag())
-				{
-					if(boost::algorithm::iequals(n.tagName(), "meta"))
-					{
-						n.parseAttributes();
-						if(boost::algorithm::iequals(n.attribute("http-equiv").second, "Content-Type"))
-						{
-							boost::shared_ptr<htmlcxx::CharsetConverter> cc;
-							cc = convertorFromContentType(n.attribute("content").second);
-							if(cc && cc->isOk())
-							{
-								return cc;
-							}
-						}
-					}
-				}
-			}
-			return boost::shared_ptr<htmlcxx::CharsetConverter>();
-		}
-
-
-
 		std::map<std::string, bool> init_skipTextInTag()
 		{
 			std::map<std::string, bool> res;
@@ -973,9 +1099,9 @@ namespace scom { namespace impl
 				{
 					n.parseAttributes();
 					std::pair<bool, std::string> p = n.attribute("href");
+
 					if(p.first)
 					{
-
 						htmlcxx::Uri uri(htmlcxx::HTML::convert_link(p.second, base));
 						if(uri.isOk())
 						{

@@ -45,7 +45,7 @@ CREATE TABLE page
     instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
     active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
     uri varchar NOT NULL,
-    access int4 NOT NULL DEFAULT 0,
+    access int4 NULL,
 
     status varchar,
     http_headers varchar,

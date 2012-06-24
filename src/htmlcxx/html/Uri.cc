@@ -185,13 +185,18 @@ void Uri::init(const string &uri_str)
 		++s;
 	}
 	/* scheme must be non-empty and followed by :// */
-	if (s == uri || s[0] != ':' || s[1] != '/' || s[2] != '/') {
+	//if (s == uri || s[0] != ':' || s[1] != '/' || s[2] != '/') {
+	if (s == uri || s[0] != ':') {
 		goto deal_with_path;        /* backwards predicted taken! */
 	}
 
 	mScheme.assign(uri, s - uri);
 	DEBUGP("Scheme is %s\n", mScheme.c_str());
-	s += 3;
+	s += 1;
+
+	if (s[0] == '/' && s[1] == '/') {
+		s += 2;
+	}
 
 	DEBUGP("Finding hostinfo\n");
 	hostinfo = s;

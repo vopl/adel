@@ -83,9 +83,10 @@ namespace scom { namespace impl
 		bool workerInstancesDeleteOld();
 		bool workerPageRestatusPend();
 		bool workerHostDeleteOld();
+		bool workerPageRuleApplyer();
 
 		void uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &instanceId, const utils::Variant &uri, int access);
-		void Service::parse(
+		void parse(
 			http::client::Response resp,
 			const std::string &baseUriString,
 			std::deque<htmlcxx::Uri> *uris,

@@ -340,10 +340,13 @@ namespace scom { namespace impl
 
 			_pages.push_back(Page());
 			Page &p = _pages.back();
+
 			p._id = row[0];
 			p._uriStr = row[1].to<std::string>();
 			p._uri = htmlcxx::Uri(p._uriStr);
-			p._access = row[2];
+
+			utils::Variant accessv = row[2];
+			p._access = accessv.isNull()?0:accessv.to<int>();
 			p._accessSimple = 0;
 			p._accessRefs = 0;
 			p._levelInCurrentUpdate = INT_MAX;
