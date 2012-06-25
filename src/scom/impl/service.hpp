@@ -107,6 +107,8 @@ namespace scom { namespace impl
 		pgc::Statement _stCommit;
 		pgc::Statement _stRollback;
 		pgc::Statement _stPingSelectInstance;
+		pgc::Statement _stPingSelectPagesVolume;
+		pgc::Statement _stPingSelectPagesProcessed;
 		pgc::Statement _stPingUpdateInstance;
 		
 		pgc::Statement _stLockInstance;

@@ -21,7 +21,8 @@ CREATE TABLE page_rule
     value varchar NOT NULL,
     kind_and_access int4 NOT NULL,
     kind_and_access_min int4 NOT NULL,
-    kind_and_access_max int4 NOT NULL
+    kind_and_access_max int4 NOT NULL,
+    amount int4 NOT NULL
 );
 
 

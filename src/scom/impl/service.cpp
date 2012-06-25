@@ -173,8 +173,13 @@ namespace scom { namespace impl
 		_stBegin = pgc::Statement("BEGIN");
 		_stCommit = pgc::Statement("COMMIT");
 		_stRollback = pgc::Statement("ROLLBACK");
-		_stPingSelectInstance = pgc::Statement("SELECT stage, is_started, dtime FROM instance "
-			"WHERE id=$1 AND password=$2");
+		_stPingSelectInstance = pgc::Statement("SELECT i.stage, i.is_started, i.dtime "
+			"FROM instance AS i "
+			"WHERE i.id=$1 AND i.password=$2");
+
+		_stPingSelectPagesVolume = pgc::Statement("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6)");
+		_stPingSelectPagesProcessed = pgc::Statement("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND (status IS NOT NULL AND status<>'pend')");
+
 		_stPingUpdateInstance = pgc::Statement("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1");
 		_stLockInstance = pgc::Statement("LOCK instance IN EXCLUSIVE MODE");
 		_stLockPageRule = pgc::Statement("LOCK page_rule IN EXCLUSIVE MODE");
@@ -189,9 +194,10 @@ namespace scom { namespace impl
 			"value,"
 			"kind_and_access,"
 			"kind_and_access_min,"
-			"kind_and_access_max"
+			"kind_and_access_max,"
+			"amount"
 			") VALUES ("
-			"$1,$2,$3,$4,$5)");
+			"$1,$2,$3,$4,$5,$6)");
 		_stSetupUpdateInstance = pgc::Statement("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1");
 
 
@@ -329,18 +335,27 @@ namespace scom { namespace impl
 			return ee_badId;
 		}
 
+		pgc::Result resVolume = c.query(_stPingSelectPagesVolume, utils::Variant(auth._id));
+		IF_PGRES_ERROR(return ee_internalError, resVolume);
+
+		pgc::Result resProcessed = c.query(_stPingSelectPagesProcessed, utils::Variant(auth._id));
+		IF_PGRES_ERROR(return ee_internalError, resProcessed);
+
+
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stPingUpdateInstance, utils::Variant(auth._id)));
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stCommit));
 
-		utils::Variant row;
+		utils::Variant row,rowVolume, rowProcessed;
 		res.fetchRowList(row, 0);
+		resVolume.fetchRowList(rowVolume, 0);
+		resProcessed.fetchRowList(rowProcessed, 0);
 
 		status._stage		= (Status::EStage)(int)row[0];
 		status._isStarted	= row[1];
 		status._destroyTime	= row[2];
 
-		status._workProcessed = 0;
-		status._workVolume = 0;
+		status._workProcessed = rowProcessed[0];
+		status._workVolume = rowVolume[0];
 
 		_evtIface.set(true);
 
@@ -479,6 +494,18 @@ namespace scom { namespace impl
 				break;
 			}
 			
+			if(!validator)
+			{
+				if(pr._amount <= 0)
+				{
+					validator = ee_badAmount;
+				}
+				else if(pr._amount > 32768)
+				{
+					validator = ee_badAmount;
+				}
+			}
+
 			
 			
 			if(validator)
@@ -494,7 +521,8 @@ namespace scom { namespace impl
 						pr._value,
 						pr._kindAndAccess,
 						pr._kindAndAccessMin,
-						pr._kindAndAccessMax)
+						pr._kindAndAccessMax,
+						pr._amount)
 				)
 			);
 		}
@@ -1114,10 +1142,10 @@ namespace scom { namespace impl
 				continue;
 			}
 
-// 			if(uri2.hostname()!="127.0.0.1")
-// 			{
-// 				continue;
-// 			}
+ 			if(uri2.hostname()!="127.0.0.1")
+ 			{
+ 				continue;
+ 			}
 
 			utils::Variant uri2v = htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT)));
 			res = c.query(

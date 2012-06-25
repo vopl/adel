@@ -57,6 +57,7 @@ namespace scom
 		int				_kindAndAccess;
 		int				_kindAndAccessMin;
 		int				_kindAndAccessMax;
+		int				_amount;
 	};
 
 	///////////////////////////////////////////////////////////////////////////////
@@ -70,6 +71,7 @@ namespace scom
 		ee_badRegex,
 		ee_badUri,
 		ee_badRange,
+		ee_badAmount,
 	};
 
 	///////////////////////////////////////////////////////////////////////////////

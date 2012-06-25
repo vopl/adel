@@ -94,14 +94,28 @@ namespace scom { namespace impl
 	/////////////////////////////////////////////////////////////////////////////////////
 	void PageRuleApplyer::update()
 	{
+		//бросить счетчики применения
+		BOOST_FOREACH(RuleRegex &r, _rulesRegex)
+		{
+			r._amountApplyed = 0;
+		}
+		BOOST_FOREACH(RuleDomain &r, _rulesDomain)
+		{
+			r._amountApplyed = 0;
+		}
+		BOOST_FOREACH(RulePath &r, _rulesPath)
+		{
+			r._amountApplyed = 0;
+		}
+		BOOST_FOREACH(RuleReference &r, _rulesReference)
+		{
+			r._amountApplyed = 0;
+		}
+
 		//перебрать все страницы, применить к ним простые правила
 		for(size_t pageIdx(0); pageIdx<_pages.size(); pageIdx++)
 		{
 			Page &p = _pages[pageIdx];
-			if(p._accessSimple & PageRule::ea_ignore)
-			{
-				continue;
-			}
 			p._accessRefs = 0;
 
 			//regex
@@ -109,19 +123,16 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesRegex.size(); ruleIdx++)
 				{
 					RuleRegex &r = _rulesRegex[ruleIdx];
+					if(r._amountApplyed >= r._amount)
+					{
+						continue;
+					}
 					if(boost::regex_match(p._uriStr, r._regex))
 					{
 						p._accessSimple |= r._access;
-						if(p._accessSimple & PageRule::ea_ignore)
-						{
-							break;
-						}
+						r._amountApplyed++;
 					}
 				}
-			}
-			if(p._accessSimple & PageRule::ea_ignore)
-			{
-				continue;
 			}
 
 			//domain
@@ -129,6 +140,10 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesDomain.size(); ruleIdx++)
 				{
 					RuleDomain &r = _rulesDomain[ruleIdx];
+					if(r._amountApplyed >= r._amount)
+					{
+						continue;
+					}
 
 					std::vector<std::string> sample;
 					boost::split(sample, p._uri.hostname(), boost::algorithm::is_any_of("."));
@@ -137,16 +152,9 @@ namespace scom { namespace impl
 					if(levelMatched(r._domain, r._levelMin, r._levelMax, sample))
 					{
 						p._accessSimple |= r._access;
-						if(p._accessSimple & PageRule::ea_ignore)
-						{
-							break;
-						}
+						r._amountApplyed++;
 					}
 				}
-			}
-			if(p._accessSimple & PageRule::ea_ignore)
-			{
-				continue;
 			}
 
 			//path
@@ -154,6 +162,10 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesPath.size(); ruleIdx++)
 				{
 					RulePath &r = _rulesPath[ruleIdx];
+					if(r._amountApplyed >= r._amount)
+					{
+						continue;
+					}
 
 					if(p._uri.hostnameWithPort() != r._host)
 					{
@@ -171,18 +183,10 @@ namespace scom { namespace impl
 					if(levelMatched(r._path, r._levelMin, r._levelMax, sample))
 					{
 						p._accessSimple |= r._access;
-						if(p._accessSimple & PageRule::ea_ignore)
-						{
-							break;
-						}
+						r._amountApplyed++;
 					}
 				}
 			}
-			/*if(p._access & PageRule::ea_ignore)
-			{
-				continue;
-			}
-			*/
 		}
 
 		//refs
@@ -218,7 +222,7 @@ namespace scom { namespace impl
 			bool b = pgr.fetchRowList(row, i);
 			assert(b);
 
-			//id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max
+			//id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, amount
 
 			int kindAndAccess = row[3];
 
@@ -232,6 +236,7 @@ namespace scom { namespace impl
 						_rulesDomain.push_back(RuleDomain());
 						RuleDomain &r = _rulesDomain.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
 						r._levelMin = row[4];
 						r._levelMax = row[5];
 
@@ -254,6 +259,7 @@ namespace scom { namespace impl
 						_rulesRegex.push_back(RuleRegex());
 						RuleRegex &r = _rulesRegex.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
 						r._regex = regex;
 						amount++;
 					}
@@ -271,6 +277,7 @@ namespace scom { namespace impl
 						_rulesPath.push_back(RulePath());
 						RulePath &r = _rulesPath.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
 						r._host = uri.hostnameWithPort();
 						r._levelMin = row[4];
 						r._levelMax = row[5];
@@ -298,6 +305,7 @@ namespace scom { namespace impl
 						_rulesReference.push_back(RuleReference());
 						RuleReference &r = _rulesReference.back();
 						r._access = kindAndAccess & PageRule::ea_mask;
+						r._amount = row[6];
 						r._source = uri.unparse(htmlcxx::Uri::REMOVE_FRAGMENT);
 						r._levelMin = row[4];
 						r._levelMax = row[5];
@@ -406,7 +414,7 @@ namespace scom { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
-	void PageRuleApplyer::updateReferences(const RuleReference &r)
+	void PageRuleApplyer::updateReferences(RuleReference &r)
 	{
 		assert(r._levelMin <= r._levelMax);
 		if(0 > r._levelMax)
@@ -452,6 +460,11 @@ namespace scom { namespace impl
 		//плохо если страниц много а выбираемая область маленькая
 		for(size_t i(0); i<_pages.size(); i++)
 		{
+			if(r._amountApplyed >= r._amount)
+			{
+				continue;
+			}
+
 			Page &p = _pages[i];
 			if(
 				p._levelInCurrentUpdate >= r._levelMin &&
@@ -459,6 +472,7 @@ namespace scom { namespace impl
 				true)
 			{
 				p._accessRefs |= r._access;
+				r._amountApplyed++;
 			}
 			p._levelInCurrentUpdate = INT_MAX;
 		}

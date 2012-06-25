@@ -43,6 +43,8 @@ namespace scom { namespace impl
 		struct Rule
 		{
 			int					_access;//PageRule::EAccess bits
+			int					_amount;
+			int					_amountApplyed;
 		};
 		
 		struct RuleRegex
@@ -118,7 +120,7 @@ namespace scom { namespace impl
 				}
 			};
 
-		void updateReferences(const RuleReference &r);
+		void updateReferences(RuleReference &r);
 	};
 	typedef boost::shared_ptr<PageRuleApplyer> PageRuleApplyerPtr;
 }}

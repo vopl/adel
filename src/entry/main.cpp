@@ -44,41 +44,11 @@ void testScomClient(scom::Service *scom)
 	{
 		std::vector<scom::PageRule> rules;
 
-		scom::PageRule r1 = {
-			"127.0.0.1",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
-			0, 0};
-
-		scom::PageRule r2 = {
-			"http://127.0.0.1:8080/libs/index.html",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			0, 1};
-
-		scom::PageRule r2_1 = {
-			"http://127.0.0.1:8080/libs/",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3};
-
-		scom::PageRule r2_2 = {
-			"http://127.0.0.1:8080/libs",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3};
-
-		scom::PageRule r3 = {
-			"[xyz]{2}",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_regex,
-			0, 0};
-
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 3};
+			0, 3, 200};
 
-		rules.push_back(r1);
-		rules.push_back(r2);
-		rules.push_back(r2_1);
-		rules.push_back(r2_2);
-		rules.push_back(r3);
 		rules.push_back(r4);
 
 		err = scom->setup(auth, rules);
@@ -104,6 +74,7 @@ void testScomClient(scom::Service *scom)
 				std::cout<<"scom complete"<<std::endl;
 				break;
 			}
+			//std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
 			async::timeout(100).wait();
 		}
 	}

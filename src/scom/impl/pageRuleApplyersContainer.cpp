@@ -42,7 +42,7 @@ namespace scom { namespace impl
 			//"	p2.instance_id=$1 AND "
 			"	(src_page_id>$2 OR dst_page_id>$2)");
 		_stLoadRulesSelectRule = pgc::Statement("SELECT "
-			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max "
+			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, amount "
 			"FROM page_rule WHERE instance_id=$1");
 		_stLoadPagesSelectPage = pgc::Statement("SELECT "
 			"id, uri, access "
