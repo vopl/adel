@@ -47,12 +47,12 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r1 = {
 			"127.0.0.1",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
-			0, 10};
+			0, 0};
 
 		scom::PageRule r2 = {
 			"http://127.0.0.1:8080/libs/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-			-1, 3};
+			0, 1};
 
 		scom::PageRule r2_1 = {
 			"http://127.0.0.1:8080/libs/",

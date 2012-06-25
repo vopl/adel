@@ -37,6 +37,21 @@ CREATE TABLE active_host
     atime timestamp without time zone
 );
 
+CREATE INDEX active_host_atime_idx
+  ON active_host
+  USING btree
+  (atime );
+
+CREATE INDEX active_host_name_idx
+  ON active_host
+  USING btree
+  (name COLLATE pg_catalog."default" );
+
+
+
+
+
+
 --------------------------------------------------------
 DROP TABLE IF EXISTS page CASCADE;
 CREATE TABLE page
@@ -56,6 +71,23 @@ CREATE TABLE page
     atime timestamp without time zone
 );
 
+CREATE INDEX page_active_host_id_idx
+  ON page
+  USING btree
+  (active_host_id );
+
+CREATE INDEX page_instance_id_idx
+  ON page
+  USING btree
+  (instance_id );
+
+CREATE INDEX page_instance_id_uri_idx
+  ON page
+  USING btree
+  (instance_id , uri COLLATE pg_catalog."default" );
+
+
+
 --------------------------------------------------------
 DROP TABLE IF EXISTS page_ref CASCADE;
 CREATE TABLE page_ref
@@ -63,5 +95,15 @@ CREATE TABLE page_ref
     src_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
     dst_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE
 );
+
+CREATE INDEX page_ref_dst_page_id_idx
+  ON page_ref
+  USING btree
+  (dst_page_id );
+
+CREATE INDEX page_ref_src_page_id_idx
+  ON page_ref
+  USING btree
+  (src_page_id );
 
 

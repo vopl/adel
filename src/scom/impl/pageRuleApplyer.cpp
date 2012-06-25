@@ -346,7 +346,7 @@ namespace scom { namespace impl
 			p._uri = htmlcxx::Uri(p._uriStr);
 
 			utils::Variant accessv = row[2];
-			p._access = accessv.isNull()?0:accessv.to<int>();
+			p._access = accessv.isNull()?-1:accessv.to<int>();
 			p._accessSimple = 0;
 			p._accessRefs = 0;
 			p._levelInCurrentUpdate = INT_MAX;

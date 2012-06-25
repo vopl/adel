@@ -69,6 +69,7 @@ namespace scom { namespace impl
 
 		size_t							_pagesToLoadGranula;
 		size_t							_maxHttpBodySize;
+		size_t							_maxWorkers;
 
 		utils::Variant::TimeDuration	_pageRestatusPentTimeout;
 		utils::Variant::TimeDuration	_activeHostTimeout;
@@ -99,6 +100,52 @@ namespace scom { namespace impl
 
 	private:
 		bool insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri);
+
+	private:
+		pgc::Statement _stCreateInsertInstance;
+		pgc::Statement _stBegin;
+		pgc::Statement _stCommit;
+		pgc::Statement _stRollback;
+		pgc::Statement _stPingSelectInstance;
+		pgc::Statement _stPingUpdateInstance;
+		
+		pgc::Statement _stLockInstance;
+		pgc::Statement _stLockPageRule;
+		pgc::Statement _stLockPage;
+		pgc::Statement _stLockPageRef;
+		pgc::Statement _stLockActiveHost;
+
+		pgc::Statement _stSetupSelectInstance;
+		pgc::Statement _stSetupinsertPageRule;
+		pgc::Statement _stSetupUpdateInstance;
+
+
+
+
+		pgc::Statement _stStartSelectInstance;
+		pgc::Statement _stStartUpdateInstance;
+		pgc::Statement _stStopSelectInstance;
+		pgc::Statement _stStopUpdateInstance;
+		pgc::Statement _stDestroyDeleteInstance;
+		pgc::Statement _stMainSelectPage;
+		pgc::Statement _stMainSelectActiveHost;
+		pgc::Statement _stMainUpdatePageActiveHost;
+		pgc::Statement _stMainUpdateActiveHostAtime;
+		pgc::Statement _stMainInsertActiveHost;
+		pgc::Statement _stMainUpdatePageStatusPend;
+		pgc::Statement _stInsatanceDeleteOld;
+		pgc::Statement _stPageRestatusPend;
+		pgc::Statement _stHostDeleteOld;
+		pgc::Statement _stPageRuleApplyerSelectPage;
+		pgc::Statement _stUpdatePageStatus;
+		pgc::Statement _stLoaderUpdatePage;
+		pgc::Statement _stLoaderSelectPage;
+		pgc::Statement _stLoaderInsertPage;
+		pgc::Statement _stLoaderInsertPageRef;
+		pgc::Statement _stInsertPageSelectId;
+		pgc::Statement _stInsertPage;
+
+
 	};
 }}
 #endif

@@ -3,6 +3,7 @@
 
 #include "scom/impl/pageRuleApplyer.hpp"
 #include "pgc/connection.hpp"
+#include "pgc/statement.hpp"
 #include "async/mutex.hpp"
 
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
@@ -78,6 +79,12 @@ namespace scom { namespace impl
 		bool loadRules(pgc::Connection c, const PageRuleApplyerPtr &prap);
 		bool loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap);
 		bool storePages(pgc::Connection c, const PageRuleApplyerPtr &prap);
+
+	private:
+		pgc::Statement _stLoadRulesSelectRule;
+		pgc::Statement _stLoadPagesSelectPage;
+		pgc::Statement _stLoadPagesSelectPageRef;
+		pgc::Statement _stStorePagesUpdatePage;
 	};
 }}
 #endif
