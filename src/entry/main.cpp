@@ -47,7 +47,7 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 3, 200};
+			0, 3, 5};
 
 		rules.push_back(r4);
 
@@ -74,7 +74,7 @@ void testScomClient(scom::Service *scom)
 				std::cout<<"scom complete"<<std::endl;
 				break;
 			}
-			//std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
+			std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
 			async::timeout(100).wait();
 		}
 	}

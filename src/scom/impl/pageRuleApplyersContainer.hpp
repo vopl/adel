@@ -78,7 +78,7 @@ namespace scom { namespace impl
 	private:
 		bool loadRules(pgc::Connection c, const PageRuleApplyerPtr &prap);
 		bool loadPages(pgc::Connection c, const PageRuleApplyerPtr &prap);
-		bool storePages(pgc::Connection c, const PageRuleApplyerPtr &prap);
+		bool storePages(size_t &updatedAmount, pgc::Connection c, const PageRuleApplyerPtr &prap);
 
 	private:
 		pgc::Statement _stLoadRulesSelectRule;

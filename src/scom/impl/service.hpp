@@ -66,6 +66,7 @@ namespace scom { namespace impl
 		utils::Variant::TimeDuration	_workerIdleTimeoutMain;
 		utils::Variant::TimeDuration	_workerIdleTimeoutCleanupper;
 		utils::Variant::TimeDuration	_ruleApplyerCacheTimeout;
+		utils::Variant::TimeDuration	_workerIdleTimeoutMerger;
 
 		size_t							_pagesToLoadGranula;
 		size_t							_maxHttpBodySize;
@@ -97,6 +98,9 @@ namespace scom { namespace impl
 			const std::string &baseUriString,
 			std::deque<htmlcxx::Uri> *uris,
 			std::string *text);
+
+		bool workerMerger();
+
 
 	private:
 		bool insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri);

@@ -62,6 +62,11 @@ namespace scom { namespace impl
 
 
 		options->addOption(
+			"workerIdleTimeoutMerger",
+			boost::program_options::value<size_t>()->default_value(10),
+			"content merger worker idle timeout, seconds");
+
+		options->addOption(
 			"pagesToLoadGranula",
 			boost::program_options::value<size_t>()->default_value(50),
 			"amount of pages, selected for load from database per one worker iteration");
@@ -111,8 +116,9 @@ namespace scom { namespace impl
 		, _evtIface(true)
 		, _pgc_maxConnections(10)
 		, _net_defaultHostDelay(boost::posix_time::seconds(10))
-		, _workerIdleTimeoutMain(boost::posix_time::seconds(1))
+		, _workerIdleTimeoutMerger(boost::posix_time::seconds(10))
 		, _workerIdleTimeoutCleanupper(boost::posix_time::seconds(10))
+		, _workerIdleTimeoutMain(boost::posix_time::seconds(1))
 		, _ruleApplyerCacheTimeout(boost::posix_time::seconds(10))
 		, _numWorkers(0)
 		, _pagesToLoadGranula(50)
@@ -131,6 +137,8 @@ namespace scom { namespace impl
 		_workerIdleTimeoutMain = boost::posix_time::seconds((long)o["workerIdleTimeoutMain"].as<size_t>());
 		_workerIdleTimeoutCleanupper = boost::posix_time::seconds((long)o["workerIdleTimeoutCleanupper"].as<size_t>());
 		_ruleApplyerCacheTimeout = boost::posix_time::seconds((long)o["ruleApplyerCacheTimeout"].as<size_t>());
+
+		_workerIdleTimeoutMerger = boost::posix_time::seconds((long)o["workerIdleTimeoutMerger"].as<size_t>());
 
 		_pagesToLoadGranula = o["pagesToLoadGranula"].as<size_t>();
 		_maxHttpBodySize = o["httpBodyMaxSize"].as<size_t>();
@@ -229,7 +237,7 @@ namespace scom { namespace impl
 		_stInsatanceDeleteOld = pgc::Statement("DELETE FROM instance WHERE dtime <= CURRENT_TIMESTAMP");
 		_stPageRestatusPend = pgc::Statement("UPDATE page SET status=NULL WHERE status='pend' AND atime <= CURRENT_TIMESTAMP-$1::INTERVAL");
 		_stHostDeleteOld = pgc::Statement("DELETE FROM active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL");
-		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT instance_id FROM page WHERE access IS NULL GROUP BY instance_id LIMIT $1");
+		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT p.instance_id FROM page AS p INNER JOIN instance AS i ON (p.instance_id=i.id) WHERE p.access IS NULL AND i.stage=10 AND i.is_started GROUP BY instance_id LIMIT $1");
 		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
 		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET status=$2, text=$3, http_headers=$4, ip=$5, fetch_time=$6 WHERE id=$1");
 		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
@@ -249,6 +257,7 @@ namespace scom { namespace impl
 		runWorker(&Service::workerPageRestatusPend, _workerIdleTimeoutCleanupper);
 		runWorker(&Service::workerHostDeleteOld, _workerIdleTimeoutCleanupper);
 		runWorker(&Service::workerPageRuleApplyer, _workerIdleTimeoutCleanupper);
+		runWorker(&Service::workerMerger, _workerIdleTimeoutMerger);
 
 		_prac.start(_ruleApplyerCacheTimeout);
 		_evtIface.set(true);
@@ -574,7 +583,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(
 			return ee_internalError,
 			c.query(_stStartUpdateInstance, utils::MVA(auth._id, Status::es_load, true)));
-			
+
 		if(!_prac.update(c, auth._id))
 		{	
 			return ee_internalError;
@@ -870,6 +879,7 @@ namespace scom { namespace impl
 		pgc::Connection c = _db.allocConnection();
 
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
+
 		IF_PGRES_ERROR(return false, c.query(_stLockInstance));
 		IF_PGRES_ERROR(return false, c.query(_stLockPageRule));
 		IF_PGRES_ERROR(return false, c.query(_stLockPage));
@@ -1307,6 +1317,21 @@ namespace scom { namespace impl
 	}
 			
 	//////////////////////////////////////////////////////////////////////////
+	bool Service::workerMerger()
+	{
+		//транзакция
+		//	выбрать один инстанс в состоянии load который все загрузил
+		//	перевесли его в состояние merge, выбрать его данные
+		//конец транзакции
+
+		//считать
+
+		//транзакция
+		//	перевесли его в состояние report, сохранить данные
+		//конец транзакции
+
+		return true;
+	}
 
 
 }}

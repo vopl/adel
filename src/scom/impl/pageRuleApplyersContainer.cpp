@@ -98,11 +98,13 @@ namespace scom { namespace impl
 
 		prap->update();
 
-		if(!storePages(c, prap))
+		size_t updatedAmount = 0;
+		if(!storePages(updatedAmount, c, prap))
 		{
 			_instances.get<0>().erase(iter);
 			return false;
 		}
+
 		return true;
 	}
 
@@ -167,10 +169,11 @@ namespace scom { namespace impl
 	}
 
 	////////////////////////////////////////////////////////////////////
-	bool PageRuleApplyersContainer::storePages(pgc::Connection c, const PageRuleApplyerPtr &prap)
+	bool PageRuleApplyersContainer::storePages(size_t &updatedAmount, pgc::Connection c, const PageRuleApplyerPtr &prap)
 	{
 		std::vector<utils::Variant> rows;
 		prap->storePages(rows);
+		updatedAmount = rows.size();
 
 		for(size_t i(0); i<rows.size(); i++)
 		{
