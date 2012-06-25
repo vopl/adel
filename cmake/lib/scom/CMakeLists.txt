@@ -85,6 +85,12 @@ endif()
 include_directories(${ICONV_INCLUDE_DIRS})
 
 
+include(FindSqlite3)
+if(NOT SQLITE3_FOUND)
+	message(FATAL_ERROR "sqlite3 required")
+endif()
+
+include_directories(${SQLITE3_INCLUDE_DIR})
 
 
 #find_package(XMLRPC REQUIRED c++)
@@ -106,5 +112,5 @@ target_link_libraries(${PROJECT} ${l4cpl})
 target_link_libraries(${PROJECT} ${HUNSPELL_LIBRARIES})
 target_link_libraries(${PROJECT} ${ICONV_LIBRARIES})
 #target_link_libraries(${PROJECT} ${XMLRPC_LIBRARIES})
-
+target_link_libraries(${PROJECT} ${SQLITE3_LIBRARIES})
 
