@@ -61,7 +61,7 @@ namespace scom { namespace impl
 
 		std::string						_pgc_connectionString;
 		size_t							_pgc_maxConnections;
-		utils::Variant::TimeDuration	_net_defaultHostDelay;
+		utils::Variant::TimeDuration	_net_hostAccessDelay;
 
 		utils::Variant::TimeDuration	_workerIdleTimeoutMain;
 		utils::Variant::TimeDuration	_workerIdleTimeoutCleanupper;
@@ -73,7 +73,7 @@ namespace scom { namespace impl
 		size_t							_maxWorkers;
 
 		utils::Variant::TimeDuration	_deadWorkerTimeout;
-		utils::Variant::TimeDuration	_activeHostTimeout;
+		utils::Variant::TimeDuration	_activeHostDeleteTimeout;
 
 		pgc::Db		_db;
 		PageRuleApplyersContainer	_prac;

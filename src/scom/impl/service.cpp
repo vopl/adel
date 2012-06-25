@@ -36,7 +36,7 @@ namespace scom { namespace impl
 			"maximum number of connections to postgres database");
 
 		options->addOption(
-			"net.defaultHostDelay",
+			"net.hostAccessDelay",
 			boost::program_options::value<size_t>()->default_value(1),
 			"delay between requests to one host, seconds");
 
@@ -115,7 +115,7 @@ namespace scom { namespace impl
 		, _evtWorkerDone(true)
 		, _evtIface(true)
 		, _pgc_maxConnections(10)
-		, _net_defaultHostDelay(boost::posix_time::seconds(10))
+		, _net_hostAccessDelay(boost::posix_time::seconds(10))
 		, _workerIdleTimeoutMerger(boost::posix_time::seconds(10))
 		, _workerIdleTimeoutCleanupper(boost::posix_time::seconds(10))
 		, _workerIdleTimeoutMain(boost::posix_time::seconds(1))
@@ -125,14 +125,14 @@ namespace scom { namespace impl
 		, _maxHttpBodySize(1024*1024)
 		, _maxWorkers(200)
 		, _deadWorkerTimeout(boost::posix_time::minutes(60))
-		, _activeHostTimeout(boost::posix_time::minutes(10))
+		, _activeHostDeleteTimeout(boost::posix_time::minutes(10))
 		, _htc(optionsPtr)
 		, _hunspell(NULL)
 	{
 		utils::Options &o = *optionsPtr;
 		_pgc_connectionString = o["pgc.connectionString"].as<std::string>();
 		_pgc_maxConnections = o["pgc.maxConnections"].as<size_t>();
-		_net_defaultHostDelay = boost::posix_time::seconds((long)o["net.defaultHostDelay"].as<size_t>());
+		_net_hostAccessDelay = boost::posix_time::seconds((long)o["net.hostAccessDelay"].as<size_t>());
 
 		_workerIdleTimeoutMain = boost::posix_time::seconds((long)o["workerIdleTimeoutMain"].as<size_t>());
 		_workerIdleTimeoutCleanupper = boost::posix_time::seconds((long)o["workerIdleTimeoutCleanupper"].as<size_t>());
@@ -143,8 +143,8 @@ namespace scom { namespace impl
 		_pagesToLoadGranula = o["pagesToLoadGranula"].as<size_t>();
 		_maxHttpBodySize = o["httpBodyMaxSize"].as<size_t>();
 		_maxWorkers = o["maxWorkers"].as<size_t>();
-		_deadWorkerTimeout = boost::posix_time::seconds((long)o["pageRestatusPentTimeout"].as<size_t>());
-		_activeHostTimeout = boost::posix_time::seconds((long)o["activeHostTimeout"].as<size_t>());
+		_deadWorkerTimeout = boost::posix_time::seconds((long)o["deadWorkerTimeout"].as<size_t>());
+		_activeHostDeleteTimeout = boost::posix_time::seconds((long)o["activeHostTimeout"].as<size_t>());
 
 		_hunspell = new Hunspell(
 			o["hunspell.affpath"].as<std::string>().c_str(),
@@ -726,7 +726,7 @@ namespace scom { namespace impl
 
 		pgc::Result res;
 
-		res = c.query(_stMainSelectPage, utils::MVA(_net_defaultHostDelay, _pagesToLoadGranula));
+		res = c.query(_stMainSelectPage, utils::MVA(_net_hostAccessDelay, _pagesToLoadGranula));
 		IF_PGRES_ERROR(return true, res);
 
 		if(!res.rows())
@@ -762,7 +762,7 @@ namespace scom { namespace impl
 				htmlcxx::Uri u(uri);
 
 				//выбрать
-				pgc::Result res = c.query(_stMainSelectActiveHost, utils::MVA(_net_defaultHostDelay, u.hostname()));
+				pgc::Result res = c.query(_stMainSelectActiveHost, utils::MVA(_net_hostAccessDelay, u.hostname()));
 				IF_PGRES_ERROR(return true, res);
 
 				if(res.rows())
@@ -865,7 +865,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return true, c.query(_stLockPage));
 		IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
 
-		pgc::Result res = c.query(_stHostDeleteOld, utils::Variant(_activeHostTimeout));
+		pgc::Result res = c.query(_stHostDeleteOld, utils::Variant(_activeHostDeleteTimeout));
 		IF_PGRES_ERROR(return false, res);
 
 		IF_PGRES_ERROR(return true, c.query(_stCommit));
@@ -1340,8 +1340,10 @@ namespace scom { namespace impl
 			"		FROM PAGE AS p "
 			"		WHERE "
 			"			p.instance_id=i.id AND "
-			"			(p.access=2 OR p.access=4 OR p.access=6) AND "
-			"			(p.status IS NULL OR p.status='pend') "
+			"			(p.access IS NULL OR "
+			"				((p.access=2 OR p.access=4 OR p.access=6) AND "
+			"				(p.status IS NULL OR p.status='pend')) "
+			"			) "
 			"	) "
 			"LIMIT 1",
 			utils::Variant(_deadWorkerTimeout)

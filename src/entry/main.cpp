@@ -47,7 +47,7 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 3, 5};
+			0, 4, 30000};
 
 		rules.push_back(r4);
 
@@ -80,11 +80,11 @@ void testScomClient(scom::Service *scom)
 	}
     //getResult
 
-    //delete
-	{
-		err = scom->destroy(auth);
-		CHECK_ERR(err);
-	}
+//     //delete
+// 	{
+// 		err = scom->destroy(auth);
+// 		CHECK_ERR(err);
+// 	}
 }
 
 //////////////////////////////////////////////////////////////////////
