@@ -1319,16 +1319,61 @@ namespace scom { namespace impl
 	//////////////////////////////////////////////////////////////////////////
 	bool Service::workerMerger()
 	{
+		pgc::Connection c = _db.allocConnection();
+		pgc::Result res;
+
 		//транзакция
+		IF_PGRES_ERROR(return false, c.query(_stBegin));
+
+		IF_PGRES_ERROR(return false, c.query(_stLockInstance));
+		IF_PGRES_ERROR(return false, c.query(_stLockPage));
+		IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
+
 		//	выбрать один инстанс в состоянии load который все загрузил
+		res = c.query(
+			"SELECT i.id "
+			"FROM instance AS i "
+			"WHERE "
+			"	i.stage=10 AND "
+			"	NOT EXISTS( "
+			"		SELECT * "
+			"		FROM PAGE AS p "
+			"		WHERE "
+			"			p.instance_id=i.id AND "
+			"			(p.access=2 OR p.access=4 OR p.access=6) AND "
+			"			(p.status IS NULL OR p.status='pend') "
+			"	) "
+			"LIMIT 1"
+		);
+		IF_PGRES_ERROR(return false, res);
+
+		if(!res.rows())
+		{
+			//нет готовых
+			IF_PGRES_ERROR(return false, c.query(_stRollback));
+			return false;
+		}
+
+		utils::Variant instanceId;
+		bool b = res.fetch(instanceId,0,0);
+		assert(b);
+
 		//	перевесли его в состояние merge, выбрать его данные
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20 WHERE id=$1", instanceId));
+
 		//конец транзакции
+		IF_PGRES_ERROR(return false, c.query(_stCommit));
 
 		//считать
 
 		//транзакция
+		IF_PGRES_ERROR(return false, c.query(_stBegin));
+
 		//	перевесли его в состояние report, сохранить данные
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30 WHERE id=$1", instanceId));
+
 		//конец транзакции
+		IF_PGRES_ERROR(return false, c.query(_stCommit));
 
 		return true;
 	}
