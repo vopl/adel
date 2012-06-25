@@ -72,7 +72,7 @@ namespace scom { namespace impl
 		size_t							_maxHttpBodySize;
 		size_t							_maxWorkers;
 
-		utils::Variant::TimeDuration	_pageRestatusPentTimeout;
+		utils::Variant::TimeDuration	_deadWorkerTimeout;
 		utils::Variant::TimeDuration	_activeHostTimeout;
 
 		pgc::Db		_db;

@@ -82,9 +82,9 @@ namespace scom { namespace impl
 			"maximum number of active workers");
 
 		options->addOption(
-			"pageRestatusPentTimeout",
+			"deadWorkerTimeout",
 			boost::program_options::value<size_t>()->default_value(60*60),
-			"pended page timeout, seconds");
+			"dead worker timeout, seconds");
 
 		options->addOption(
 			"activeHostTimeout",
@@ -124,7 +124,7 @@ namespace scom { namespace impl
 		, _pagesToLoadGranula(50)
 		, _maxHttpBodySize(1024*1024)
 		, _maxWorkers(200)
-		, _pageRestatusPentTimeout(boost::posix_time::minutes(60))
+		, _deadWorkerTimeout(boost::posix_time::minutes(60))
 		, _activeHostTimeout(boost::posix_time::minutes(10))
 		, _htc(optionsPtr)
 		, _hunspell(NULL)
@@ -143,7 +143,7 @@ namespace scom { namespace impl
 		_pagesToLoadGranula = o["pagesToLoadGranula"].as<size_t>();
 		_maxHttpBodySize = o["httpBodyMaxSize"].as<size_t>();
 		_maxWorkers = o["maxWorkers"].as<size_t>();
-		_pageRestatusPentTimeout = boost::posix_time::seconds((long)o["pageRestatusPentTimeout"].as<size_t>());
+		_deadWorkerTimeout = boost::posix_time::seconds((long)o["pageRestatusPentTimeout"].as<size_t>());
 		_activeHostTimeout = boost::posix_time::seconds((long)o["activeHostTimeout"].as<size_t>());
 
 		_hunspell = new Hunspell(
@@ -851,7 +851,7 @@ namespace scom { namespace impl
 	bool Service::workerPageRestatusPend()
 	{
 		pgc::Connection c = _db.allocConnection();
-		pgc::Result res = c.query(_stPageRestatusPend, utils::Variant(_pageRestatusPentTimeout));
+		pgc::Result res = c.query(_stPageRestatusPend, utils::Variant(_deadWorkerTimeout));
 		IF_PGRES_ERROR(return false, res);
 
 		return false;
@@ -1334,7 +1334,7 @@ namespace scom { namespace impl
 			"SELECT i.id "
 			"FROM instance AS i "
 			"WHERE "
-			"	i.stage=10 AND "
+			"	(i.stage=10 OR i.stage=20 AND i.atime<CURRENT_TIMESTAMP-$1::INTERVAL) AND "
 			"	NOT EXISTS( "
 			"		SELECT * "
 			"		FROM PAGE AS p "
@@ -1343,7 +1343,9 @@ namespace scom { namespace impl
 			"			(p.access=2 OR p.access=4 OR p.access=6) AND "
 			"			(p.status IS NULL OR p.status='pend') "
 			"	) "
-			"LIMIT 1"
+			"LIMIT 1",
+			utils::Variant(_deadWorkerTimeout)
+
 		);
 		IF_PGRES_ERROR(return false, res);
 
@@ -1359,7 +1361,7 @@ namespace scom { namespace impl
 		assert(b);
 
 		//	перевесли его в состояние merge, выбрать его данные
-		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20 WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
@@ -1370,7 +1372,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
 		//	перевесли его в состояние report, сохранить данные
-		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30 WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
