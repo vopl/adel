@@ -1367,6 +1367,39 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
 
 		//считать
+		{
+			/*
+			 *	перебирать из базы страницы, каждую
+			 *		бить на фразы, каждую фразу складировать в линейный контейнер
+			 *
+			 *	сортировать фразы
+			 *
+			 *	перебрать диапазоны одинаковых фраз, каждый диапазон
+			 *		перебирать страницы, добавлять кроссы в базу
+			 *
+			 *	вычистить редкие фразы
+			 *
+			 */
+
+			/*
+			PageMerger merger;
+
+			for(pages)
+			{
+				merger.pushPage(id, text);
+			}
+
+			merger.sort();
+
+			vector<row> rows;
+			while(merger.store(rows, 220 штук))
+			{
+				store(rows);
+			}
+			*/
+
+
+		}
 
 		//транзакция
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
