@@ -30,7 +30,7 @@ string CharsetConverter::convert(const string &input)
 	const char *inbuf = input.c_str();
 	size_t inbytesleft = input.length();
 
-	size_t outbuf_len = 2 * input.length();
+	size_t outbuf_len = 4 * input.length()+32;
 	char *outbuf_start = new char[outbuf_len];
 	char *outbuf = outbuf_start;
 	size_t outbytesleft = outbuf_len;
@@ -39,14 +39,26 @@ string CharsetConverter::convert(const string &input)
 	while (1) {
 		ret = iconv(mIconvDescriptor, const_cast<char**>(&inbuf), &inbytesleft, &outbuf, &outbytesleft);
 		if (ret == 0) break;
-		if (ret == (size_t)-1 && errno == E2BIG) return string();
+		if (ret == (size_t)-1 && errno == E2BIG)
+		{
+			delete [] outbuf_start;
+			return string();
+		}
 
 		//				fprintf(stderr, "invalid byte: %d\n", inbuf - input.c_str());
 
 		inbuf++; inbytesleft--;
 	}
 
-	string out(outbuf_start, outbuf_len - outbytesleft);
+	outbuf_len -= outbytesleft;
+	for(size_t i(0); i<outbuf_len; i++)
+	{
+		if(!*outbuf_start)
+		{
+			*outbuf_start = ' ';
+		}
+	}
+	string out(outbuf_start, outbuf_len);
 
 	delete [] outbuf_start;
 

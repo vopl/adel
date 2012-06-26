@@ -1076,6 +1076,7 @@ namespace scom { namespace impl
 			break;
 		case http::esc_301:
 		case http::esc_302:
+		case http::esc_303:
 			{
 				if(const http::client::Response::Segment *locs = resp.header(http::hn::location))
 				{
@@ -1158,10 +1159,10 @@ namespace scom { namespace impl
 				continue;
 			}
 
- 			if(uri2.hostname()!="127.0.0.1")
- 			{
- 				continue;
- 			}
+//  			if(uri2.hostname()!="127.0.0.1")
+//  			{
+//  				continue;
+//  			}
 
 			utils::Variant uri2v = htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT)));
 			res = c.query(
