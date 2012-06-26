@@ -16,6 +16,8 @@
 #include <boost/chrono.hpp>
 #include <boost/algorithm/string.hpp>
 
+#include <sqlite3.h>
+
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {ELOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
 namespace scom { namespace impl
@@ -1379,7 +1381,7 @@ namespace scom { namespace impl
 		assert(b);
 
 		//	перевесли его в состояние merge, выбрать его данные
-		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
@@ -1447,6 +1449,20 @@ namespace scom { namespace impl
 			
 			*/
 
+			sqlite3 *sdb = NULL;
+
+			int res = sqlite3_open("/tmp/rdb.sqlite", &sdb);
+
+			char *errMsg = NULL;
+			res = sqlite3_exec(sdb, "CREATE TABLE page(id int4, uri string)", NULL, NULL, &errMsg);
+			if(errMsg)
+			{
+				sqlite3_free(errMsg);
+			}
+
+			res = sqlite3_close(sdb);
+
+
 
 		}
 
@@ -1454,7 +1470,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
 		//	перевесли его в состояние report, сохранить данные
-		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));

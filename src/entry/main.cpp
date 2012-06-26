@@ -31,6 +31,7 @@ namespace po = boost::program_options;
 #define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__<<std::endl;}
 void testScomClient(scom::Service *scom)
 {
+	return;
 	scom::Auth auth;
 	scom::EError err;
 
@@ -44,16 +45,10 @@ void testScomClient(scom::Service *scom)
 	{
 		std::vector<scom::PageRule> rules;
 
-		scom::PageRule r3 = {
-			"127.0.0.1",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
-			0, 400, 999999};
-		//rules.push_back(r3);
-
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 400, 999999};
+			0, 4, 20};
 		rules.push_back(r4);
 
 		err = scom->setup(auth, rules);
