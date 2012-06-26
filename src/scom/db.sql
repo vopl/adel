@@ -17,7 +17,8 @@ DROP TABLE IF EXISTS page_rule CASCADE;
 CREATE TABLE page_rule
 (
     id bigserial NOT NULL PRIMARY KEY,
-    instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    --instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    instance_id bigint,
     value varchar NOT NULL,
     kind_and_access int4 NOT NULL,
     kind_and_access_min int4 NOT NULL,
@@ -58,14 +59,19 @@ DROP TABLE IF EXISTS page CASCADE;
 CREATE TABLE page
 (
     id bigserial NOT NULL PRIMARY KEY,
-    instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
+    --instance_id bigint NOT NULL REFERENCES instance(id) ON DELETE CASCADE ON UPDATE CASCADE,
+    instance_id bigint,
+    
+    --active_host_id bigint NULL REFERENCES active_host(id) ON DELETE SET NULL ON UPDATE SET NULL,
+    active_host_id bigint,
+    
     uri varchar NOT NULL,
     access int4 NULL,
 
     status varchar,
     http_headers varchar,
     text varchar,
+    ref_page_ids bytea,
     ip varchar,
     fetch_time int4,
 
@@ -86,31 +92,6 @@ CREATE INDEX page_instance_id_uri_idx
   ON page
   USING btree
   (instance_id , uri COLLATE pg_catalog."default" );
-
-
-
---------------------------------------------------------
-DROP TABLE IF EXISTS page_ref CASCADE;
-CREATE TABLE page_ref
-(
-    src_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE,
-    dst_page_id bigint NOT NULL REFERENCES page(id) ON DELETE CASCADE ON UPDATE CASCADE
-);
-
-CREATE INDEX page_ref_dst_page_id_idx
-  ON page_ref
-  USING btree
-  (dst_page_id );
-
-CREATE INDEX page_ref_src_page_id_idx
-  ON page_ref
-  USING btree
-  (src_page_id );
-
-
-
-
-
 
 
 

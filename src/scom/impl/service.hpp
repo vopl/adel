@@ -106,21 +106,23 @@ namespace scom { namespace impl
 		bool insertPageIfAbsent(pgc::Connection c, boost::int64_t instanceId, const std::string &uri);
 
 	private:
-		pgc::Statement _stCreateInsertInstance;
+
 		pgc::Statement _stBegin;
 		pgc::Statement _stCommit;
 		pgc::Statement _stRollback;
+
+		//pgc::Statement _stLockInstance;
+		//pgc::Statement _stLockPageRule;
+		pgc::Statement _stLockPage;
+		//pgc::Statement _stLockPageRef;
+		//pgc::Statement _stLockActiveHost;
+
+		pgc::Statement _stCreateInsertInstance;
 		pgc::Statement _stPingSelectInstance;
 		pgc::Statement _stPingSelectPagesVolume;
 		pgc::Statement _stPingSelectPagesProcessed;
 		pgc::Statement _stPingUpdateInstance;
 		
-		pgc::Statement _stLockInstance;
-		pgc::Statement _stLockPageRule;
-		pgc::Statement _stLockPage;
-		pgc::Statement _stLockPageRef;
-		pgc::Statement _stLockActiveHost;
-
 		pgc::Statement _stSetupSelectInstance;
 		pgc::Statement _stSetupinsertPageRule;
 		pgc::Statement _stSetupUpdateInstance;
@@ -133,6 +135,8 @@ namespace scom { namespace impl
 		pgc::Statement _stStopSelectInstance;
 		pgc::Statement _stStopUpdateInstance;
 		pgc::Statement _stDestroyDeleteInstance;
+		pgc::Statement _stDestroyDeletePageRule;
+		pgc::Statement _stDestroyDeletePage;
 		pgc::Statement _stMainSelectPage;
 		pgc::Statement _stMainSelectActiveHost;
 		pgc::Statement _stMainUpdatePageActiveHost;
@@ -147,7 +151,7 @@ namespace scom { namespace impl
 		pgc::Statement _stLoaderUpdatePage;
 		pgc::Statement _stLoaderSelectPage;
 		pgc::Statement _stLoaderInsertPage;
-		pgc::Statement _stLoaderInsertPageRef;
+		//pgc::Statement _stLoaderInsertPageRef;
 		pgc::Statement _stInsertPageSelectId;
 		pgc::Statement _stInsertPage;
 

@@ -78,6 +78,16 @@ namespace utils
 
 	//////////////////////////////////////////////////////////////////////////
 	template <>
+	std::ostream &dumpOstr<Variant::VectorChar>(std::ostream &ostr, const Variant::VectorChar &v, size_t /*level*/, bool /*levelApplyed*/)
+	{
+		ostr
+			<<"binary data, size "<<v.size();
+
+		return ostr;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
+	template <>
 	std::ostream &dumpOstr<Variant>(std::ostream &ostr, const Variant &v, size_t level, bool levelApplyed)
 	{
 		return dumpOstr_variant(ostr, v, level, levelApplyed);

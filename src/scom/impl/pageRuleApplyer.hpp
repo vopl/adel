@@ -31,6 +31,7 @@ namespace scom { namespace impl
 		
 		size_t loadRules(pgc::Result pgr);
 		boost::int64_t maxLoadedPageId();
+		boost::int64_t maxLoadedPageRefId();
 		size_t loadPages(pgc::Result pgrPages, pgc::Result pgrReferences);
 
 		void storePages(std::vector<utils::Variant> &rows);
@@ -105,6 +106,7 @@ namespace scom { namespace impl
 		};
 		std::deque<Page>	_pages;
 		boost::int64_t		_maxLoadedPageId;
+		boost::int64_t		_maxLoadedPageRefId;
 		typedef std::map<boost::int64_t, size_t> TPageId2Idx;
 		TPageId2Idx _pageId2Idx;
 

@@ -74,7 +74,7 @@ void testScomClient(scom::Service *scom)
 				std::cout<<"scom complete"<<std::endl;
 				break;
 			}
-			std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
+			//std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
 			async::timeout(100).wait();
 		}
 	}

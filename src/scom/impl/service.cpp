@@ -63,7 +63,7 @@ namespace scom { namespace impl
 
 		options->addOption(
 			"workerIdleTimeoutMerger",
-			boost::program_options::value<size_t>()->default_value(10),
+			boost::program_options::value<size_t>()->default_value(1),
 			"content merger worker idle timeout, seconds");
 
 		options->addOption(
@@ -189,11 +189,11 @@ namespace scom { namespace impl
 		_stPingSelectPagesProcessed = pgc::Statement("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND (status IS NOT NULL AND status<>'pend')");
 
 		_stPingUpdateInstance = pgc::Statement("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1");
-		_stLockInstance = pgc::Statement("LOCK instance IN EXCLUSIVE MODE");
-		_stLockPageRule = pgc::Statement("LOCK page_rule IN EXCLUSIVE MODE");
+		//_stLockInstance = pgc::Statement("LOCK instance IN EXCLUSIVE MODE");
+		//_stLockPageRule = pgc::Statement("LOCK page_rule IN EXCLUSIVE MODE");
 		_stLockPage = pgc::Statement("LOCK page IN EXCLUSIVE MODE");
-		_stLockPageRef = pgc::Statement("LOCK page_ref IN EXCLUSIVE MODE");
-		_stLockActiveHost = pgc::Statement("LOCK active_host IN EXCLUSIVE MODE");
+		//_stLockPageRef = pgc::Statement("LOCK page_ref IN EXCLUSIVE MODE");
+		//_stLockActiveHost = pgc::Statement("LOCK active_host IN EXCLUSIVE MODE");
 
 		_stSetupSelectInstance = pgc::Statement("SELECT stage FROM instance "
 			"WHERE id=$1 AND password=$2");
@@ -218,6 +218,8 @@ namespace scom { namespace impl
 		_stDestroyDeleteInstance = pgc::Statement("DELETE FROM instance "
 			"WHERE id=$1 AND password=$2 "
 			"RETURNING id");
+		_stDestroyDeletePageRule = pgc::Statement("DELETE FROM page_rule WHERE instance_id=$1");
+		_stDestroyDeletePage = pgc::Statement("DELETE FROM page WHERE instance_id=$1");
 		_stMainSelectPage = pgc::Statement("SELECT p.id, ah.id, i.id, p.uri, p.access "
 			"FROM page AS p "
 			"INNER JOIN instance AS i ON(p.instance_id=i.id) "
@@ -228,8 +230,8 @@ namespace scom { namespace impl
 			"	p.access IN(x'2'::int, x'4'::int, x'6'::int) AND "
 			"	i.stage=10 AND i.is_started AND "
 			"	1=1 "
-			"LIMIT $2");
-		_stMainSelectActiveHost = pgc::Statement("SELECT id, atime<CURRENT_TIMESTAMP-$1::INTERVAL FROM active_host WHERE name=$2");
+			"LIMIT $2 FOR UPDATE OF p");
+		_stMainSelectActiveHost = pgc::Statement("SELECT id, atime<CURRENT_TIMESTAMP-$1::INTERVAL FROM active_host WHERE name=$2 FOR UPDATE");
 		_stMainUpdatePageActiveHost = pgc::Statement("UPDATE page SET active_host_id=$2 WHERE id=$1");
 		_stMainUpdateActiveHostAtime = pgc::Statement("UPDATE active_host SET atime=CURRENT_TIMESTAMP WHERE id=$1");
 		_stMainInsertActiveHost = pgc::Statement("INSERT INTO active_host (name, atime) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id");
@@ -239,11 +241,11 @@ namespace scom { namespace impl
 		_stHostDeleteOld = pgc::Statement("DELETE FROM active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL");
 		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT p.instance_id FROM page AS p INNER JOIN instance AS i ON (p.instance_id=i.id) WHERE p.access IS NULL AND i.stage=10 AND i.is_started GROUP BY instance_id LIMIT $1");
 		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
-		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET status=$2, text=$3, http_headers=$4, ip=$5, fetch_time=$6 WHERE id=$1");
-		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
+		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET status=$2, text=$3, ref_page_ids=$4, http_headers=$5, ip=$6, fetch_time=$7 WHERE id=$1");
+		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2 FOR UPDATE");
 		_stLoaderInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id");
-		_stLoaderInsertPageRef = pgc::Statement("INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)");
-		_stInsertPageSelectId = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
+		//_stLoaderInsertPageRef = pgc::Statement("INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)");
+		_stInsertPageSelectId = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2 FOR UPDATE");
 		_stInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2)");
 
 		_isWork = true;
@@ -383,9 +385,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
 
 		res = c.query(
 			_stSetupSelectInstance, utils::MVA(auth._id, auth._secret));
@@ -555,10 +557,10 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
 
 		res = c.query(
 			_stStartSelectInstance, utils::MVA(auth._id, auth._secret));
@@ -607,7 +609,7 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
 
 		res = c.query(
 			_stStopSelectInstance, utils::MVA(auth._id, auth._secret));
@@ -650,10 +652,10 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
-		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
 
 		res = c.query(
 			_stDestroyDeleteInstance, utils::MVA(auth._id, auth._secret));
@@ -664,6 +666,15 @@ namespace scom { namespace impl
 			IF_PGRES_ERROR(return ee_internalError, c.query(_stRollback));
 			return ee_badId;
 		}
+
+		res = c.query(
+			_stDestroyDeletePageRule, utils::Variant(auth._id));
+		IF_PGRES_ERROR(return ee_internalError, res);
+
+
+		res = c.query(
+			_stDestroyDeletePage, utils::Variant(auth._id));
+		IF_PGRES_ERROR(return ee_internalError, res);
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stCommit));
 
@@ -720,9 +731,10 @@ namespace scom { namespace impl
 		pgc::Connection c = _db.allocConnection();
 
 		IF_PGRES_ERROR(return true, c.query(_stBegin));
-		IF_PGRES_ERROR(return true, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return true, c.query(_stLockPage));
-		IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
+
+		//IF_PGRES_ERROR(return true, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return true, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
 
 		pgc::Result res;
 
@@ -862,8 +874,9 @@ namespace scom { namespace impl
 	{
 		pgc::Connection c = _db.allocConnection();
 		IF_PGRES_ERROR(return true, c.query(_stBegin));
-		IF_PGRES_ERROR(return true, c.query(_stLockPage));
-		IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
+
+		//IF_PGRES_ERROR(return true, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
 
 		pgc::Result res = c.query(_stHostDeleteOld, utils::Variant(_activeHostDeleteTimeout));
 		IF_PGRES_ERROR(return false, res);
@@ -880,10 +893,10 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return false, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return false, c.query(_stLockPageRule));
-		IF_PGRES_ERROR(return false, c.query(_stLockPage));
-		IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
+		//IF_PGRES_ERROR(return false, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return false, c.query(_stLockPageRule));
+		//IF_PGRES_ERROR(return false, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
 
 		pgc::Result res = c.query(_stPageRuleApplyerSelectPage, utils::Variant(_pagesToLoadGranula));
 		IF_PGRES_ERROR(return false, res);
@@ -1125,26 +1138,12 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return, c.query(_stLockInstance));
 		IF_PGRES_ERROR(return, c.query(_stLockPage));
-		IF_PGRES_ERROR(return, c.query(_stLockPageRef));
+		//IF_PGRES_ERROR(return, c.query(_stLockPageRef));
 
-		res = c.query(
-			_stLoaderUpdatePage, 
-			utils::MVA(
-				pageId, 
-				cc->convert(std::string(resp.firstLine().begin(), resp.firstLine().end())),
-				text,
-				cc->convert(std::string(resp.headers().begin(), resp.headers().end())),
-				resp.channel().endpointRemote().address().to_string(),
-				getTime.count()
-			)
-		);
-
-		//TODO utf8 глючно разобрался
-		IF_PGRES_ERROR(return, res);
-
-		//применить ссылки
+		//просчитать ссылки и добавить новые страницы
+		std::vector<char> refPageIds;
 		BOOST_FOREACH(htmlcxx::Uri &uri2, uris)
 		{
 			if(uri2.scheme()!="http" && uri2.scheme()!="https")
@@ -1177,12 +1176,24 @@ namespace scom { namespace impl
 			bool b = res.fetch(page2Id, 0,0);
 			assert(b);
 
-			res = c.query(
-				_stLoaderInsertPageRef, 
-				utils::MVA(pageId, page2Id)
-			);
-			IF_PGRES_ERROR(return, res);
+			boost::int64_t i64 = page2Id;
+			refPageIds.insert(refPageIds.end(), (char *)&i64, (char *)&i64 + 8);
 		}
+
+		res = c.query(
+			_stLoaderUpdatePage,
+			utils::MVA(
+				pageId,
+				cc->convert(std::string(resp.firstLine().begin(), resp.firstLine().end())),
+				text,
+				refPageIds,
+				cc->convert(std::string(resp.headers().begin(), resp.headers().end())),
+				resp.channel().endpointRemote().address().to_string(),
+				getTime.count()
+			)
+		);
+		IF_PGRES_ERROR(return, res);
+
 
 		IF_PGRES_ERROR(return, c.query(_stCommit));
 
@@ -1325,9 +1336,9 @@ namespace scom { namespace impl
 		//транзакция
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
-		IF_PGRES_ERROR(return false, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return false, c.query(_stLockPage));
-		IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
+		//IF_PGRES_ERROR(return false, c.query(_stLockInstance));
+		//IF_PGRES_ERROR(return false, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
 
 		//	выбрать один инстанс в состоянии load который все загрузил
 		res = c.query(

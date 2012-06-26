@@ -14,6 +14,7 @@ namespace scom { namespace impl
 		: _instanceId(instanceId)
 		, _accessTime(accessTime)
 		, _maxLoadedPageId(0)
+		, _maxLoadedPageRefId(0)
 	{
 	}
 
@@ -333,6 +334,12 @@ namespace scom { namespace impl
 	}
 
 	//////////////////////////////////////////////////////////////////////////
+	boost::int64_t PageRuleApplyer::maxLoadedPageRefId()
+	{
+		return _maxLoadedPageRefId;
+	}
+
+	//////////////////////////////////////////////////////////////////////////
 	size_t PageRuleApplyer::loadPages(pgc::Result pgrPages, pgc::Result pgrReferences)
 	{
 		size_t amount = 0;
@@ -344,8 +351,6 @@ namespace scom { namespace impl
 			assert(b);
 
 			//id, uri, access
-			_maxLoadedPageId = std::max(_maxLoadedPageId, row[0].to<boost::int64_t>());
-
 			_pages.push_back(Page());
 			Page &p = _pages.back();
 
@@ -372,6 +377,7 @@ namespace scom { namespace impl
 					r._sourcePageIdx = _pages.size()-1;
 				}
 			}
+			_maxLoadedPageId = std::max(_maxLoadedPageId, p._id);
 
 			amount++;
 		}
@@ -382,17 +388,24 @@ namespace scom { namespace impl
 			bool b = pgrReferences.fetchRowList(row, i);
 			assert(b);
 
-			//src_page_id, dst_page_id
-			boost::int64_t srcId = row[0];
-			boost::int64_t dstId = row[1];
+			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
+			//id, ref_page_ids
+			boost::int64_t srcId = rowv[0].as<boost::int64_t>();
+			const utils::Variant::VectorChar &dstIds = rowv[1].as<utils::Variant::VectorChar>();
 
 			assert(_pageId2Idx.end() != _pageId2Idx.find(srcId));
-			assert(_pageId2Idx.end() != _pageId2Idx.find(dstId));
-
 			assert(_pageId2Idx[srcId] < _pages.size());
-			assert(_pageId2Idx[dstId] < _pages.size());
 
-			_pages[_pageId2Idx[srcId]]._refereces.push_back(_pageId2Idx[dstId]);
+			for(size_t i(0); i<dstIds.size(); i+=8)
+			{
+				const boost::int64_t &dstId = *(const boost::int64_t *)&dstIds[i];
+				assert(_pageId2Idx.end() != _pageId2Idx.find(dstId));
+				assert(_pageId2Idx[dstId] < _pages.size());
+
+				_pages[_pageId2Idx[srcId]]._refereces.push_back(_pageId2Idx[dstId]);
+			}
+			_maxLoadedPageRefId = std::max(_maxLoadedPageRefId, srcId);
+
 		}
 		return amount;
 	}

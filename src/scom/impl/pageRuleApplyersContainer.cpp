@@ -32,21 +32,14 @@ namespace scom { namespace impl
 		_instances.clear();
 
 		_stStorePagesUpdatePage = pgc::Statement("UPDATE page SET access=$2 WHERE id=$1");
-		_stLoadPagesSelectPageRef = pgc::Statement("SELECT "
-			"src_page_id, dst_page_id "
-			"FROM page_ref "
-			"INNER JOIN page AS p1 ON(src_page_id=p1.id) "
-			//"INNER JOIN page AS p2 ON(dst_page_id=p2.id) "
-			"WHERE "
-			"	p1.instance_id=$1 AND "
-			//"	p2.instance_id=$1 AND "
-			"	(src_page_id>$2 OR dst_page_id>$2)");
 		_stLoadRulesSelectRule = pgc::Statement("SELECT "
 			"id, instance_id, value, kind_and_access, kind_and_access_min, kind_and_access_max, amount "
-			"FROM page_rule WHERE instance_id=$1");
+			"FROM page_rule WHERE instance_id=$1 FOR UPDATE");
+
 		_stLoadPagesSelectPage = pgc::Statement("SELECT "
-			"id, uri, access "
-			"FROM page WHERE instance_id=$1 AND id>$2");
+			"id, uri, access, ref_page_ids "
+			"FROM page WHERE instance_id=$1 AND id>$2 FOR UPDATE");
+		_stLoadPagesSelectPageRef = pgc::Statement("SELECT id, ref_page_ids FROM page WHERE instance_id=$1 AND id>$2 AND ref_page_ids IS NOT NULL FOR UPDATE");
 
 	}
 
@@ -157,7 +150,7 @@ namespace scom { namespace impl
 				resPage);
 
 		pgc::Result resReference = c.query(
-			_stLoadPagesSelectPageRef, utils::MVA(prap->instanceId(), prap->maxLoadedPageId()));
+			_stLoadPagesSelectPageRef, utils::MVA(prap->instanceId(), prap->maxLoadedPageRefId()));
 
 		IF_PGRES_ERROR(
 			return false,
