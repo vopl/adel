@@ -246,7 +246,7 @@ namespace scom { namespace impl
 		_stHostDeleteOld = pgc::Statement("DELETE FROM active_host WHERE atime <= CURRENT_TIMESTAMP-$1::INTERVAL");
 		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT p.instance_id FROM page AS p INNER JOIN instance AS i ON (p.instance_id=i.id) WHERE p.access IS NULL AND i.stage=10 AND i.is_started GROUP BY instance_id LIMIT $1");
 		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
-		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET status=$2, text=$3, ref_page_ids=$4, http_headers=$5, ip=$6, fetch_time=$7 WHERE id=$1");
+		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET fetch_order=nextval('page_id_seq'::regclass), status=$2, text=$3, ref_page_ids=$4, http_headers=$5, ip=$6, fetch_time=$7 WHERE id=$1");
 		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
 		_stLoaderInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id");
 		//_stLoaderInsertPageRef = pgc::Statement("INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)");
@@ -432,8 +432,8 @@ namespace scom { namespace impl
 				{
 					if(
 						pr._kindAndAccessMin > pr._kindAndAccessMax ||
-						pr._kindAndAccessMin < -100 ||
-						pr._kindAndAccessMax > 100
+						pr._kindAndAccessMin < -999999 ||
+						pr._kindAndAccessMax > 999999
 					)
 					{
 						validator = ee_badRange;
@@ -450,8 +450,8 @@ namespace scom { namespace impl
 				{
 					if(
 						pr._kindAndAccessMin > pr._kindAndAccessMax ||
-						pr._kindAndAccessMin < -100 ||
-						pr._kindAndAccessMax > 100
+						pr._kindAndAccessMin < -999999 ||
+						pr._kindAndAccessMax > 999999
 					)
 					{
 						validator = ee_badRange;

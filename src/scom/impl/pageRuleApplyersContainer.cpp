@@ -39,7 +39,7 @@ namespace scom { namespace impl
 		_stLoadPagesSelectPage = pgc::Statement("SELECT "
 			"id, uri, access, ref_page_ids "
 			"FROM page WHERE instance_id=$1 AND id>$2 FOR UPDATE");
-		_stLoadPagesSelectPageRef = pgc::Statement("SELECT id, ref_page_ids FROM page WHERE instance_id=$1 AND id>$2 AND ref_page_ids IS NOT NULL FOR UPDATE");
+		_stLoadPagesSelectPageRef = pgc::Statement("SELECT id, ref_page_ids, fetch_order FROM page WHERE instance_id=$1 AND fetch_order>$2 AND ref_page_ids IS NOT NULL FOR UPDATE");
 
 	}
 

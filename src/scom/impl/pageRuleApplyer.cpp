@@ -118,6 +118,7 @@ namespace scom { namespace impl
 		{
 			Page &p = _pages[pageIdx];
 			p._accessRefs = 0;
+			p._accessSimple = 0;
 
 			//regex
 			{
@@ -389,9 +390,10 @@ namespace scom { namespace impl
 			assert(b);
 
 			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
-			//id, ref_page_ids
+			//id, ref_page_ids, refId
 			boost::int64_t srcId = rowv[0].as<boost::int64_t>();
 			const utils::Variant::VectorChar &dstIds = rowv[1].as<utils::Variant::VectorChar>();
+			boost::int64_t refId = rowv[2].as<boost::int64_t>();
 
 			assert(_pageId2Idx.end() != _pageId2Idx.find(srcId));
 			assert(_pageId2Idx[srcId] < _pages.size());
@@ -404,7 +406,7 @@ namespace scom { namespace impl
 
 				_pages[_pageId2Idx[srcId]]._refereces.push_back(_pageId2Idx[dstId]);
 			}
-			_maxLoadedPageRefId = std::max(_maxLoadedPageRefId, srcId);
+			_maxLoadedPageRefId = std::max(_maxLoadedPageRefId, refId);
 
 		}
 		return amount;
@@ -457,7 +459,7 @@ namespace scom { namespace impl
 				}
 
 				//дочерние в буфер, на следующий шаг
-				if(f._level < r._levelMax)
+				//if(f._level < r._levelMax)
 				{
 					for(size_t i(0); i<f._page->_refereces.size(); i++)
 					{

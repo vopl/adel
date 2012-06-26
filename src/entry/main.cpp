@@ -44,11 +44,16 @@ void testScomClient(scom::Service *scom)
 	{
 		std::vector<scom::PageRule> rules;
 
+		scom::PageRule r3 = {
+			"127.0.0.1",
+			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_domain,
+			0, 400, 999999};
+		//rules.push_back(r3);
+
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
 			0, 400, 999999};
-
 		rules.push_back(r4);
 
 		err = scom->setup(auth, rules);
@@ -74,8 +79,8 @@ void testScomClient(scom::Service *scom)
 				std::cout<<"scom complete"<<std::endl;
 				break;
 			}
-			//std::cout<<"----------- scom status: "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
-			async::timeout(100).wait();
+			std::cout<<"----------- scom stage: "<<status._stage<<", "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
+			async::timeout(1000).wait();
 		}
 	}
     //getResult

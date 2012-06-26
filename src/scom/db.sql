@@ -75,6 +75,7 @@ CREATE TABLE page
     ip varchar,
     fetch_time int4,
 
+    fetch_order bigint,
     atime timestamp without time zone
 );
 
