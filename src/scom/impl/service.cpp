@@ -92,7 +92,10 @@ namespace scom { namespace impl
 			"delay betwen http requests for same host, seconds");
 
 
-
+		options->addOption(
+			"maxPagesPerRule",
+			boost::program_options::value<size_t>()->default_value(999999),
+			"maximum number of pages per one rule");
 		options->addOption(
 			"hunspell.affpath",
 			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.aff"),
@@ -124,6 +127,7 @@ namespace scom { namespace impl
 		, _pagesToLoadGranula(50)
 		, _maxHttpBodySize(1024*1024)
 		, _maxWorkers(200)
+		, _maxPagesPerRule(1000)
 		, _deadWorkerTimeout(boost::posix_time::minutes(60))
 		, _activeHostDeleteTimeout(boost::posix_time::minutes(10))
 		, _htc(optionsPtr)
@@ -143,6 +147,7 @@ namespace scom { namespace impl
 		_pagesToLoadGranula = o["pagesToLoadGranula"].as<size_t>();
 		_maxHttpBodySize = o["httpBodyMaxSize"].as<size_t>();
 		_maxWorkers = o["maxWorkers"].as<size_t>();
+		_maxPagesPerRule = o["maxPagesPerRule"].as<size_t>();
 		_deadWorkerTimeout = boost::posix_time::seconds((long)o["deadWorkerTimeout"].as<size_t>());
 		_activeHostDeleteTimeout = boost::posix_time::seconds((long)o["activeHostTimeout"].as<size_t>());
 
@@ -242,10 +247,10 @@ namespace scom { namespace impl
 		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT p.instance_id FROM page AS p INNER JOIN instance AS i ON (p.instance_id=i.id) WHERE p.access IS NULL AND i.stage=10 AND i.is_started GROUP BY instance_id LIMIT $1");
 		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
 		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET status=$2, text=$3, ref_page_ids=$4, http_headers=$5, ip=$6, fetch_time=$7 WHERE id=$1");
-		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2 FOR UPDATE");
+		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
 		_stLoaderInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id");
 		//_stLoaderInsertPageRef = pgc::Statement("INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)");
-		_stInsertPageSelectId = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2 FOR UPDATE");
+		_stInsertPageSelectId = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
 		_stInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2)");
 
 		_isWork = true;
@@ -387,7 +392,7 @@ namespace scom { namespace impl
 
 		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
 		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
 
 		res = c.query(
 			_stSetupSelectInstance, utils::MVA(auth._id, auth._secret));
@@ -477,7 +482,7 @@ namespace scom { namespace impl
 					if(
 						pr._kindAndAccessMin > pr._kindAndAccessMax ||
 						pr._kindAndAccessMin < 0 ||
-						pr._kindAndAccessMax > 100
+						pr._kindAndAccessMax > 999999
 					)
 					{
 						validator = ee_badRange;
@@ -511,7 +516,7 @@ namespace scom { namespace impl
 				{
 					validator = ee_badAmount;
 				}
-				else if(pr._amount > 32768)
+				else if(pr._amount > _maxPagesPerRule)
 				{
 					validator = ee_badAmount;
 				}

@@ -71,6 +71,7 @@ namespace scom { namespace impl
 		size_t							_pagesToLoadGranula;
 		size_t							_maxHttpBodySize;
 		size_t							_maxWorkers;
+		size_t							_maxPagesPerRule;
 
 		utils::Variant::TimeDuration	_deadWorkerTimeout;
 		utils::Variant::TimeDuration	_activeHostDeleteTimeout;

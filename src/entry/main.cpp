@@ -47,7 +47,7 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 4, 30000};
+			0, 400, 999999};
 
 		rules.push_back(r4);
 
