@@ -1399,6 +1399,37 @@ namespace scom { namespace impl
 				store(rows);
 			}
 			*/
+			
+			/*
+			подключить sqlite
+			отчет это база sqlite
+				host (name)
+				page (uri)
+				phrase1 (w1)
+				phrase2 (w1,w2)
+				phrase3 (w1,w2,w3)
+				
+				page_ref_page (src_page_id, dst_page_id)
+				
+				phrase1_in_page (phrase1_id, page_id)
+				phrase2_in_page (phrase2_id, page_id)
+				phrase3_in_page (phrase3_id, page_id)
+			
+			
+			выделить транслятор id для страниц, хостов
+			выбрать из страниц id, uri, перебирать
+				заполнять трансляторы
+			упорядочить трансляторы
+			сформировать таблицы host, page
+			
+			итерациями выбирать ссылки, перебирать
+				заполнять ссылки через транслятор
+			
+			итерациями выбирать текст из страниц, перебирать
+				бить на фразы, перебирать
+					заполнять phrase1, phrase2, phrase3
+			
+			*/
 
 
 		}
