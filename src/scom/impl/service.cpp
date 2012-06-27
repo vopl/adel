@@ -1489,7 +1489,7 @@ namespace scom { namespace impl
 			//заливать урлы, тексты и ссылки страниц
 			for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
 			{
-				res = c.query("SELECT id, uri, text, ref_page_ids FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+				res = c.query("SELECT id, uri, ref_page_ids, text FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
 				IF_PGRES_ERROR(return false, res);
 
 				utils::Variant pageRows;

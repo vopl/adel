@@ -30,6 +30,9 @@ namespace scom { namespace impl
 		sqlite3							*_db;
 		std::deque<boost::int64_t>		_pageIds;
 
+	private:
+		int pageId(boost::int64_t id);
+
 	};
 }}
 #endif

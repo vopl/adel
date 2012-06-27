@@ -81,7 +81,15 @@ namespace utils
 	std::ostream &dumpOstr<Variant::VectorChar>(std::ostream &ostr, const Variant::VectorChar &v, size_t /*level*/, bool /*levelApplyed*/)
 	{
 		ostr
-			<<"binary data, size "<<v.size();
+			<<"binary data, size "<<v.size()<<": 0x";
+
+		for(size_t i(0); i<v.size(); i++)
+		{
+			char c1 = (v[i] >> 4) & 0xf;
+			char c2 = (v[i] >> 0) & 0xf;
+			ostr << (char)(c1>=10?('a'-10+c1):('0'+c1));
+			ostr << (char)(c2>=10?('a'-10+c2):('0'+c2));
+		}
 
 		return ostr;
 	}
