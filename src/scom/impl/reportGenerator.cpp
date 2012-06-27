@@ -27,7 +27,7 @@ namespace scom { namespace impl
 
 		LITE(return, sqlite3_exec(_db, "CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR)", NULL, NULL, NULL));
 
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4)", NULL, NULL, NULL));
+		LITE(return, sqlite3_exec(_db, "CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )", NULL, NULL, NULL));
 
 		LITE(return, sqlite3_exec(_db, "CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)", NULL, NULL, NULL));
 		LITE(return, sqlite3_exec(_db, "CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)", NULL, NULL, NULL));
@@ -86,13 +86,17 @@ namespace scom { namespace impl
 		LITE(return false, sqlite3_prepare(_db, "UPDATE page SET uri=? WHERE id=?", -1, &stm, NULL));
 
 		sqlite3_stmt *stm2;
-		LITE(sqlite3_finalize(stm);return false, sqlite3_prepare(_db, "INSERT INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)", -1, &stm2, NULL));
+		LITE(sqlite3_finalize(stm);return false, sqlite3_prepare(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)", -1, &stm2, NULL));
 
 		BOOST_FOREACH(const utils::Variant &row, rows.as<utils::Variant::DequeVariant>())
 		{
 			//id, uri, ref_page_ids, text
 			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
 			int srcId = pageId(rowv[0]);
+			if(srcId >= _pageIds.size())
+			{
+				continue;
+			}
 			const std::string &uri = rowv[1].as<std::string>();
 
 			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_text(stm, 1, uri.data(), uri.size(), NULL));
@@ -108,6 +112,10 @@ namespace scom { namespace impl
 				{
 					boost::int64_t &i64 = *(boost::int64_t*)&refIds[i];
 					int dstId = pageId(i64);
+					if(dstId >= _pageIds.size())
+					{
+						continue;
+					}
 
 					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm2, 1, srcId));
 					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm2, 2, dstId));
