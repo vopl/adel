@@ -27,6 +27,7 @@ namespace scom { namespace impl
 	private:
 		bool							_isOk;
 		Hunspell						*_hunspell;
+		std::string						_dbFileName;
 		sqlite3							*_db;
 		std::deque<boost::int64_t>		_pageIds;
 

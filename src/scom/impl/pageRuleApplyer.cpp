@@ -488,6 +488,7 @@ namespace scom { namespace impl
 
 			Page &p = _pages[i];
 			if(
+				//!(p._accessSimple & PageRule::ea_ignore) &&
 				(
 					p._levelInCurrentUpdate >= r._levelMin &&
 					p._levelInCurrentUpdate <= r._levelMax

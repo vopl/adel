@@ -13,17 +13,22 @@ namespace scom { namespace impl
 		, _hunspell(hunspell)
 		, _db(NULL)
 	{
-		char fnameTemplate[L_tmpnam];
-		if(!tmpnam_r(fnameTemplate))
+		char fnameBuf[L_tmpnam];
+#ifdef _MSC_VER
+		if(tmpnam_s(fnameBuf))
+#else
+		if(!tmpnam_r(fnameBuf))
+#endif
 		{
 			ELOG("failed to create temporary file for report sqlite database: "<<strerror(errno));
 			_isOk = false;
 			return;
 		}
+		_dbFileName = fnameBuf;
 
 #define LITE(action, ...) {int res = (__VA_ARGS__); if(SQLITE_OK != res && SQLITE_DONE != res && SQLITE_ROW != res){ELOG("sqlite call failed: "<<sqlite3_errmsg(_db)<<" ("<<__LINE__<<")");_isOk=false;action;}}
 
-		LITE(return, sqlite3_open(fnameTemplate, &_db));
+		LITE(return, sqlite3_open(_dbFileName.c_str(), &_db));
 
 		LITE(return, sqlite3_exec(_db, "CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR)", NULL, NULL, NULL));
 
@@ -99,7 +104,7 @@ namespace scom { namespace impl
 			}
 			const std::string &uri = rowv[1].as<std::string>();
 
-			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_text(stm, 1, uri.data(), uri.size(), NULL));
+			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_text(stm, 1, uri.data(), (int)uri.size(), NULL));
 			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm, 2, srcId));
 			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_step(stm));
 			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_reset(stm));
