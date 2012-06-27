@@ -125,11 +125,11 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesRegex.size(); ruleIdx++)
 				{
 					RuleRegex &r = _rulesRegex[ruleIdx];
-					if(r._amountApplyed >= r._amount)
+					if(r._amount >= 0 && r._amountApplyed >= r._amount)
 					{
 						continue;
 					}
-					if(boost::regex_match(p._uriStr, r._regex))
+					if(boost::regex_match(p._uriStr, r._regex) != r._negative)
 					{
 						p._accessSimple |= r._access;
 						r._amountApplyed++;
@@ -142,7 +142,7 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesDomain.size(); ruleIdx++)
 				{
 					RuleDomain &r = _rulesDomain[ruleIdx];
-					if(r._amountApplyed >= r._amount)
+					if(r._amount >= 0 && r._amountApplyed >= r._amount)
 					{
 						continue;
 					}
@@ -151,7 +151,7 @@ namespace scom { namespace impl
 					boost::split(sample, p._uri.hostname(), boost::algorithm::is_any_of("."));
 					std::reverse(sample.begin(), sample.end());
 
-					if(levelMatched(r._domain, r._levelMin, r._levelMax, sample))
+					if(levelMatched(r._domain, r._levelMin, r._levelMax, sample) != r._negative)
 					{
 						p._accessSimple |= r._access;
 						r._amountApplyed++;
@@ -164,12 +164,12 @@ namespace scom { namespace impl
 				for(size_t ruleIdx(0); ruleIdx<_rulesPath.size(); ruleIdx++)
 				{
 					RulePath &r = _rulesPath[ruleIdx];
-					if(r._amountApplyed >= r._amount)
+					if(r._amount >= 0 && r._amountApplyed >= r._amount)
 					{
 						continue;
 					}
 
-					if(p._uri.hostnameWithPort() != r._host)
+					if((p._uri.hostnameWithPort() != r._host) && !r._negative)
 					{
 						continue;
 					}
@@ -182,7 +182,7 @@ namespace scom { namespace impl
 						sample.pop_back();
 					}
 
-					if(levelMatched(r._path, r._levelMin, r._levelMax, sample))
+					if(levelMatched(r._path, r._levelMin, r._levelMax, sample) != r._negative)
 					{
 						p._accessSimple |= r._access;
 						r._amountApplyed++;
@@ -228,7 +228,9 @@ namespace scom { namespace impl
 
 			int kindAndAccess = row[3];
 
-			switch(kindAndAccess & PageRule::ek_mask)
+			bool negative = (kindAndAccess & PageRule::ek_negative)?true:false;
+
+			switch(kindAndAccess & PageRule::ek_mask & ~PageRule::ek_negative)
 			{
 			case PageRule::ek_domain:
 				{
@@ -237,6 +239,7 @@ namespace scom { namespace impl
 					{
 						_rulesDomain.push_back(RuleDomain());
 						RuleDomain &r = _rulesDomain.back();
+						r._negative = negative;
 						r._access = kindAndAccess & PageRule::ea_mask;
 						r._amount = row[6];
 						r._levelMin = row[4];
@@ -260,6 +263,7 @@ namespace scom { namespace impl
 
 						_rulesRegex.push_back(RuleRegex());
 						RuleRegex &r = _rulesRegex.back();
+						r._negative = negative;
 						r._access = kindAndAccess & PageRule::ea_mask;
 						r._amount = row[6];
 						r._regex = regex;
@@ -278,6 +282,7 @@ namespace scom { namespace impl
 					{
 						_rulesPath.push_back(RulePath());
 						RulePath &r = _rulesPath.back();
+						r._negative = negative;
 						r._access = kindAndAccess & PageRule::ea_mask;
 						r._amount = row[6];
 						r._host = uri.hostnameWithPort();
@@ -306,6 +311,7 @@ namespace scom { namespace impl
 					{
 						_rulesReference.push_back(RuleReference());
 						RuleReference &r = _rulesReference.back();
+						r._negative = negative;
 						r._access = kindAndAccess & PageRule::ea_mask;
 						r._amount = row[6];
 						r._source = uri.unparse(htmlcxx::Uri::REMOVE_FRAGMENT);
@@ -475,16 +481,17 @@ namespace scom { namespace impl
 		//плохо если страниц много а выбираемая область маленькая
 		for(size_t i(0); i<_pages.size(); i++)
 		{
-			if(r._amountApplyed >= r._amount)
+			if(r._amount >= 0 && r._amountApplyed >= r._amount)
 			{
 				continue;
 			}
 
 			Page &p = _pages[i];
 			if(
-				p._levelInCurrentUpdate >= r._levelMin &&
-				p._levelInCurrentUpdate <= r._levelMax &&
-				true)
+				(
+					p._levelInCurrentUpdate >= r._levelMin &&
+					p._levelInCurrentUpdate <= r._levelMax
+				) != r._negative)
 			{
 				p._accessRefs |= r._access;
 				r._amountApplyed++;

@@ -35,11 +35,11 @@ namespace scom
 	{
 		enum EAccess
 		{
-			ea_null		=0x00,
-			ea_ignore	=0x01,
-			ea_useLinks	=0x02,
-			ea_useWords	=0x04,
-			ea_mask		=0xff,
+			ea_null			=0x00,
+			ea_ignore		=0x01,
+			ea_useLinks		=0x02,
+			ea_useWords		=0x04,
+			ea_mask			=0xff,
 		};
 
 		enum EKind
@@ -49,6 +49,7 @@ namespace scom
 			ek_regex		=0x0200,
 			ek_path			=0x0300,
 			ek_reference	=0x0400,
+			ek_negative		=0x0800,
 			ek_mask			=0xff00,
 		};
 

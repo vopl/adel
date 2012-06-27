@@ -514,11 +514,12 @@ namespace scom { namespace impl
 			
 			if(!validator)
 			{
-				if(pr._amount <= 0)
+				// amount in [-1;  _maxPagesPerRule]
+				if(pr._amount <= -2)
 				{
 					validator = ee_badAmount;
 				}
-				else if(pr._amount > _maxPagesPerRule)
+				else if(pr._amount > (int)_maxPagesPerRule)
 				{
 					validator = ee_badAmount;
 				}
@@ -1031,8 +1032,8 @@ namespace scom { namespace impl
 	void Service::uriLoader(const utils::Variant &pageId, const utils::Variant &hostId, const utils::Variant &instanceId, const utils::Variant &uri, int access)
 	{
 		WorkerRaii raii(_mtxWorkers, _numWorkers, _evtWorkerDone);
-		assert(access&PageRule::ea_useLinks || access&PageRule::ea_useWords);
-
+		assert((access&PageRule::ea_useLinks) || (access&PageRule::ea_useWords));
+		assert(! (access&PageRule::ea_ignore) );
 
 		boost::chrono::time_point<boost::chrono::system_clock> start = 
 			boost::chrono::system_clock::now();

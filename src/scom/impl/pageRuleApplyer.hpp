@@ -43,6 +43,7 @@ namespace scom { namespace impl
 		
 		struct Rule
 		{
+			bool				_negative;
 			int					_access;//PageRule::EAccess bits
 			int					_amount;
 			int					_amountApplyed;
