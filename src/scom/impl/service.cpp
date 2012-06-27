@@ -10,13 +10,13 @@
 
 #include "utils/htmlEntities.hpp"
 
+#include "scom/impl/reportGenerator.hpp"
+
 #include <boost/foreach.hpp>
 #include <boost/date_time/posix_time/posix_time_duration.hpp>
 #include <boost/regex.hpp>
 #include <boost/chrono.hpp>
 #include <boost/algorithm/string.hpp>
-
-#include <sqlite3.h>
 
 #define IF_PGRES_ERROR(action, ...) {pgc::Result r = __VA_ARGS__; if(pgc::ersError == r.status()) {ELOG(r.errorMsg()<<" ("<<__LINE__<<")");action;}}
 
@@ -1451,6 +1451,59 @@ namespace scom { namespace impl
 			
 			*/
 
+			ReportGenerator rg(_hunspell);
+
+			if(!rg.isOk())
+			{
+				return false;
+			}
+
+			//выявить количество страниц
+			res = c.query("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL", instanceId);
+			IF_PGRES_ERROR(return false, res);
+
+			size_t pagesAmount = res.fetchInt32(0,0);
+#define PAGESGRANULA (1000)
+
+			//заливать идентификаторы страницы
+			for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
+			{
+				res = c.query("SELECT id FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+				IF_PGRES_ERROR(return false, res);
+
+				utils::Variant pageIds;
+				bool b = res.fetchColumn(pageIds, 0, 0, (size_t)-1);
+				assert(b);
+
+				if(!rg.addPageIds(pageIds))
+				{
+					return false;
+				}
+			}
+
+			if(!rg.fixPageIds())
+			{
+				return false;
+			}
+
+			//заливать урлы, тексты и ссылки страниц
+			for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
+			{
+				res = c.query("SELECT id, uri, text, ref_page_ids FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+				IF_PGRES_ERROR(return false, res);
+
+				utils::Variant pageRows;
+				bool b = res.fetchRowsList(pageRows, 0, (size_t)-1);
+				assert(b);
+
+				if(!rg.setPagesContent(pageRows))
+				{
+					return false;
+				}
+			}
+
+
+			/*
 			sqlite3 *sdb = NULL;
 
 			int res = sqlite3_open("/tmp/rdb.sqlite", &sdb);
@@ -1463,6 +1516,7 @@ namespace scom { namespace impl
 			}
 
 			res = sqlite3_close(sdb);
+			*/
 
 
 

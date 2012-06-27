@@ -47,6 +47,7 @@ set(IMPL_INC
 	${PSRC}/impl/textParser.hpp
 	${PSRC}/impl/word.hpp
 	${PSRC}/impl/wordBucket.hpp
+	${PSRC}/impl/reportGenerator.hpp
 
 )
 source_group(src/impl FILES ${IMPL_INC})
@@ -60,6 +61,7 @@ set(IMPL_SRC
 	${PSRC}/impl/textParser.cpp
 	${PSRC}/impl/word.cpp
 	${PSRC}/impl/wordBucket.cpp
+	${PSRC}/impl/reportGenerator.cpp
 )
 source_group(src/impl FILES ${IMPL_SRC})
 
