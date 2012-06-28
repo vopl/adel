@@ -2,20 +2,20 @@
 #define _SCOM_IMPL_REPORTGENERATOR_HPP_
 
 #include "utils/variant.hpp"
+#include "sqlitepp/sqlitepp.hpp"
 
 #ifdef near
 #	undef near
 #endif
 #include <hunspell.hxx>
 
-#include <sqlite3.h>
 
 namespace scom { namespace impl
 {
 	class ReportGenerator
 	{
 	public:
-		ReportGenerator(Hunspell *hunspell);
+		ReportGenerator(const std::string &tmpDir, Hunspell *hunspell);
 		~ReportGenerator();
 
 		bool isOk() const;
@@ -28,7 +28,7 @@ namespace scom { namespace impl
 		bool							_isOk;
 		Hunspell						*_hunspell;
 		std::string						_dbFileName;
-		sqlite3							*_db;
+		sqlitepp::session				_db;
 		std::deque<boost::int64_t>		_pageIds;
 
 	private:

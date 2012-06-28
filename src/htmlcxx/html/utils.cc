@@ -449,6 +449,7 @@ namespace htmlcxx {
 								++ptr;
 								state = NONE;
 							}
+							break;
 					}
 				}
 

@@ -87,13 +87,6 @@ endif()
 include_directories(${ICONV_INCLUDE_DIRS})
 
 
-include(FindSqlite3)
-if(NOT SQLITE3_FOUND)
-	message(FATAL_ERROR "sqlite3 required")
-endif()
-
-include_directories(${SQLITE3_INCLUDE_DIR})
-
 
 #find_package(XMLRPC REQUIRED c++)
 #if(NOT XMLRPC_FOUND)
@@ -109,10 +102,10 @@ add_library(${PROJECT} STATIC ${INC} ${SRC} ${SRC_PCH} ${SRC_HDR} ${IMPL_INC} ${
 create_pch(${PROJECT} ${PSRC}/pch.hpp ${PSRC}/pch.cpp)
 use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${IMPL_SRC})
 
-target_link_libraries(${PROJECT} async http pgc utils htmlcxx utf8proc)
+target_link_libraries(${PROJECT} async http pgc utils htmlcxx utf8proc sqlitepp)
 target_link_libraries(${PROJECT} ${l4cpl})
 target_link_libraries(${PROJECT} ${HUNSPELL_LIBRARIES})
 target_link_libraries(${PROJECT} ${ICONV_LIBRARIES})
 #target_link_libraries(${PROJECT} ${XMLRPC_LIBRARIES})
-target_link_libraries(${PROJECT} ${SQLITE3_LIBRARIES})
+
 

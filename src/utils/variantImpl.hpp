@@ -461,6 +461,7 @@ namespace utils
 				break;
 			default:
 				assert(0);
+				break;
 			}
 			dst.setNull();
 		}

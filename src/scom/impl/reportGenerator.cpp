@@ -3,50 +3,77 @@
 #include "scom/log.hpp"
 
 #include <boost/foreach.hpp>
+#include <boost/filesystem.hpp>
 
 namespace scom { namespace impl
 {
 
 	///////////////////////////////////////////////////
-	ReportGenerator::ReportGenerator(Hunspell *hunspell)
+	ReportGenerator::ReportGenerator(const std::string &tmpDir, Hunspell *hunspell)
 		: _isOk(true)
 		, _hunspell(hunspell)
-		, _db(NULL)
 	{
-		char fnameBuf[L_tmpnam];
 #ifdef _MSC_VER
+		char fnameBuf[L_tmpnam];
 		if(tmpnam_s(fnameBuf))
-#else
-		if(!tmpnam_r(fnameBuf))
-#endif
 		{
 			ELOG("failed to create temporary file for report sqlite database: "<<strerror(errno));
 			_isOk = false;
 			return;
 		}
-		_dbFileName = fnameBuf;
+#else
+		boost::filesystem::path p(tmpDir);
+		p = boost::filesystem::absolute(p);
+		boost::system::error_code ec;
+		p = boost::filesystem::canonical(p, ec);
+		if(ec)
+		{
+			ELOG("unable to canonicalize temporary directory path: "<<ec);
+			_isOk = false;
+			return;
+		}
+		p /= "rdb_XXXXXX.sqlite";
+		std::string str = p.string();
+		std::vector<char> fnameBuf(str.begin(), str.end());
+		fnameBuf.push_back(0);
+		int fd = mkstemps(&fnameBuf[0], 7);
+		if(0 > fd)
+		{
+			ELOG("failed to create temporary file for report sqlite database: "<<strerror(errno));
+			_isOk = false;
+			return;
+		}
+		close(fd);
+		_dbFileName.assign(fnameBuf.begin(), fnameBuf.end());
+#endif
 
-#define LITE(action, ...) {int res = (__VA_ARGS__); if(SQLITE_OK != res && SQLITE_DONE != res && SQLITE_ROW != res){ELOG("sqlite call failed: "<<sqlite3_errmsg(_db)<<" ("<<__LINE__<<")");_isOk=false;action;}}
+//#define LITE(action, ...) {int res = (__VA_ARGS__); if(SQLITE_OK != res && SQLITE_DONE != res && SQLITE_ROW != res){ELOG("sqlite call failed: "<<sqlite3_errmsg(_db)<<" ("<<__LINE__<<")");_isOk=false;action;}}
 
-		LITE(return, sqlite3_open(_dbFileName.c_str(), &_db));
+		try
+		{
+			_db.open(_dbFileName);
+			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
+			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
 
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR)", NULL, NULL, NULL));
+			_db<<"CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )";
 
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )", NULL, NULL, NULL));
+			_db<<"CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)";
+			_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
+			_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
 
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)", NULL, NULL, NULL));
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)", NULL, NULL, NULL));
-		LITE(return, sqlite3_exec(_db, "CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)", NULL, NULL, NULL));
+			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,intersect1_volume INT4,intersect2_volume INT4,intersect3_volume INT4, PRIMARY KEY(page1_id,page2_id))";
+		}
+		catch(sqlitepp::exception &e)
+		{
+			ELOG("sqlitepp exception: "<<e.what());
+		}
+
+
 	}
 
 	///////////////////////////////////////////////////
 	ReportGenerator::~ReportGenerator()
 	{
-		if(_db)
-		{
-			sqlite3_close(_db);
-		}
-
 	}
 
 	///////////////////////////////////////////////////
@@ -70,16 +97,13 @@ namespace scom { namespace impl
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
-		sqlite3_stmt *stm;
-		LITE(return false, sqlite3_prepare(_db, "INSERT INTO page (id) VALUES(?)", -1, &stm, NULL));
+		sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
 
 		for(int i(0); i<_pageIds.size(); i++)
 		{
-			LITE(sqlite3_finalize(stm);return false, sqlite3_bind_int(stm, 1, i));
-			LITE(sqlite3_finalize(stm);return false, sqlite3_step(stm));
-			LITE(sqlite3_finalize(stm);return false, sqlite3_reset(stm));
+			stm.use_value(1, i);
+			stm.exec();
 		}
-		sqlite3_finalize(stm);
 		return _isOk;
 	}
 
@@ -87,27 +111,24 @@ namespace scom { namespace impl
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
 		//перебрать строки, обновить в базе урлы и ссылки
-		sqlite3_stmt *stm;
-		LITE(return false, sqlite3_prepare(_db, "UPDATE page SET uri=? WHERE id=?", -1, &stm, NULL));
+		sqlitepp::statement stm(_db, "UPDATE page SET uri=? WHERE id=?");
 
-		sqlite3_stmt *stm2;
-		LITE(sqlite3_finalize(stm);return false, sqlite3_prepare(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)", -1, &stm2, NULL));
+		sqlitepp::statement stm2(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)");
 
 		BOOST_FOREACH(const utils::Variant &row, rows.as<utils::Variant::DequeVariant>())
 		{
 			//id, uri, ref_page_ids, text
 			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
-			int srcId = pageId(rowv[0]);
+			int srcId = pageId(rowv[0].as<boost::int64_t>());
 			if(srcId >= _pageIds.size())
 			{
 				continue;
 			}
 			const std::string &uri = rowv[1].as<std::string>();
 
-			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_text(stm, 1, uri.data(), (int)uri.size(), NULL));
-			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm, 2, srcId));
-			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_step(stm));
-			LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_reset(stm));
+			stm.use_value(1, uri, false);
+			stm.use_value(2, srcId);
+			stm.exec();
 
 			if(!rowv[2].isNull())
 			{
@@ -122,16 +143,12 @@ namespace scom { namespace impl
 						continue;
 					}
 
-					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm2, 1, srcId));
-					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_bind_int(stm2, 2, dstId));
-					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_step(stm2));
-					LITE(sqlite3_finalize(stm);sqlite3_finalize(stm2);return false, sqlite3_reset(stm2));
+					stm2.use_value(1, srcId);
+					stm2.use_value(2, dstId);
+					stm2.exec();
 				}
 			}
 		}
-
-		sqlite3_finalize(stm);
-		sqlite3_finalize(stm2);
 
 		//индексировать слова
 		return _isOk;

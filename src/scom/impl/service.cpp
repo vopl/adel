@@ -108,6 +108,11 @@ namespace scom { namespace impl
 			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.dic"),
 			"hunspell dic path");
 
+		options->addOption(
+			"tmp-dir",
+			boost::program_options::value<std::string>()->default_value("../tmp"),
+			"temporary directory for report database files");
+
 		options->addOptions(*http::Client::prepareOptions(prefix));
 
 		return options;
@@ -156,6 +161,8 @@ namespace scom { namespace impl
 		_hunspell = new Hunspell(
 			o["hunspell.affpath"].as<std::string>().c_str(),
 			o["hunspell.dicpath"].as<std::string>().c_str());
+
+		_tmpDir = o["tmp-dir"].as<std::string>();
 
 	}
 
@@ -1451,57 +1458,63 @@ namespace scom { namespace impl
 			
 			*/
 
-			ReportGenerator rg(_hunspell);
-
-			if(!rg.isOk())
+			try
 			{
-				return false;
-			}
+				ReportGenerator rg(_tmpDir, _hunspell);
 
-			//выявить количество страниц
-			res = c.query("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL", instanceId);
-			IF_PGRES_ERROR(return false, res);
-
-			size_t pagesAmount = res.fetchInt32(0,0);
-#define PAGESGRANULA (1000)
-
-			//заливать идентификаторы страницы
-			for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
-			{
-				res = c.query("SELECT id FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
-				IF_PGRES_ERROR(return false, res);
-
-				utils::Variant pageIds;
-				bool b = res.fetchColumn(pageIds, 0, 0, (size_t)-1);
-				assert(b);
-
-				if(!rg.addPageIds(pageIds))
+				if(!rg.isOk())
 				{
 					return false;
 				}
-			}
 
-			if(!rg.fixPageIds())
-			{
-				return false;
-			}
-
-			//заливать урлы, тексты и ссылки страниц
-			for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
-			{
-				res = c.query("SELECT id, uri, ref_page_ids, text FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+				//выявить количество страниц
+				res = c.query("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL", instanceId);
 				IF_PGRES_ERROR(return false, res);
 
-				utils::Variant pageRows;
-				bool b = res.fetchRowsList(pageRows, 0, (size_t)-1);
-				assert(b);
+				size_t pagesAmount = res.fetchInt32(0,0);
+	#define PAGESGRANULA (1000)
 
-				if(!rg.setPagesContent(pageRows))
+				//заливать идентификаторы страницы
+				for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
+				{
+					res = c.query("SELECT id FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+					IF_PGRES_ERROR(return false, res);
+
+					utils::Variant pageIds;
+					bool b = res.fetchColumn(pageIds, 0, 0, (size_t)-1);
+					assert(b);
+
+					if(!rg.addPageIds(pageIds))
+					{
+						return false;
+					}
+				}
+
+				if(!rg.fixPageIds())
 				{
 					return false;
 				}
-			}
 
+				//заливать урлы, тексты и ссылки страниц
+				for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
+				{
+					res = c.query("SELECT id, uri, ref_page_ids, text FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND status IS NOT NULL ORDER BY id LIMIT $2 OFFSET $3", utils::MVA(instanceId, PAGESGRANULA, i));
+					IF_PGRES_ERROR(return false, res);
+
+					utils::Variant pageRows;
+					bool b = res.fetchRowsList(pageRows, 0, (size_t)-1);
+					assert(b);
+
+					if(!rg.setPagesContent(pageRows))
+					{
+						return false;
+					}
+				}
+			}
+			catch (sqlitepp::exception &e)
+			{
+				ELOG("sqlitepp exception: "<<e.what());
+			}
 
 			/*
 			sqlite3 *sdb = NULL;

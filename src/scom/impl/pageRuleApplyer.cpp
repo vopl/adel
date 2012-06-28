@@ -329,6 +329,7 @@ namespace scom { namespace impl
 			default:
 				assert(!"unknown page rule kind");
 				ELOG("unknown page rule kind: "<<(kindAndAccess & PageRule::ek_mask));
+				break;
 			}
 		}
 		return amount;

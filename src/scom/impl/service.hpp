@@ -80,6 +80,7 @@ namespace scom { namespace impl
 		PageRuleApplyersContainer	_prac;
 
 		http::Client	_htc;
+		std::string		_tmpDir;
 		Hunspell		*_hunspell;
 
 	private:

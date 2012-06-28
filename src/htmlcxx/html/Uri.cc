@@ -422,7 +422,7 @@ string Uri::unparse(int flags ) const
 	DEBUGP("Unparsing hostname\n");
 	if(!mHostname.empty()) { 
 		size_t offset = 0;
-		if(flags & Uri::REMOVE_WWW_PREFIX && mHostname.length() > 3) {
+		if((flags & Uri::REMOVE_WWW_PREFIX) && mHostname.length() > 3) {
 			offset = wwwPrefixOffset(mHostname);
 		}
 		ret += (mHostname.c_str() + offset);
