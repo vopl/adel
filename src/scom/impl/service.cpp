@@ -99,13 +99,20 @@ namespace scom { namespace impl
 			"maximum number of pages per one rule");
 		options->addOption(
 			"hunspell.affpath",
-			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.aff"),
+			boost::program_options::value<std::string>()->default_value("../spell/en_US.aff"),
 			"hunspell aff path");
 
 		options->addOption(
 			"hunspell.dicpath",
-			boost::program_options::value<std::string>()->default_value("../spell/ru_RU.dic"),
+			boost::program_options::value<std::string>()->default_value("../spell/en_US.dic"),
 			"hunspell dic path");
+
+		std::vector<std::string> extraDics;
+		extraDics.push_back("../spell/ru_RU.dic");
+		options->addOption(
+			"hunspell.extradicpath",
+			boost::program_options::value<std::vector<std::string> >()->default_value(extraDics, "../spell/ru_RU.dic"),
+			"hunspell extra dic paths");
 
 		options->addOption(
 			"tmp-dir",
@@ -160,6 +167,12 @@ namespace scom { namespace impl
 		_hunspell = new Hunspell(
 			o["hunspell.affpath"].as<std::string>().c_str(),
 			o["hunspell.dicpath"].as<std::string>().c_str());
+
+		BOOST_FOREACH(const std::string &dp, o["hunspell.extradicpath"].as<std::vector<std::string> >())
+		{
+			_hunspell->add_dic(dp.c_str(), NULL);
+		}
+
 
 		_tmpDir = o["tmp-dir"].as<std::string>();
 

@@ -44,6 +44,7 @@ namespace scom { namespace impl
 	private:
 		boost::int32_t pageId(boost::int64_t id);
 		boost::int32_t pushPageText(boost::int32_t id, const std::string &text);
+		void stem(std::deque<int32_t> &compressedWords, const std::vector<int32_t> &wordChars);
 
 	};
 }}
