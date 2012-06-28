@@ -97,13 +97,33 @@ namespace scom { namespace impl
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
-		sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
-		stm.prepare();
 
-		for(int i(0); i<_pageIds.size(); i++)
+		//сформировать заготовки страниц
 		{
-			stm.use_value(1, i);
-			stm.exec();
+			sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
+			stm.prepare();
+
+			for(int i(0); i<_pageIds.size(); i++)
+			{
+				stm.use_value(1, i);
+				stm.exec();
+			}
+		}
+
+		//сформировать заготовки связей страниц по фразам
+		{
+			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page (page1_id, page2_id,intersect1_volume,intersect2_volume,intersect3_volume) VALUES(?,?,0,0,0)");
+			stm.prepare();
+
+			for(int i(0); i<_pageIds.size(); i++)
+			{
+				for(int j(0); j<i; j++)
+				{
+					stm.use_value(1, i);
+					stm.use_value(2, j);
+					stm.exec();
+				}
+			}
 		}
 		return _isOk;
 	}
@@ -112,7 +132,7 @@ namespace scom { namespace impl
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
 		//перебрать строки, обновить в базе урлы и ссылки
-		sqlitepp::statement stm(_db, "UPDATE page SET uri=? WHERE id=?");
+		sqlitepp::statement stm(_db, "UPDATE page SET uri=?, volume=? WHERE id=?");
 		stm.prepare();
 
 		sqlitepp::statement stm2(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)");
@@ -128,9 +148,13 @@ namespace scom { namespace impl
 				continue;
 			}
 			const std::string &uri = rowv[1].as<std::string>();
+			const std::string *text = rowv[3].isNull()?NULL:&rowv[3].as<std::string>();
+
+			//индексировать слова тут
 
 			stm.use_value(1, uri, false);
-			stm.use_value(2, srcId);
+			stm.use_value(2, text?(int)text->size():0);
+			stm.use_value(3, srcId);
 			stm.exec();
 
 			if(!rowv[2].isNull())
@@ -153,7 +177,6 @@ namespace scom { namespace impl
 			}
 		}
 
-		//индексировать слова
 		return _isOk;
 	}
 
