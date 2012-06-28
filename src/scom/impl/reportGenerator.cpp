@@ -47,8 +47,6 @@ namespace scom { namespace impl
 		_dbFileName.assign(fnameBuf.begin(), fnameBuf.end());
 #endif
 
-//#define LITE(action, ...) {int res = (__VA_ARGS__); if(SQLITE_OK != res && SQLITE_DONE != res && SQLITE_ROW != res){ELOG("sqlite call failed: "<<sqlite3_errmsg(_db)<<" ("<<__LINE__<<")");_isOk=false;action;}}
-
 		try
 		{
 			_db.open(_dbFileName);
@@ -103,7 +101,7 @@ namespace scom { namespace impl
 			sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
 			stm.prepare();
 
-			for(int i(0); i<_pageIds.size(); i++)
+			for(boost::int32_t i(0); i<_pageIds.size(); i++)
 			{
 				stm.use_value(1, i);
 				stm.exec();
@@ -115,9 +113,9 @@ namespace scom { namespace impl
 			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page (page1_id, page2_id,intersect1_volume,intersect2_volume,intersect3_volume) VALUES(?,?,0,0,0)");
 			stm.prepare();
 
-			for(int i(0); i<_pageIds.size(); i++)
+			for(boost::int32_t i(0); i<_pageIds.size(); i++)
 			{
-				for(int j(0); j<i; j++)
+				for(boost::int32_t j(0); j<i; j++)
 				{
 					stm.use_value(1, i);
 					stm.use_value(2, j);
@@ -142,7 +140,7 @@ namespace scom { namespace impl
 		{
 			//id, uri, ref_page_ids, text
 			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
-			int srcId = pageId(rowv[0].as<boost::int64_t>());
+			boost::int32_t srcId = pageId(rowv[0].as<boost::int64_t>());
 			if(srcId >= _pageIds.size())
 			{
 				continue;
@@ -150,10 +148,8 @@ namespace scom { namespace impl
 			const std::string &uri = rowv[1].as<std::string>();
 			const std::string *text = rowv[3].isNull()?NULL:&rowv[3].as<std::string>();
 
-			//индексировать слова тут
-
 			stm.use_value(1, uri, false);
-			stm.use_value(2, text?(int)text->size():0);
+			stm.use_value(2, text?pushPageText(srcId, *text):(boost::int32_t)0);
 			stm.use_value(3, srcId);
 			stm.exec();
 
@@ -164,7 +160,7 @@ namespace scom { namespace impl
 				for(size_t i(0); i<refIds.size(); i+=8)
 				{
 					boost::int64_t &i64 = *(boost::int64_t*)&refIds[i];
-					int dstId = pageId(i64);
+					boost::int32_t dstId = pageId(i64);
 					if(dstId >= _pageIds.size())
 					{
 						continue;
@@ -181,9 +177,16 @@ namespace scom { namespace impl
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
-	int ReportGenerator::pageId(boost::int64_t id)
+	boost::int32_t ReportGenerator::pageId(boost::int64_t id)
 	{
-		return (int)(std::lower_bound(_pageIds.begin(), _pageIds.end(), id) - _pageIds.begin());
+		return (boost::int32_t)(std::lower_bound(_pageIds.begin(), _pageIds.end(), id) - _pageIds.begin());
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////
+	boost::int32_t ReportGenerator::pushPageText(boost::int32_t id, const std::string &text)
+	{
+		assert(0);
+		return 0;
 	}
 
 }}

@@ -31,8 +31,19 @@ namespace scom { namespace impl
 		sqlitepp::session				_db;
 		std::deque<boost::int64_t>		_pageIds;
 
+		template <size_t size>
+		struct PhraseEntry
+		{
+			boost::int32_t	_pageId;
+			boost::int32_t	_words[size];
+		};
+		std::deque<PhraseEntry<1> > _phrases1;
+		std::deque<PhraseEntry<2> > _phrases2;
+		std::deque<PhraseEntry<3> > _phrases3;
+
 	private:
-		int pageId(boost::int64_t id);
+		boost::int32_t pageId(boost::int64_t id);
+		boost::int32_t pushPageText(boost::int32_t id, const std::string &text);
 
 	};
 }}

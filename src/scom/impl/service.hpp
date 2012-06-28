@@ -9,7 +9,6 @@
 #include "http/client.hpp"
 
 #include "scom/impl/pageRuleApplyersContainer.hpp"
-#include "scom/impl/wordBucket.hpp"
 
 #ifdef near
 #	undef near

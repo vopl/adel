@@ -2,7 +2,6 @@
 #include "scom/impl/service.hpp"
 #include "scom/impl/workerRaii.hpp"
 #include "scom/log.hpp"
-#include "scom/impl/textParser.hpp"
 
 #include "htmlcxx/html/ParserDom.h"
 #include "htmlcxx/html/CharsetConverter.h"
