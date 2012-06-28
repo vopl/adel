@@ -42,7 +42,7 @@ public:
 	// Current SQL statement.
 	string_t sql() const // throw()
 	{
-		return sql_.str();
+		return (*sql_).str();
 	}
 	
 	// Set new SQL statement.
@@ -76,7 +76,7 @@ public:
 	template<typename T>
 	query& operator<<(T const& t)
 	{
-		sql_ << t;
+		(*sql_) << t;
 		return *this;
 	}
 
@@ -101,7 +101,7 @@ public:
 	// Swap queries.
 	friend void swap(query& lhs, query& rhs);
 
-protected:
+private:
 	// Noncopyable.
 	query(query const& src);
 	// Nonassignable.
@@ -111,7 +111,8 @@ private:
 	into_binders intos_;
 	use_binders  uses_;
 
-	std::basic_ostringstream<char_t> sql_;
+	typedef std::basic_ostringstream<char_t> TSql;
+	TSql *sql_;
 };
 
 // Statement preparing proxy.

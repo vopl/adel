@@ -7,3 +7,4 @@ syntax: regexp
 ^MinSizeRel/
 ^log/
 ^statics/
+^tmp/

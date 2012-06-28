@@ -45,26 +45,29 @@ inline void delete_object(T* obj)
 //
 
 query::query()
+	: sql_(new TSql)
 {
 }
 //----------------------------------------------------------------------------
 
 query::query(string_t const& sql)
+	: sql_(new TSql)
 {
-	sql_ << sql;
+	(*sql_) << sql;
 }
 //----------------------------------------------------------------------------
 
 query::~query()
 {
 	clear();
+	delete sql_;
 }
 //----------------------------------------------------------------------------
 
 void query::sql(string_t const& text)
 {
-	sql_.str(text);
-	sql_.seekp(0, std::ios_base::end).clear();
+	(*sql_).str(text);
+	(*sql_).seekp(0, std::ios_base::end).clear();
 }
 //----------------------------------------------------------------------------
 
@@ -82,7 +85,7 @@ void query::clear() // throw()
 
 bool query::empty() const // throw()
 {
-	return sql_.str().empty() && intos_.empty() && uses_.empty();
+	return (*sql_).str().empty() && intos_.empty() && uses_.empty();
 }
 //----------------------------------------------------------------------------
 
@@ -114,11 +117,9 @@ void swap(query& q1, query& q2)
 	swap(q1.intos_, q2.intos_);
 	swap(q1.uses_, q2.uses_);
 	// swap sql streams
-	//std::swap(q1.sql_, q2.sql_);
-	q1.sql_.rdbuf(q2.sql_.rdbuf);
-	assert(!"swap(q1.sql_, q2.sql_); is not implemented");
-	q1.sql_.clear();
-	q2.sql_.clear();
+	std::swap(q1.sql_, q2.sql_);
+	q1.sql_->clear();
+	q2.sql_->clear();
 }
 //----------------------------------------------------------------------------
 

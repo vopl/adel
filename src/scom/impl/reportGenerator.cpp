@@ -53,7 +53,6 @@ namespace scom { namespace impl
 		{
 			_db.open(_dbFileName);
 			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
-			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
 
 			_db<<"CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )";
 
@@ -66,6 +65,7 @@ namespace scom { namespace impl
 		catch(sqlitepp::exception &e)
 		{
 			ELOG("sqlitepp exception: "<<e.what());
+			_isOk = false;
 		}
 
 
@@ -98,6 +98,7 @@ namespace scom { namespace impl
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
 		sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
+		stm.prepare();
 
 		for(int i(0); i<_pageIds.size(); i++)
 		{
@@ -112,8 +113,10 @@ namespace scom { namespace impl
 	{
 		//перебрать строки, обновить в базе урлы и ссылки
 		sqlitepp::statement stm(_db, "UPDATE page SET uri=? WHERE id=?");
+		stm.prepare();
 
 		sqlitepp::statement stm2(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)");
+		stm2.prepare();
 
 		BOOST_FOREACH(const utils::Variant &row, rows.as<utils::Variant::DequeVariant>())
 		{
