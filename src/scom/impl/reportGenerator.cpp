@@ -97,6 +97,7 @@ namespace scom { namespace impl
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
+		sqlitepp::transaction tr(_db);
 
 		//сформировать заготовки страниц
 		{
@@ -119,18 +120,21 @@ namespace scom { namespace impl
 			{
 				for(boost::int32_t j(0); j<i; j++)
 				{
-					stm.use_value(1, i);
-					stm.use_value(2, j);
+					stm.use_value(1, j);//page1_id < page2_id
+					stm.use_value(2, i);
 					stm.exec();
 				}
 			}
 		}
+
+		tr.commit();
 		return _isOk;
 	}
 
 	///////////////////////////////////////////////////
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
+		sqlitepp::transaction tr(_db);
 		//перебрать строки, обновить в базе урлы и ссылки
 		sqlitepp::statement stm(_db, "UPDATE page SET uri=?, volume=? WHERE id=?");
 		stm.prepare();
@@ -175,7 +179,31 @@ namespace scom { namespace impl
 			}
 		}
 
+		tr.commit();
 		return _isOk;
+	}
+
+	/////////////////////////////////////////////////////////////////////////////////
+	bool ReportGenerator::evalPhraseWeights()
+	{
+		//сортировать фразы, брать участки идентичных фраз и по ним обновлять веса кросса
+
+		if(!evalPhraseWeights(_phrases1))
+		{
+			return false;
+		}
+
+		if(!evalPhraseWeights(_phrases2))
+		{
+			return false;
+		}
+
+		if(!evalPhraseWeights(_phrases3))
+		{
+			return false;
+		}
+
+		return true;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
@@ -185,7 +213,7 @@ namespace scom { namespace impl
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
-	boost::int32_t ReportGenerator::pushPageText(boost::int32_t id, const std::string &text)
+	boost::int32_t ReportGenerator::pushPageText(boost::int32_t pageId, const std::string &text)
 	{
 		//нормализовать, разбить по словам
 		size_t bufSize = text.size()*3+16;
@@ -324,14 +352,13 @@ namespace scom { namespace impl
 		wordChars.clear();
 		ewt = ewtNull;
 
-		//заполнять фразы
-		assert(0);
+		fillPhrases(pageId, compressedWords);
 
 		return compressedWords.size();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////
-	void ReportGenerator::stem(std::deque<boost::int32_t> &compressedWords, const std::vector<int32_t> &wordChars)
+	void ReportGenerator::stem(std::deque<boost::int32_t> &compressedWords, const std::vector<boost::int32_t> &wordChars)
 	{
 		if(wordChars.empty())
 		{
@@ -370,6 +397,96 @@ namespace scom { namespace impl
 		crc32.process_bytes(encoded.data(), encoded.size());
 		compressedWords.push_back(crc32.checksum());
 
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	void ReportGenerator::fillPhrases(boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
+	{
+		size_t amount = compressedWords.size();
+
+		// {w1}
+		for(size_t i(0); i<amount; i++)
+		{
+			PhraseEntry<1> p1 = {pageId, {compressedWords[i]} };
+			_phrases1.push_back(p1);
+		}
+
+		// {w1,w2}
+		for(size_t i(0); i<amount-1; i++)
+		{
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+1]} };
+			_phrases2.push_back(p2);
+		}
+
+		// {w1,s1,w2}
+		for(size_t i(0); i<amount-2; i++)
+		{
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+2]} };
+			_phrases2.push_back(p2);
+		}
+
+		// {w1,s1,s2,w2}
+		for(size_t i(0); i<amount-3; i++)
+		{
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+3]} };
+			_phrases2.push_back(p2);
+		}
+
+		// {w1,			w2,			w3}
+		for(size_t i(0); i<amount-2; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+2]} };
+			_phrases3.push_back(p3);
+		}
+
+		// {w1,			w2,s1,		w3}
+		for(size_t i(0); i<amount-3; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+3]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,			w2,s1,s2	w3}
+		for(size_t i(0); i<amount-4; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+4]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1,		w2,			w3}
+		for(size_t i(0); i<amount-3; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+3]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1		w2,s1		w3}
+		for(size_t i(0); i<amount-4; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+4]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1		w2,s1,s2	w3}
+		for(size_t i(0); i<amount-5; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+5]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1,s2,	w2,			w3}
+		for(size_t i(0); i<amount-4; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+4]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1,s2	w2,s1		w3}
+		for(size_t i(0); i<amount-5; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+5]} };
+			_phrases3.push_back(p3);
+		}
+		// {w1,s1,s2	w2,s1,s2	w3}
+		for(size_t i(0); i<amount-6; i++)
+		{
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+6]} };
+			_phrases3.push_back(p3);
+		}
 	}
 
 }}

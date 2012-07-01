@@ -1484,7 +1484,7 @@ namespace scom { namespace impl
 				IF_PGRES_ERROR(return false, res);
 
 				size_t pagesAmount = res.fetchInt32(0,0);
-	#define PAGESGRANULA (1000)
+#define PAGESGRANULA (1000)
 
 				//заливать идентификаторы страницы
 				for(size_t i(0); i<pagesAmount; i+=PAGESGRANULA)
@@ -1521,6 +1521,12 @@ namespace scom { namespace impl
 					{
 						return false;
 					}
+				}
+
+				//считать веса фраз
+				if(!rg.evalPhraseWeights())
+				{
+					return false;
 				}
 			}
 			catch (sqlitepp::exception &e)
