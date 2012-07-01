@@ -59,6 +59,9 @@ namespace scom { namespace impl
 			_db<<"PRAGMA ignore_check_constraints=on";
 			_db<<"PRAGMA journal_mode = off";
 			_db<<"PRAGMA synchronous = off";
+			_db<<"PRAGMA count_changes = off";
+			_db<<"PRAGMA temp_store = MEMORY";
+			_db<<"PRAGMA locking_mode = EXCLUSIVE";
 
 			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
 
@@ -68,7 +71,7 @@ namespace scom { namespace impl
 			//_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
 			//_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
 
-			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,intersect1_volume INT4,intersect2_volume INT4,intersect3_volume INT4, PRIMARY KEY(page1_id,page2_id))";
+			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,intersect1_volume INT4,intersect2_volume INT4,intersect3_volume INT4)";
 		}
 		catch(sqlitepp::exception &e)
 		{
@@ -126,16 +129,21 @@ namespace scom { namespace impl
 
 			for(boost::int32_t i(0); i<_pageIds.size(); i++)
 			{
+				sqlitepp::transaction tr2(_db);
 				for(boost::int32_t j(0); j<i; j++)
 				{
 					stm.use_value(1, j);//page1_id < page2_id
 					stm.use_value(2, i);
 					stm.exec();
 				}
+				tr2.commit();
 			}
 		}
 
 		//tr.commit();
+
+		_db<<"CREATE UNIQUE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
+
 		return _isOk;
 	}
 
