@@ -101,17 +101,18 @@ namespace scom { namespace impl
 	template <size_t size>
 	bool ReportGenerator::evalPhraseWeights(std::deque<PhraseEntry<size> > &phrases)
 	{
+		size_t pagesAmount = _pageIds.size();
+		////////////////////////
+		//половина матрицы пересечения страниц
+#define CROSSIDX(page1Idx, page2Idx) ((page2Idx*(page2Idx-1))/2+page1Idx)
+		std::vector<boost::int32_t> crossCounters(CROSSIDX(0, pagesAmount));
+
+		////////////////////////
 		std::sort(phrases.begin(), phrases.end());
 		typedef std::deque<PhraseEntry<size> > TPhrases;
 		typename TPhrases::const_iterator beginRangeIter, endRangeIter, end, crossIter1, crossIter2;
 		beginRangeIter = phrases.begin();
 		end = phrases.end();
-
-		char sql[128];
-		sprintf(sql, "UPDATE page_phrase_page SET intersect%d_volume=intersect%d_volume+1 WHERE page1_id=? AND page2_id=?", size, size);
-		sqlitepp::statement stm(_db, sql);
-		stm.prepare();
-		sqlitepp::transaction tr(_db);
 
 		//перебирать диапазоны идентичных фраз
 		while(end != beginRangeIter)
@@ -140,14 +141,46 @@ namespace scom { namespace impl
 						//там треугольная матрица, ид должен быть упорядочены
 						std::swap(page1Id, page2Id);
 					}
-					stm.use_value(1, page1Id);
-					stm.use_value(2, page2Id);
+					size_t cidx = CROSSIDX(page1Id, page2Id);
+					assert(cidx < crossCounters.size());
+					crossCounters[cidx] += 1;
+				}
+			}
+			//std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
+			beginRangeIter = endRangeIter;
+		}
+
+		phrases.clear();
+
+		//вылить в базу накопленные веса
+		{
+			char sql[128];
+			sprintf(sql, "UPDATE page_phrase_page SET intersect%d_volume=? WHERE page1_id=? AND page2_id=?", size, size);
+			sqlitepp::statement stm(_db, sql);
+			stm.prepare();
+			//sqlitepp::transaction tr(_db);
+
+			for(boost::int32_t page2Idx(0); page2Idx<_pageIds.size(); page2Idx++)
+			{
+				for(boost::int32_t page1Idx(0); page1Idx<page2Idx; page1Idx++)
+				{
+					size_t cidx = CROSSIDX(page1Idx, page2Idx);
+					assert(cidx < crossCounters.size());
+					stm.use_value(1, crossCounters[cidx]);
+					stm.use_value(2, page1Idx);//page1_id < page2_id
+					stm.use_value(3, page2Idx);
 					stm.exec();
 				}
 			}
-			beginRangeIter = endRangeIter;
+			//tr.commit();
 		}
-		tr.commit();
+
+
+		//std::cout<<"-------- size "<<size<<" complete"<<std::endl;
+		/*if(3 == size)
+		{
+			exit(0);
+		}*/
 
 		return true;
 	}

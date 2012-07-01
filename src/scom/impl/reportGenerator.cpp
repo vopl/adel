@@ -52,13 +52,21 @@ namespace scom { namespace impl
 		try
 		{
 			_db.open(_dbFileName);
+			_db<<"PRAGMA auto_vacuum = 0";
+			_db<<"PRAGMA checkpoint_fullfsync = off";
+			_db<<"PRAGMA fullfsync = off";
+			_db<<"PRAGMA encoding = \"UTF-8\"";
+			_db<<"PRAGMA ignore_check_constraints=on";
+			_db<<"PRAGMA journal_mode = off";
+			_db<<"PRAGMA synchronous = off";
+
 			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
 
 			_db<<"CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )";
 
-			_db<<"CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)";
-			_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
-			_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
+			//_db<<"CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)";
+			//_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
+			//_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
 
 			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,intersect1_volume INT4,intersect2_volume INT4,intersect3_volume INT4, PRIMARY KEY(page1_id,page2_id))";
 		}
@@ -97,7 +105,7 @@ namespace scom { namespace impl
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
-		sqlitepp::transaction tr(_db);
+		//sqlitepp::transaction tr(_db);
 
 		//сформировать заготовки страниц
 		{
@@ -127,14 +135,14 @@ namespace scom { namespace impl
 			}
 		}
 
-		tr.commit();
+		//tr.commit();
 		return _isOk;
 	}
 
 	///////////////////////////////////////////////////
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
-		sqlitepp::transaction tr(_db);
+		//sqlitepp::transaction tr(_db);
 		//перебрать строки, обновить в базе урлы и ссылки
 		sqlitepp::statement stm(_db, "UPDATE page SET uri=?, volume=? WHERE id=?");
 		stm.prepare();
@@ -179,7 +187,7 @@ namespace scom { namespace impl
 			}
 		}
 
-		tr.commit();
+		//tr.commit();
 		return _isOk;
 	}
 
@@ -392,6 +400,14 @@ namespace scom { namespace impl
 			}*/
 			_hunspell->free_list(&result, ns);
 		}
+		else
+		{
+			if(wordChars.size() <= 2)
+			{
+				return;
+			}
+
+		}
 
 		boost::crc_32_type  crc32;
 		crc32.process_bytes(encoded.data(), encoded.size());
@@ -405,84 +421,84 @@ namespace scom { namespace impl
 		size_t amount = compressedWords.size();
 
 		// {w1}
-		for(size_t i(0); i<amount; i++)
+		if(amount > 0) for(size_t i(0); i<amount; i++)
 		{
 			PhraseEntry<1> p1 = {pageId, {compressedWords[i]} };
 			_phrases1.push_back(p1);
 		}
 
 		// {w1,w2}
-		for(size_t i(0); i<amount-1; i++)
+		if(amount > 1) for(size_t i(0); i<amount-1; i++)
 		{
 			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+1]} };
 			_phrases2.push_back(p2);
 		}
 
 		// {w1,s1,w2}
-		for(size_t i(0); i<amount-2; i++)
+		if(amount > 2) for(size_t i(0); i<amount-2; i++)
 		{
 			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+2]} };
 			_phrases2.push_back(p2);
 		}
 
 		// {w1,s1,s2,w2}
-		for(size_t i(0); i<amount-3; i++)
+		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
 			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+3]} };
 			_phrases2.push_back(p2);
 		}
 
 		// {w1,			w2,			w3}
-		for(size_t i(0); i<amount-2; i++)
+		if(amount > 2) for(size_t i(0); i<amount-2; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+2]} };
 			_phrases3.push_back(p3);
 		}
 
 		// {w1,			w2,s1,		w3}
-		for(size_t i(0); i<amount-3; i++)
+		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+3]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,			w2,s1,s2	w3}
-		for(size_t i(0); i<amount-4; i++)
+		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+4]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1,		w2,			w3}
-		for(size_t i(0); i<amount-3; i++)
+		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+3]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1		w2,s1		w3}
-		for(size_t i(0); i<amount-4; i++)
+		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+4]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1		w2,s1,s2	w3}
-		for(size_t i(0); i<amount-5; i++)
+		if(amount > 5) for(size_t i(0); i<amount-5; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+5]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1,s2,	w2,			w3}
-		for(size_t i(0); i<amount-4; i++)
+		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+4]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1,s2	w2,s1		w3}
-		for(size_t i(0); i<amount-5; i++)
+		if(amount > 5) for(size_t i(0); i<amount-5; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+5]} };
 			_phrases3.push_back(p3);
 		}
 		// {w1,s1,s2	w2,s1,s2	w3}
-		for(size_t i(0); i<amount-6; i++)
+		if(amount > 6) for(size_t i(0); i<amount-6; i++)
 		{
 			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+6]} };
 			_phrases3.push_back(p3);

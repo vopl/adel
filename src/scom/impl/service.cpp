@@ -1402,73 +1402,13 @@ namespace scom { namespace impl
 		assert(b);
 
 		//	перевесли его в состояние merge, выбрать его данные
-		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
 
 		//считать
 		{
-			/*
-			 *	перебирать из базы страницы, каждую
-			 *		бить на фразы, каждую фразу складировать в линейный контейнер
-			 *
-			 *	сортировать фразы
-			 *
-			 *	перебрать диапазоны одинаковых фраз, каждый диапазон
-			 *		перебирать страницы, добавлять кроссы в базу
-			 *
-			 *	вычистить редкие фразы
-			 *
-			 */
-
-			/*
-			PageMerger merger;
-
-			for(pages)
-			{
-				merger.pushPage(id, text);
-			}
-
-			merger.sort();
-
-			vector<row> rows;
-			while(merger.store(rows, 220 штук))
-			{
-				store(rows);
-			}
-			*/
-			
-			/*
-			подключить sqlite
-			отчет это база sqlite
-				host (name)
-				page (uri)
-				phrase1 (w1)
-				phrase2 (w1,w2)
-				phrase3 (w1,w2,w3)
-				
-				page_ref_page (src_page_id, dst_page_id)
-				
-				phrase1_in_page (phrase1_id, page_id)
-				phrase2_in_page (phrase2_id, page_id)
-				phrase3_in_page (phrase3_id, page_id)
-			
-			
-			выделить транслятор id для страниц, хостов
-			выбрать из страниц id, uri, перебирать
-				заполнять трансляторы
-			упорядочить трансляторы
-			сформировать таблицы host, page
-			
-			итерациями выбирать ссылки, перебирать
-				заполнять ссылки через транслятор
-			
-			итерациями выбирать текст из страниц, перебирать
-				бить на фразы, перебирать
-					заполнять phrase1, phrase2, phrase3
-			
-			*/
 
 			try
 			{
@@ -1534,30 +1474,13 @@ namespace scom { namespace impl
 				ELOG("sqlitepp exception: "<<e.what());
 			}
 
-			/*
-			sqlite3 *sdb = NULL;
-
-			int res = sqlite3_open("/tmp/rdb.sqlite", &sdb);
-
-			char *errMsg = NULL;
-			res = sqlite3_exec(sdb, "CREATE TABLE page(id int4, uri string)", NULL, NULL, &errMsg);
-			if(errMsg)
-			{
-				sqlite3_free(errMsg);
-			}
-
-			res = sqlite3_close(sdb);
-			*/
-
-
-
 		}
 
 		//транзакция
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
 		//	перевесли его в состояние report, сохранить данные
-		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
