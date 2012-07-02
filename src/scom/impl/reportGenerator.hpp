@@ -136,6 +136,7 @@ namespace scom { namespace impl
 		while(end != beginRangeIter)
 		{
 			endRangeIter = beginRangeIter;
+
 			do
 			{
 				endRangeIter++;
@@ -143,46 +144,53 @@ namespace scom { namespace impl
 			while(*endRangeIter == *beginRangeIter && endRangeIter != end);
 
 			//внутри одного диапазона наращивать кросс весов
-			typedef std::map<std::pair<boost::int32_t, boost::int32_t>, boost::int32_t> TLocalCross;
-			TLocalCross localCross;
-			for(crossIter1 = beginRangeIter; crossIter1 != endRangeIter; crossIter1++)
+			size_t rangeSize = endRangeIter-beginRangeIter;
+			if(rangeSize > 1)
 			{
-				for(crossIter2 = beginRangeIter; crossIter2 != endRangeIter; crossIter2++)
+				typename TPhrases::const_iterator preEndRangeIter = endRangeIter-1;
+				typedef std::map<std::pair<boost::int32_t, boost::int32_t>, boost::int32_t> TLocalCross;
+				TLocalCross localCross;
+				for(crossIter1 = beginRangeIter; crossIter1 != preEndRangeIter; crossIter1++)
 				{
-					boost::int32_t page1Id = crossIter1->_pageId;
-					boost::int32_t page2Id = crossIter2->_pageId;
-					if(page1Id == page2Id)
+					for(crossIter2 = crossIter1+1; crossIter2 != endRangeIter; crossIter2++)
 					{
-						//сам с собой не надо
-						continue;
+						boost::int32_t page1Id = crossIter1->_pageId;
+						boost::int32_t page2Id = crossIter2->_pageId;
+						if(page1Id == page2Id)
+						{
+							//сам с собой не надо
+							continue;
+						}
+						if(page1Id > page2Id)
+						{
+							//там треугольная матрица, ид должены быть упорядочены
+							std::swap(page1Id, page2Id);
+						}
+						localCross[std::make_pair(page1Id, page2Id)]++;
 					}
-					if(page1Id > page2Id)
-					{
-						//там треугольная матрица, ид должены быть упорядочены
-						std::swap(page1Id, page2Id);
-					}
-					localCross[std::make_pair(page1Id, page2Id)]++;
 				}
-			}
-			BOOST_FOREACH(const TLocalCross::value_type &c, localCross)
-			{
-				size_t cidx = CROSSIDX(c.first.first, c.first.second);
-				assert(cidx < crossCounters.size());
-				CrossCounter &cc = crossCounters[cidx];
-				cc._all += c.second;
 
-				if(c.second > 1)
+				BOOST_FOREACH(const TLocalCross::value_type &c, localCross)
 				{
-					cc._gt1c++;
-					cc._gt1m1 += c.second-1;
-				}
-				if(c.second > 2)
-				{
-					cc._gt2c++;
-					cc._gt2m2 += c.second-2;
+					size_t cidx = CROSSIDX(c.first.first, c.first.second);
+					assert(cidx < crossCounters.size());
+					CrossCounter &cc = crossCounters[cidx];
+					cc._all += c.second;
+
+					if(c.second > 1)
+					{
+						cc._gt1c++;
+						cc._gt1m1 += c.second-1;
+					}
+					if(c.second > 2)
+					{
+						cc._gt2c++;
+						cc._gt2m2 += c.second-2;
+					}
 				}
 			}
-			//std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
+
+			std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
 			beginRangeIter = endRangeIter;
 		}
 
@@ -223,7 +231,7 @@ namespace scom { namespace impl
 		}
 
 
-		//std::cout<<"-------- size "<<size<<" complete"<<std::endl;
+		std::cout<<"-------- size "<<size<<" complete"<<std::endl;
 		/*if(3 == size)
 		{
 			exit(0);

@@ -1402,7 +1402,7 @@ namespace scom { namespace impl
 		assert(b);
 
 		//	перевесли его в состояние merge, выбрать его данные
-		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=20, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
@@ -1480,7 +1480,7 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
 		//	перевесли его в состояние report, сохранить данные
-		//IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
+		IF_PGRES_ERROR(return false, c.query("UPDATE instance SET stage=30, atime=CURRENT_TIMESTAMP WHERE id=$1", instanceId));
 
 		//конец транзакции
 		IF_PGRES_ERROR(return false, c.query(_stCommit));
