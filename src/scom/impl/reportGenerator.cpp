@@ -138,9 +138,9 @@ namespace scom { namespace impl
 			sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
 			stm.prepare();
 
-			for(boost::int32_t i(0); i<_pageIds.size(); i++)
+			for(boost::int32_t pageId(1); pageId<=_pageIds.size(); pageId++)
 			{
-				stm.use_value(1, i);
+				stm.use_value(1, pageId);
 				stm.exec();
 			}
 		}
@@ -167,13 +167,13 @@ namespace scom { namespace impl
 				") VALUES(?,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
 			stm.prepare();
 
-			for(boost::int32_t i(0); i<_pageIds.size(); i++)
+			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
 			{
 				sqlitepp::transaction tr2(_db);
-				for(boost::int32_t j(0); j<i; j++)
+				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
 				{
-					stm.use_value(1, j);//page1_id < page2_id
-					stm.use_value(2, i);
+					stm.use_value(1, page1Id);//page1_id < page2_id
+					stm.use_value(2, page2Id);
 					stm.exec();
 				}
 				tr2.commit();
@@ -203,7 +203,7 @@ namespace scom { namespace impl
 			//id, uri, ref_page_ids, text
 			const utils::Variant::DequeVariant &rowv = row.as<utils::Variant::DequeVariant>();
 			boost::int32_t srcId = pageId(rowv[0].as<boost::int64_t>());
-			if(srcId >= _pageIds.size())
+			if(srcId > _pageIds.size())
 			{
 				continue;
 			}
@@ -223,7 +223,7 @@ namespace scom { namespace impl
 				{
 					boost::int64_t &i64 = *(boost::int64_t*)&refIds[i];
 					boost::int32_t dstId = pageId(i64);
-					if(dstId >= _pageIds.size())
+					if(dstId > _pageIds.size())
 					{
 						continue;
 					}
@@ -265,7 +265,7 @@ namespace scom { namespace impl
 	/////////////////////////////////////////////////////////////////////////////////
 	boost::int32_t ReportGenerator::pageId(boost::int64_t id)
 	{
-		return (boost::int32_t)(std::lower_bound(_pageIds.begin(), _pageIds.end(), id) - _pageIds.begin());
+		return (boost::int32_t)(std::lower_bound(_pageIds.begin(), _pageIds.end(), id) - _pageIds.begin()) + 1;
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////

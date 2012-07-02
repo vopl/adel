@@ -54,14 +54,8 @@ void testScomClient(scom::Service *scom)
 		scom::PageRule r4 = {
 			"http://127.0.0.1:8080/index.html",
 			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 10, 2};
+			0, 10, 10000};
 		rules.push_back(r4);
-
-		scom::PageRule r41 = {
-			"http://127.0.0.1:8080/index.htm",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 10, 2};
-		rules.push_back(r41);
 
 		err = scom->setup(auth, rules);
 		CHECK_ERR(err);

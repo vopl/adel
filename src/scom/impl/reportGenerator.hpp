@@ -121,9 +121,9 @@ namespace scom { namespace impl
 		size_t pagesAmount = _pageIds.size();
 		////////////////////////
 		//половина матрицы пересечения страниц
-#define CROSSIDX(page1Idx, page2Idx) ((page2Idx*(page2Idx-1))/2+page1Idx)
+#define CROSSIDX(page1Id, page2Id) (((page2Id-1)*(page2Id-2))/2+(page1Id-1))
 
-		std::vector<CrossCounter> crossCounters(CROSSIDX(0, pagesAmount));
+		std::vector<CrossCounter> crossCounters(CROSSIDX(1, pagesAmount+1));
 
 		////////////////////////
 		std::sort(phrases.begin(), phrases.end());
@@ -202,11 +202,11 @@ namespace scom { namespace impl
 			stm.prepare();
 			//sqlitepp::transaction tr(_db);
 
-			for(boost::int32_t page2Idx(0); page2Idx<_pageIds.size(); page2Idx++)
+			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
 			{
-				for(boost::int32_t page1Idx(0); page1Idx<page2Idx; page1Idx++)
+				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
 				{
-					size_t cidx = CROSSIDX(page1Idx, page2Idx);
+					size_t cidx = CROSSIDX(page1Id, page2Id);
 					assert(cidx < crossCounters.size());
 					const CrossCounter &cc = crossCounters[cidx];
 					stm.use_value(1, cc._all);
@@ -214,8 +214,8 @@ namespace scom { namespace impl
 					stm.use_value(3, cc._gt1m1);
 					stm.use_value(4, cc._gt2c);
 					stm.use_value(5, cc._gt2m2);
-					stm.use_value(6, page1Idx);//page1_id < page2_id
-					stm.use_value(7, page2Idx);
+					stm.use_value(6, page1Id);//page1_id < page2_id
+					stm.use_value(7, page2Id);
 					stm.exec();
 				}
 			}
