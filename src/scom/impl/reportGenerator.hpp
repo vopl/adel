@@ -125,6 +125,8 @@ namespace scom { namespace impl
 			while(*endRangeIter == *beginRangeIter && endRangeIter != end);
 
 			//внутри одного диапазона наращивать кросс весов
+			typedef std::map<std::pair<boost::int32_t, boost::int32_t>, boost::int32_t> TLocalCross;
+			TLocalCross localCross;
 			for(crossIter1 = beginRangeIter; crossIter1 != endRangeIter; crossIter1++)
 			{
 				for(crossIter2 = beginRangeIter; crossIter2 != endRangeIter; crossIter2++)
@@ -141,10 +143,14 @@ namespace scom { namespace impl
 						//там треугольная матрица, ид должен быть упорядочены
 						std::swap(page1Id, page2Id);
 					}
-					size_t cidx = CROSSIDX(page1Id, page2Id);
-					assert(cidx < crossCounters.size());
-					crossCounters[cidx] += 1;
+					localCross[std::make_pair(page1Id, page2Id)]++;
 				}
+			}
+			BOOST_FOREACH(const TLocalCross::value_type &c, localCross)
+			{
+				size_t cidx = CROSSIDX(c.first.first, c.first.second);
+				assert(cidx < crossCounters.size());
+				crossCounters[cidx] += 1;
 			}
 			//std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
 			beginRangeIter = endRangeIter;

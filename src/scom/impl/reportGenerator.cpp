@@ -3,7 +3,9 @@
 #include "scom/log.hpp"
 #include "utf8proc/utf8proc.h"
 
+#ifdef _MSC_VER
 #include <io.h>
+#endif
 
 #include <boost/foreach.hpp>
 #include <boost/filesystem.hpp>
