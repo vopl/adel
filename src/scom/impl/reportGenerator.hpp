@@ -23,6 +23,23 @@ namespace scom { namespace impl
 		bool fixPageIds();
 
 		bool setPagesContent(const utils::Variant &rows);
+
+		struct CrossCounter
+		{
+			boost::int32_t _all;
+			boost::int32_t _gt1c;
+			boost::int32_t _gt2c;
+			boost::int32_t _gt1m1;
+			boost::int32_t _gt2m2;
+			CrossCounter()
+				: _all(0)
+				, _gt1c(0)
+				, _gt2c(0)
+				, _gt1m1(0)
+				, _gt2m2(0)
+			{}
+		};
+
 		bool evalPhraseWeights();
 
 	private:
@@ -105,7 +122,8 @@ namespace scom { namespace impl
 		////////////////////////
 		//половина матрицы пересечения страниц
 #define CROSSIDX(page1Idx, page2Idx) ((page2Idx*(page2Idx-1))/2+page1Idx)
-		std::vector<boost::int32_t> crossCounters(CROSSIDX(0, pagesAmount));
+
+		std::vector<CrossCounter> crossCounters(CROSSIDX(0, pagesAmount));
 
 		////////////////////////
 		std::sort(phrases.begin(), phrases.end());
@@ -140,7 +158,7 @@ namespace scom { namespace impl
 					}
 					if(page1Id > page2Id)
 					{
-						//там треугольная матрица, ид должен быть упорядочены
+						//там треугольная матрица, ид должены быть упорядочены
 						std::swap(page1Id, page2Id);
 					}
 					localCross[std::make_pair(page1Id, page2Id)]++;
@@ -150,7 +168,19 @@ namespace scom { namespace impl
 			{
 				size_t cidx = CROSSIDX(c.first.first, c.first.second);
 				assert(cidx < crossCounters.size());
-				crossCounters[cidx] += 1;
+				CrossCounter &cc = crossCounters[cidx];
+				cc._all += c.second;
+
+				if(c.second > 1)
+				{
+					cc._gt1c++;
+					cc._gt1m1 += c.second-1;
+				}
+				if(c.second > 2)
+				{
+					cc._gt2c++;
+					cc._gt2m2 += c.second-2;
+				}
 			}
 			//std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
 			beginRangeIter = endRangeIter;
@@ -161,7 +191,13 @@ namespace scom { namespace impl
 		//вылить в базу накопленные веса
 		{
 			char sql[128];
-			sprintf(sql, "UPDATE page_phrase_page SET intersect%d_volume=? WHERE page1_id=? AND page2_id=?", size, size);
+			sprintf(sql, "UPDATE page_phrase_page SET "
+				"intersect%d_all_volume=?, "
+				"intersect%d_gt1c_volume=?, "
+				"intersect%d_gt1m1_volume=?, "
+				"intersect%d_gt2c_volume=?, "
+				"intersect%d_gt2m2_volume=? "
+				"WHERE page1_id=? AND page2_id=?", size, size, size, size, size);
 			sqlitepp::statement stm(_db, sql);
 			stm.prepare();
 			//sqlitepp::transaction tr(_db);
@@ -172,9 +208,14 @@ namespace scom { namespace impl
 				{
 					size_t cidx = CROSSIDX(page1Idx, page2Idx);
 					assert(cidx < crossCounters.size());
-					stm.use_value(1, crossCounters[cidx]);
-					stm.use_value(2, page1Idx);//page1_id < page2_id
-					stm.use_value(3, page2Idx);
+					const CrossCounter &cc = crossCounters[cidx];
+					stm.use_value(1, cc._all);
+					stm.use_value(2, cc._gt1c);
+					stm.use_value(3, cc._gt1m1);
+					stm.use_value(4, cc._gt2c);
+					stm.use_value(5, cc._gt2m2);
+					stm.use_value(6, page1Idx);//page1_id < page2_id
+					stm.use_value(7, page2Idx);
 					stm.exec();
 				}
 			}

@@ -79,7 +79,22 @@ namespace scom { namespace impl
 			//_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
 			//_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
 
-			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,intersect1_volume INT4,intersect2_volume INT4,intersect3_volume INT4)";
+			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,"
+				"intersect1_all_volume INT4,"
+				"intersect1_gt1c_volume INT4,"
+				"intersect1_gt1m1_volume INT4,"
+				"intersect1_gt2c_volume INT4,"
+				"intersect1_gt2m2_volume INT4,"
+				"intersect2_all_volume INT4,"
+				"intersect2_gt1c_volume INT4,"
+				"intersect2_gt1m1_volume INT4,"
+				"intersect2_gt2c_volume INT4,"
+				"intersect2_gt2m2_volume INT4,"
+				"intersect3_all_volume INT4,"
+				"intersect3_gt1c_volume INT4,"
+				"intersect3_gt1m1_volume INT4,"
+				"intersect3_gt2c_volume INT4,"
+				"intersect3_gt2m2_volume INT4)";
 		}
 		catch(sqlitepp::exception &e)
 		{
@@ -132,7 +147,24 @@ namespace scom { namespace impl
 
 		//сформировать заготовки связей страниц по фразам
 		{
-			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page (page1_id, page2_id,intersect1_volume,intersect2_volume,intersect3_volume) VALUES(?,?,0,0,0)");
+			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page ("
+				"page1_id, page2_id,"
+				"intersect1_all_volume,"
+				"intersect1_gt1c_volume,"
+				"intersect1_gt1m1_volume,"
+				"intersect1_gt2c_volume,"
+				"intersect1_gt2m2_volume,"
+				"intersect2_all_volume,"
+				"intersect2_gt1c_volume,"
+				"intersect2_gt1m1_volume,"
+				"intersect2_gt2c_volume,"
+				"intersect2_gt2m2_volume,"
+				"intersect3_all_volume,"
+				"intersect3_gt1c_volume,"
+				"intersect3_gt1m1_volume,"
+				"intersect3_gt2c_volume,"
+				"intersect3_gt2m2_volume"
+				") VALUES(?,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
 			stm.prepare();
 
 			for(boost::int32_t i(0); i<_pageIds.size(); i++)
@@ -150,7 +182,7 @@ namespace scom { namespace impl
 
 		//tr.commit();
 
-		_db<<"CREATE UNIQUE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
+		_db<<"CREATE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
 
 		return _isOk;
 	}
