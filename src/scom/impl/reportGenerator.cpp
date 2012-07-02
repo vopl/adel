@@ -3,6 +3,8 @@
 #include "scom/log.hpp"
 #include "utf8proc/utf8proc.h"
 
+#include <io.h>
+
 #include <boost/foreach.hpp>
 #include <boost/filesystem.hpp>
 #include <boost/crc.hpp>
@@ -15,15 +17,6 @@ namespace scom { namespace impl
 		: _isOk(true)
 		, _hunspell(hunspell)
 	{
-#ifdef _MSC_VER
-		char fnameBuf[L_tmpnam];
-		if(tmpnam_s(fnameBuf))
-		{
-			ELOG("failed to create temporary file for report sqlite database: "<<strerror(errno));
-			_isOk = false;
-			return;
-		}
-#else
 		boost::filesystem::path p(tmpDir);
 		p = boost::filesystem::absolute(p);
 		boost::system::error_code ec;
@@ -34,6 +27,19 @@ namespace scom { namespace impl
 			_isOk = false;
 			return;
 		}
+
+#ifdef _MSC_VER
+		p /= "rdb_XXXXXX";
+		std::string str = p.string();
+		std::vector<char> fnameBuf(str.begin(), str.end());
+		fnameBuf.push_back(0);
+		if(_mktemp_s(&fnameBuf[0], fnameBuf.size()))
+		{
+			ELOG("failed to create temporary file for report sqlite database: "<<strerror(errno));
+			_isOk = false;
+			return;
+		}
+#else
 		p /= "rdb_XXXXXX.sqlite";
 		std::string str = p.string();
 		std::vector<char> fnameBuf(str.begin(), str.end());
@@ -46,8 +52,8 @@ namespace scom { namespace impl
 			return;
 		}
 		close(fd);
-		_dbFileName.assign(fnameBuf.begin(), fnameBuf.end());
 #endif
+		_dbFileName.assign(fnameBuf.begin(), fnameBuf.end());
 
 		try
 		{
@@ -370,7 +376,7 @@ namespace scom { namespace impl
 
 		fillPhrases(pageId, compressedWords);
 
-		return compressedWords.size();
+		return (boost::int32_t)compressedWords.size();
 	}
 
 	/////////////////////////////////////////////////////////////////////////////////

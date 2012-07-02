@@ -251,13 +251,13 @@ namespace scom { namespace impl
 			"INNER JOIN instance AS i ON(p.instance_id=i.id) "
 			"LEFT JOIN active_host AS ah ON(p.active_host_id=ah.id) "
 			"WHERE "
-			"	(ah.atime IS NULL OR ah.atime<CURRENT_TIMESTAMP-$1::INTERVAL) AND "
+			"	(ah.atime IS NULL OR ah.atime<=CURRENT_TIMESTAMP-$1::INTERVAL) AND "
 			"	p.status IS NULL AND "
 			"	p.access IN(x'2'::int, x'4'::int, x'6'::int) AND "
 			"	i.stage=10 AND i.is_started AND "
 			"	1=1 "
 			"LIMIT $2 FOR UPDATE OF p");
-		_stMainSelectActiveHost = pgc::Statement("SELECT id, atime<CURRENT_TIMESTAMP-$1::INTERVAL FROM active_host WHERE name=$2 FOR UPDATE");
+		_stMainSelectActiveHost = pgc::Statement("SELECT id, atime<=CURRENT_TIMESTAMP-$1::INTERVAL FROM active_host WHERE name=$2 FOR UPDATE");
 		_stMainUpdatePageActiveHost = pgc::Statement("UPDATE page SET active_host_id=$2 WHERE id=$1");
 		_stMainUpdateActiveHostAtime = pgc::Statement("UPDATE active_host SET atime=CURRENT_TIMESTAMP WHERE id=$1");
 		_stMainInsertActiveHost = pgc::Statement("INSERT INTO active_host (name, atime) VALUES ($1, CURRENT_TIMESTAMP) RETURNING id");
@@ -1373,7 +1373,7 @@ namespace scom { namespace impl
 			"SELECT i.id "
 			"FROM instance AS i "
 			"WHERE "
-			"	(i.stage=10 OR i.stage=20 AND i.atime<CURRENT_TIMESTAMP-$1::INTERVAL) AND "
+			"	(i.stage=10 OR i.stage=20 AND i.atime<=CURRENT_TIMESTAMP-$1::INTERVAL) AND "
 			"	NOT EXISTS( "
 			"		SELECT * "
 			"		FROM PAGE AS p "
