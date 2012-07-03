@@ -131,72 +131,81 @@ void Uri::init(const string &uri_str)
 	const char *hostinfo;
 	char *endstr;
 	
-	/* We assume the processor has a branch predictor like most --
-	 * it assumes forward branches are untaken and backwards are taken.  That's
-	 * the reason for the gotos.  -djg
-	 */
-	if (uri[0] == '/') {
-		deal_with_path:
-		DEBUGP("Dealing with path\n");
-		/* we expect uri to point to first character of path ... remember
-		 * that the path could be empty -- http://foobar?query for example
-		 */
+	if (uri[0] == '/' && uri[1] == '/')
+	{
 		s = uri;
-		while ((uri_delims[*(unsigned char *)s] & NOTEND_PATH) == 0) {
-			++s;
-		}
-		if (s != uri) {
-			mPath.assign(uri, s - uri);
-			DEBUGP("Path is %s\n", mPath.c_str());
-		}
-		if (*s == 0) {
-			return;
-		}
-		if (*s == '?') {
-			++s;
-			s1 = strchr(s, '#');
-			if (s1) {
-				mFragment.assign(s1 + 1);
-				mExistsFragment = true;
-				DEBUGP("Fragment is %s\n", mFragment.c_str());
-				mQuery.assign(s, s1 - s);
-				mExistsQuery = true;
-				DEBUGP("Query is %s\n", mQuery.c_str());
-			}
-			else {
-				mQuery.assign(s);
-				mExistsQuery = true;
-				DEBUGP("Query is %s\n", mQuery.c_str());
-			}
-			return;
-		}
-		/* otherwise it's a fragment */
-		mFragment.assign(s + 1);
-		mExistsFragment = true;
-		DEBUGP("Fragment is %s\n", mFragment.c_str());
-		return;
-	}
-
-	DEBUGP("Dealing with scheme\n");
-	/* find the scheme: */
-	if (!isalpha(static_cast<unsigned char>(*uri))) goto deal_with_path;
-	s = uri;
-	while ((uri_delims[*(unsigned char *)s] & NOTEND_SCHEME) == 0) {
-		++s;
-	}
-	/* scheme must be non-empty and followed by :// */
-	//if (s == uri || s[0] != ':' || s[1] != '/' || s[2] != '/') {
-	if (s == uri || s[0] != ':') {
-		goto deal_with_path;        /* backwards predicted taken! */
-	}
-
-	mScheme.assign(uri, s - uri);
-	DEBUGP("Scheme is %s\n", mScheme.c_str());
-	s += 1;
-
-	if (s[0] == '/' && s[1] == '/') {
 		s += 2;
 	}
+	else
+	{
+		/* We assume the processor has a branch predictor like most --
+		 * it assumes forward branches are untaken and backwards are taken.  That's
+		 * the reason for the gotos.  -djg
+		 */
+		if (uri[0] == '/') {
+			deal_with_path:
+			DEBUGP("Dealing with path\n");
+			/* we expect uri to point to first character of path ... remember
+			 * that the path could be empty -- http://foobar?query for example
+			 */
+			s = uri;
+			while ((uri_delims[*(unsigned char *)s] & NOTEND_PATH) == 0) {
+				++s;
+			}
+			if (s != uri) {
+				mPath.assign(uri, s - uri);
+				DEBUGP("Path is %s\n", mPath.c_str());
+			}
+			if (*s == 0) {
+				return;
+			}
+			if (*s == '?') {
+				++s;
+				s1 = strchr(s, '#');
+				if (s1) {
+					mFragment.assign(s1 + 1);
+					mExistsFragment = true;
+					DEBUGP("Fragment is %s\n", mFragment.c_str());
+					mQuery.assign(s, s1 - s);
+					mExistsQuery = true;
+					DEBUGP("Query is %s\n", mQuery.c_str());
+				}
+				else {
+					mQuery.assign(s);
+					mExistsQuery = true;
+					DEBUGP("Query is %s\n", mQuery.c_str());
+				}
+				return;
+			}
+			/* otherwise it's a fragment */
+			mFragment.assign(s + 1);
+			mExistsFragment = true;
+			DEBUGP("Fragment is %s\n", mFragment.c_str());
+			return;
+		}
+
+		DEBUGP("Dealing with scheme\n");
+		/* find the scheme: */
+		if (!isalpha(static_cast<unsigned char>(*uri))) goto deal_with_path;
+		s = uri;
+		while ((uri_delims[*(unsigned char *)s] & NOTEND_SCHEME) == 0) {
+			++s;
+		}
+		/* scheme must be non-empty and followed by :// */
+		//if (s == uri || s[0] != ':' || s[1] != '/' || s[2] != '/') {
+		if (s == uri || s[0] != ':') {
+			goto deal_with_path;        /* backwards predicted taken! */
+		}
+
+		mScheme.assign(uri, s - uri);
+		DEBUGP("Scheme is %s\n", mScheme.c_str());
+		s += 1;
+
+		if (s[0] == '/' && s[1] == '/') {
+			s += 2;
+		}
+	}
+
 
 	DEBUGP("Finding hostinfo\n");
 	hostinfo = s;
@@ -597,11 +606,11 @@ std::string Uri::encode(const std::string &uri)
 			char buf[]  = "%xx";
 
 			char c = ((*ptr) >> 4) & 0xf;
-			if(c >= 10) buf[1] = c + 'A';
+			if(c >= 10) buf[1] = c + ('A' - 10);
 			else buf[1] = c + '0';
 
 			c = (*ptr) & 0xf;
-			if(c >= 10) buf[2] = c + 'A';
+			if(c >= 10) buf[2] = c + ('A' - 10);
 			else buf[2] = c + '0';
 
 			ret.append(buf, 3);

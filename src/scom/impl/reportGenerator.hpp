@@ -54,6 +54,8 @@ namespace scom { namespace impl
 		{
 			boost::int32_t	_pageId;
 			boost::int32_t	_words[size];
+			//TODO сливать фразы одной страницы в счетчик
+			//boost::int32_t	_amount;
 
 			bool operator<(const PhraseEntry<size> &with) const;
 			bool operator==(const PhraseEntry<size> &with) const;
@@ -198,7 +200,7 @@ namespace scom { namespace impl
 
 		//вылить в базу накопленные веса
 		{
-			char sql[128];
+			char sql[256];
 			sprintf(sql, "UPDATE page_phrase_page SET "
 				"intersect%d_all_volume=?, "
 				"intersect%d_gt1c_volume=?, "
