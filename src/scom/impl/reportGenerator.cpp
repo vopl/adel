@@ -131,7 +131,6 @@ namespace scom { namespace impl
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
-		//sqlitepp::transaction tr(_db);
 
 		//сформировать заготовки страниц
 		{
@@ -167,22 +166,18 @@ namespace scom { namespace impl
 				") VALUES(?,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
 			stm.prepare();
 
-			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
-			{
-				sqlitepp::transaction tr2(_db);
-				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
-				{
-					stm.use_value(1, page1Id);//page1_id < page2_id
-					stm.use_value(2, page2Id);
-					stm.exec();
-				}
-				tr2.commit();
-			}
+// 			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
+// 			{
+// 				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
+// 				{
+// 					stm.use_value(1, page1Id);//page1_id < page2_id
+// 					stm.use_value(2, page2Id);
+// 					stm.exec();
+// 				}
+// 			}
 		}
 
-		//tr.commit();
-
-		_db<<"CREATE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
+		//_db<<"CREATE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
 
 		return _isOk;
 	}
@@ -190,7 +185,6 @@ namespace scom { namespace impl
 	///////////////////////////////////////////////////
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
-		//sqlitepp::transaction tr(_db);
 		//перебрать строки, обновить в базе урлы и ссылки
 		sqlitepp::statement stm(_db, "UPDATE page SET uri=?, volume=? WHERE id=?");
 		stm.prepare();
@@ -235,7 +229,6 @@ namespace scom { namespace impl
 			}
 		}
 
-		//tr.commit();
 		return _isOk;
 	}
 

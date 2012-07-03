@@ -9,6 +9,7 @@
 #endif
 #include <hunspell.hxx>
 
+#include <boost/pool/pool_alloc.hpp>
 
 namespace scom { namespace impl
 {
@@ -31,6 +32,20 @@ namespace scom { namespace impl
 			boost::int32_t _gt2c;
 			boost::int32_t _gt1m1;
 			boost::int32_t _gt2m2;
+
+			//TODO размножить все возможние счетчики тут
+			//таблицу с весами не делать заранее и не лепить для нее индекс, тут считать все веса целиком, по окончании расчетов вылить в таблицу
+			//это избавит от двух очень тяжелых операций
+			// 1 создание индекса в таблице
+			// 2 обновление весов в таблице
+
+			/*
+				так же, попробовать такой финт
+
+				не лепить все 3 размера фраз в оном проходе, сделать три прохода, на каждый размер
+				это поможет экономить память под фразы на время просчета других размеров
+				но нагрузит выборки первой базы
+			*/
 			CrossCounter()
 				: _all(0)
 				, _gt1c(0)
@@ -174,15 +189,31 @@ namespace scom { namespace impl
 			{
 				endRangeIter++;
 			}
-			while(endRangeIter->equalWords(*beginRangeIter) && endRangeIter != end);
+			while(endRangeIter != end && endRangeIter->equalWords(*beginRangeIter));
 
 			//внутри одного диапазона наращивать кросс весов
 			size_t rangeSize = endRangeIter-beginRangeIter;
 			if(rangeSize > 1)
 			{
 				typename TPhrases::const_iterator preEndRangeIter = endRangeIter-1;
-				typedef std::map<std::pair<boost::int32_t, boost::int32_t>, boost::int32_t> TLocalCross;
+				
+				/*
+				//аллокатор на базе буст пул
+				typedef std::map<
+					std::pair<boost::int32_t, boost::int32_t>, 
+					boost::int32_t,
+					std::less<std::pair<boost::int32_t, boost::int32_t> >,
+					boost::fast_pool_allocator<std::pair<boost::int32_t, boost::int32_t> >
+				> TLocalCross;
+				*/
+
+				typedef std::map<
+					std::pair<boost::int32_t, boost::int32_t>, 
+					boost::int32_t
+				> TLocalCross;
+
 				TLocalCross localCross;
+
 				for(crossIter1 = beginRangeIter; crossIter1 != preEndRangeIter; crossIter1++)
 				{
 					for(crossIter2 = crossIter1+1; crossIter2 != endRangeIter; crossIter2++)
@@ -222,12 +253,16 @@ namespace scom { namespace impl
 				}
 			}
 
-			std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<endRangeIter-beginRangeIter<<std::endl;
+			if(rangeSize > 10)
+			{
+				std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<rangeSize<<std::endl;
+			}
 			beginRangeIter = endRangeIter;
 		}
 
 		phrases.clear();
 
+/*
 		//вылить в базу накопленные веса
 		{
 			char sql[256];
@@ -240,7 +275,6 @@ namespace scom { namespace impl
 				"WHERE page1_id=? AND page2_id=?", size, size, size, size, size);
 			sqlitepp::statement stm(_db, sql);
 			stm.prepare();
-			//sqlitepp::transaction tr(_db);
 
 			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
 			{
@@ -259,9 +293,8 @@ namespace scom { namespace impl
 					stm.exec();
 				}
 			}
-			//tr.commit();
 		}
-
+*/
 
 		std::cout<<"-------- size "<<size<<" complete"<<std::endl;
 		/*if(3 == size)

@@ -31,7 +31,7 @@ namespace po = boost::program_options;
 #define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__<<std::endl;}
 void testScomClient(scom::Service *scom)
 {
-	return;
+	//return;
 	scom::Auth auth;
 	scom::EError err;
 
@@ -69,6 +69,9 @@ void testScomClient(scom::Service *scom)
 
     //ping-ping
 	{
+		int stage=-1;
+		int workProcessed=-1;
+		int workVolume=-1;
 		for(;;)
 		{
 			scom::Status status;
@@ -80,7 +83,16 @@ void testScomClient(scom::Service *scom)
 				std::cout<<"scom complete"<<std::endl;
 				break;
 			}
-			std::cout<<"----------- scom stage: "<<status._stage<<", "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
+
+			if(	stage != status._stage ||
+				workProcessed != status._workProcessed ||
+				workVolume != status._workVolume)
+			{
+				std::cout<<"----------- scom stage: "<<status._stage<<", "<<status._workProcessed<<"/"<<status._workVolume<<std::endl;
+				stage = status._stage;
+				workProcessed = status._workProcessed;
+				workVolume = status._workVolume;
+			}
 			async::timeout(1000).wait();
 		}
 	}
