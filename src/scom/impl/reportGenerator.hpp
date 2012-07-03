@@ -54,12 +54,10 @@ namespace scom { namespace impl
 		{
 			boost::int32_t	_pageId;
 			boost::int32_t	_words[size];
-			//TODO сливать фразы одной страницы в счетчик
-			//boost::int32_t	_amount;
+			boost::int32_t	_amount;
 
 			bool operator<(const PhraseEntry<size> &with) const;
-			bool operator==(const PhraseEntry<size> &with) const;
-			bool operator!=(const PhraseEntry<size> &with) const;
+			bool equalWords(const PhraseEntry<size> &with) const;
 		};
 		std::deque<PhraseEntry<1> > _phrases1;
 		std::deque<PhraseEntry<2> > _phrases2;
@@ -70,6 +68,12 @@ namespace scom { namespace impl
 		boost::int32_t pushPageText(boost::int32_t pageId, const std::string &text);
 		void stem(std::deque<boost::int32_t> &compressedWords, const std::vector<boost::int32_t> &wordChars);
 		void fillPhrases(boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords);
+
+		template <size_t size>
+		void fillPhrases(std::deque<PhraseEntry<size> > &phrases, boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords);
+
+		template <size_t size>
+		void compactPhrases(std::deque<PhraseEntry<size> > &dst, std::deque<PhraseEntry<size> > &phrases);
 
 		template <size_t size>
 		bool evalPhraseWeights(std::deque<PhraseEntry<size> > &phrases);
@@ -95,11 +99,11 @@ namespace scom { namespace impl
 				return false;
 			}
 		}
-		return false;
+		return _pageId < with._pageId;
 	}
 	///////////////////////////////////////////////////////////////
 	template <size_t size>
-	bool ReportGenerator::PhraseEntry<size>::operator==(const PhraseEntry<size> &with) const
+	bool ReportGenerator::PhraseEntry<size>::equalWords(const PhraseEntry<size> &with) const
 	{
 		for(size_t i(0); i<size; i++)
 		{
@@ -110,12 +114,39 @@ namespace scom { namespace impl
 		}
 		return true;
 	}
-	///////////////////////////////////////////////////////////////
+
+
+	///////////////////////////////////////////////////////////////////
 	template <size_t size>
-	bool ReportGenerator::PhraseEntry<size>::operator!=(const PhraseEntry<size> &with) const
+	void ReportGenerator::compactPhrases(std::deque<PhraseEntry<size> > &dst, std::deque<PhraseEntry<size> > &phrases)
 	{
-		return !operator==(with);
+		////////////////////////
+		std::sort(phrases.begin(), phrases.end());
+		typedef std::deque<PhraseEntry<size> > TPhrases;
+		typename TPhrases::const_iterator beginRangeIter, endRangeIter, end;
+		beginRangeIter = phrases.begin();
+		end = phrases.end();
+
+		//перебирать диапазоны идентичных фраз
+		while(end != beginRangeIter)
+		{
+			endRangeIter = beginRangeIter;
+			boost::int32_t amount = 0;
+			do
+			{
+				amount += endRangeIter->_amount;
+				endRangeIter++;
+			}
+			while(endRangeIter != end && endRangeIter->equalWords(*beginRangeIter) && endRangeIter->_pageId==beginRangeIter->_pageId);
+
+			PhraseEntry<size> p = *beginRangeIter;
+			p._amount = amount;
+			dst.push_back(p);
+
+			beginRangeIter = endRangeIter;
+		}
 	}
+
 	///////////////////////////////////////////////////////////////////
 	template <size_t size>
 	bool ReportGenerator::evalPhraseWeights(std::deque<PhraseEntry<size> > &phrases)
@@ -143,7 +174,7 @@ namespace scom { namespace impl
 			{
 				endRangeIter++;
 			}
-			while(*endRangeIter == *beginRangeIter && endRangeIter != end);
+			while(endRangeIter->equalWords(*beginRangeIter) && endRangeIter != end);
 
 			//внутри одного диапазона наращивать кросс весов
 			size_t rangeSize = endRangeIter-beginRangeIter;
@@ -156,19 +187,18 @@ namespace scom { namespace impl
 				{
 					for(crossIter2 = crossIter1+1; crossIter2 != endRangeIter; crossIter2++)
 					{
-						boost::int32_t page1Id = crossIter1->_pageId;
-						boost::int32_t page2Id = crossIter2->_pageId;
-						if(page1Id == page2Id)
+						std::pair<boost::int32_t,boost::int32_t> key(crossIter1->_pageId, crossIter2->_pageId);
+						if(key.first == key.second)
 						{
 							//сам с собой не надо
 							continue;
 						}
-						if(page1Id > page2Id)
+						if(key.first > key.second)
 						{
 							//там треугольная матрица, ид должены быть упорядочены
-							std::swap(page1Id, page2Id);
+							std::swap(key.first, key.second);
 						}
-						localCross[std::make_pair(page1Id, page2Id)]++;
+						localCross[key] += crossIter1->_amount + crossIter2->_amount;
 					}
 				}
 

@@ -463,94 +463,129 @@ namespace scom { namespace impl
 
 	}
 
-	///////////////////////////////////////////////////////////////////////////
-	void ReportGenerator::fillPhrases(boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
+	///////////////////////////////////////////////////////////////////
+	template <>
+	void ReportGenerator::fillPhrases<1>(std::deque<PhraseEntry<1> > &phrases, boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
 	{
+		std::deque<PhraseEntry<1> > tmpBuf;
+
 		size_t amount = compressedWords.size();
 
 		// {w1}
 		if(amount > 0) for(size_t i(0); i<amount; i++)
 		{
-			PhraseEntry<1> p1 = {pageId, {compressedWords[i]} };
-			_phrases1.push_back(p1);
+			PhraseEntry<1> p1 = {pageId, {compressedWords[i]}, 1};
+			tmpBuf.push_back(p1);
 		}
+
+		compactPhrases(phrases, tmpBuf);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	template <>
+	void ReportGenerator::fillPhrases<2>(std::deque<PhraseEntry<2> > &phrases, boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
+	{
+		std::deque<PhraseEntry<2> > tmpBuf;
+
+		size_t amount = compressedWords.size();
 
 		// {w1,w2}
 		if(amount > 1) for(size_t i(0); i<amount-1; i++)
 		{
-			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+1]} };
-			_phrases2.push_back(p2);
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+1]}, 1};
+			tmpBuf.push_back(p2);
 		}
 
 		// {w1,s1,w2}
 		if(amount > 2) for(size_t i(0); i<amount-2; i++)
 		{
-			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+2]} };
-			_phrases2.push_back(p2);
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+2]}, 1};
+			tmpBuf.push_back(p2);
 		}
 
 		// {w1,s1,s2,w2}
 		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
-			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+3]} };
-			_phrases2.push_back(p2);
+			PhraseEntry<2> p2 = {pageId, {compressedWords[i],compressedWords[i+3]}, 1};
+			tmpBuf.push_back(p2);
 		}
+
+		compactPhrases(phrases, tmpBuf);
+	}
+
+	///////////////////////////////////////////////////////////////////
+	template <>
+	void ReportGenerator::fillPhrases<3>(std::deque<PhraseEntry<3> > &phrases, boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
+	{
+		std::deque<PhraseEntry<3> > tmpBuf;
+
+		size_t amount = compressedWords.size();
 
 		// {w1,			w2,			w3}
 		if(amount > 2) for(size_t i(0); i<amount-2; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+2]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+2]}, 1};
+			tmpBuf.push_back(p3);
 		}
 
 		// {w1,			w2,s1,		w3}
 		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+3]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+3]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,			w2,s1,s2	w3}
 		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+4]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+1],compressedWords[i+4]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1,		w2,			w3}
 		if(amount > 3) for(size_t i(0); i<amount-3; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+3]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+3]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1		w2,s1		w3}
 		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+4]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+4]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1		w2,s1,s2	w3}
 		if(amount > 5) for(size_t i(0); i<amount-5; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+5]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+2],compressedWords[i+5]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1,s2,	w2,			w3}
 		if(amount > 4) for(size_t i(0); i<amount-4; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+4]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+4]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1,s2	w2,s1		w3}
 		if(amount > 5) for(size_t i(0); i<amount-5; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+5]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+5]}, 1};
+			tmpBuf.push_back(p3);
 		}
 		// {w1,s1,s2	w2,s1,s2	w3}
 		if(amount > 6) for(size_t i(0); i<amount-6; i++)
 		{
-			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+6]} };
-			_phrases3.push_back(p3);
+			PhraseEntry<3> p3 = {pageId, {compressedWords[i],compressedWords[i+3],compressedWords[i+6]}, 1};
+			tmpBuf.push_back(p3);
 		}
+
+		compactPhrases(phrases, tmpBuf);
+	}
+
+	///////////////////////////////////////////////////////////////////////////
+	void ReportGenerator::fillPhrases(boost::int32_t pageId, const std::deque<boost::int32_t> &compressedWords)
+	{
+		fillPhrases(_phrases1, pageId, compressedWords);
+		fillPhrases(_phrases2, pageId, compressedWords);
+		fillPhrases(_phrases3, pageId, compressedWords);
 	}
 
 }}
