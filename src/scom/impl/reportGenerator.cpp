@@ -71,13 +71,9 @@ namespace scom { namespace impl
 			_db<<"PRAGMA temp_store = MEMORY";
 			_db<<"PRAGMA locking_mode = EXCLUSIVE";
 
-			_db<<"CREATE TABLE page(id INT4 PRIMARY KEY,uri VARCHAR,volume INT4)";
+			_db<<"CREATE TABLE page(id INT4, uri VARCHAR, volume INT4)";
 
-			_db<<"CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4, PRIMARY KEY(src_page_id,dst_page_id) )";
-
-			//_db<<"CREATE TABLE phrase1(id INT4 PRIMARY KEY,src1 VARCHAR,page_ids BLOB)";
-			//_db<<"CREATE TABLE phrase2(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,page_ids BLOB)";
-			//_db<<"CREATE TABLE phrase3(id INT4 PRIMARY KEY,src1 VARCHAR,src2 VARCHAR,src3 VARCHAR,page_ids BLOB)";
+			_db<<"CREATE TABLE page_ref_page(src_page_id INT4, dst_page_id int4)";
 
 			_db<<"CREATE TABLE page_phrase_page(page1_id INT4, page2_id INT4,"
 				"intersect1_all_volume INT4,"
@@ -132,6 +128,7 @@ namespace scom { namespace impl
 		std::sort(_pageIds.begin(), _pageIds.end());
 		//вылить в базу
 
+		/*
 		//сформировать заготовки страниц
 		{
 			sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
@@ -143,7 +140,9 @@ namespace scom { namespace impl
 				stm.exec();
 			}
 		}
+		*/
 
+		/*
 		//сформировать заготовки связей страниц по фразам
 		{
 			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page ("
@@ -178,7 +177,7 @@ namespace scom { namespace impl
 		}
 
 		//_db<<"CREATE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
-
+*/
 		return _isOk;
 	}
 
@@ -186,10 +185,10 @@ namespace scom { namespace impl
 	bool ReportGenerator::setPagesContent(const utils::Variant &rows)
 	{
 		//перебрать строки, обновить в базе урлы и ссылки
-		sqlitepp::statement stm(_db, "UPDATE page SET uri=?, volume=? WHERE id=?");
+		sqlitepp::statement stm(_db, "INSERT INTO page (id,uri,volume) VALUES (?,?,?)");
 		stm.prepare();
 
-		sqlitepp::statement stm2(_db, "INSERT OR IGNORE INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)");
+		sqlitepp::statement stm2(_db, "INSERT INTO page_ref_page (src_page_id,dst_page_id) VALUES(?,?)");
 		stm2.prepare();
 
 		BOOST_FOREACH(const utils::Variant &row, rows.as<utils::Variant::DequeVariant>())
@@ -204,9 +203,9 @@ namespace scom { namespace impl
 			const std::string &uri = rowv[1].as<std::string>();
 			const std::string *text = rowv[3].isNull()?NULL:&rowv[3].as<std::string>();
 
-			stm.use_value(1, uri, false);
-			stm.use_value(2, text?pushPageText(srcId, *text):(boost::int32_t)0);
-			stm.use_value(3, srcId);
+			stm.use_value(1, srcId);
+			stm.use_value(2, uri, false);
+			stm.use_value(3, text?pushPageText(srcId, *text):(boost::int32_t)0);
 			stm.exec();
 
 			if(!rowv[2].isNull())
@@ -237,17 +236,17 @@ namespace scom { namespace impl
 	{
 		//сортировать фразы, брать участки идентичных фраз и по ним обновлять веса кросса
 
-		if(!evalPhraseWeights(_phrases1))
+		if(!evalPhraseWeights(_crossCounters1, _phrases1))
 		{
 			return false;
 		}
 
-		if(!evalPhraseWeights(_phrases2))
+		if(!evalPhraseWeights(_crossCounters2, _phrases2))
 		{
 			return false;
 		}
 
-		if(!evalPhraseWeights(_phrases3))
+		if(!evalPhraseWeights(_crossCounters3, _phrases3))
 		{
 			return false;
 		}

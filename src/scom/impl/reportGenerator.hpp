@@ -10,6 +10,7 @@
 #include <hunspell.hxx>
 
 #include <boost/pool/pool_alloc.hpp>
+#include <boost/unordered_map.hpp>
 
 namespace scom { namespace impl
 {
@@ -33,19 +34,6 @@ namespace scom { namespace impl
 			boost::int32_t _gt1m1;
 			boost::int32_t _gt2m2;
 
-			//TODO размножить все возможние счетчики тут
-			//таблицу с весами не делать заранее и не лепить для нее индекс, тут считать все веса целиком, по окончании расчетов вылить в таблицу
-			//это избавит от двух очень тяжелых операций
-			// 1 создание индекса в таблице
-			// 2 обновление весов в таблице
-
-			/*
-				так же, попробовать такой финт
-
-				не лепить все 3 размера фраз в оном проходе, сделать три прохода, на каждый размер
-				это поможет экономить память под фразы на время просчета других размеров
-				но нагрузит выборки первой базы
-			*/
 			CrossCounter()
 				: _all(0)
 				, _gt1c(0)
@@ -54,6 +42,14 @@ namespace scom { namespace impl
 				, _gt2m2(0)
 			{}
 		};
+
+		std::vector<CrossCounter> _crossCounters1;
+		std::vector<CrossCounter> _crossCounters2;
+		std::vector<CrossCounter> _crossCounters3;
+
+		////////////////////////
+		//половина матрицы пересечения страниц
+		boost::int32_t crossIdx(boost::int32_t page1Id, boost::int32_t page2Id);
 
 		bool evalPhraseWeights();
 
@@ -74,6 +70,7 @@ namespace scom { namespace impl
 			bool operator<(const PhraseEntry<size> &with) const;
 			bool equalWords(const PhraseEntry<size> &with) const;
 		};
+
 		std::deque<PhraseEntry<1> > _phrases1;
 		std::deque<PhraseEntry<2> > _phrases2;
 		std::deque<PhraseEntry<3> > _phrases3;
@@ -91,13 +88,25 @@ namespace scom { namespace impl
 		void compactPhrases(std::deque<PhraseEntry<size> > &dst, std::deque<PhraseEntry<size> > &phrases);
 
 		template <size_t size>
-		bool evalPhraseWeights(std::deque<PhraseEntry<size> > &phrases);
+		bool evalPhraseWeights(std::vector<CrossCounter> &crossCounters, std::deque<PhraseEntry<size> > &phrases);
 	};
 
 
 
 
 
+	///////////////////////////////////////////////////////////////
+	inline boost::int32_t ReportGenerator::crossIdx(boost::int32_t page1Id, boost::int32_t page2Id)
+	{
+		assert(page1Id > 0);
+		assert(page2Id <= _pageIds.size()+1);
+		assert(page1Id < page2Id);
+
+		page1Id -= 1;
+		page2Id -= 1;
+
+		return (page2Id*(page2Id-1))/2 + page1Id;
+	}
 
 	///////////////////////////////////////////////////////////////
 	template <size_t size>
@@ -163,15 +172,25 @@ namespace scom { namespace impl
 	}
 
 	///////////////////////////////////////////////////////////////////
-	template <size_t size>
-	bool ReportGenerator::evalPhraseWeights(std::deque<PhraseEntry<size> > &phrases)
-	{
-		size_t pagesAmount = _pageIds.size();
-		////////////////////////
-		//половина матрицы пересечения страниц
-#define CROSSIDX(page1Id, page2Id) (((page2Id-1)*(page2Id-2))/2+(page1Id-1))
+	namespace {
+		struct hashForCross
+		{
+			size_t operator()(const std::pair<boost::int32_t, boost::int32_t> &key) const
+			{
+				//половину на один половину на другой
+				return (((size_t)key.first) << (sizeof(size_t)*8/2)) | (size_t)key.second;
+			}
+		};
+	}
 
-		std::vector<CrossCounter> crossCounters(CROSSIDX(1, pagesAmount+1));
+	///////////////////////////////////////////////////////////////////
+	template <size_t size>
+	bool ReportGenerator::evalPhraseWeights(std::vector<CrossCounter> &crossCounters, std::deque<PhraseEntry<size> > &phrases)
+	{
+
+		crossCounters.resize(crossIdx(1, _pageIds.size()+1));
+		assert(!crossCounters.empty());
+		memset(&crossCounters[0], 0, crossCounters.size()*sizeof(CrossCounter));
 
 		////////////////////////
 		std::sort(phrases.begin(), phrases.end());
@@ -207,10 +226,24 @@ namespace scom { namespace impl
 				> TLocalCross;
 				*/
 
-				typedef std::map<
-					std::pair<boost::int32_t, boost::int32_t>, 
+				/*typedef std::map<
+					std::pair<boost::int32_t, boost::int32_t>,
 					boost::int32_t
 				> TLocalCross;
+				*/
+				/*typedef __gnu_cxx::hash_map<
+					std::pair<boost::int32_t, boost::int32_t>,
+					boost::int32_t,
+					hashForCross
+				> TLocalCross;
+				*/
+
+				typedef boost::unordered_map<
+					std::pair<boost::int32_t, boost::int32_t>, 
+					boost::int32_t,
+					hashForCross
+				> TLocalCross;
+
 
 				TLocalCross localCross;
 
@@ -235,7 +268,7 @@ namespace scom { namespace impl
 
 				BOOST_FOREACH(const TLocalCross::value_type &c, localCross)
 				{
-					size_t cidx = CROSSIDX(c.first.first, c.first.second);
+					size_t cidx = crossIdx(c.first.first, c.first.second);
 					assert(cidx < crossCounters.size());
 					CrossCounter &cc = crossCounters[cidx];
 					cc._all += c.second;
