@@ -49,7 +49,7 @@ namespace scom { namespace impl
 
 		////////////////////////
 		//половина матрицы пересечения страниц
-		boost::int32_t crossIdx(boost::int32_t page1Id, boost::int32_t page2Id);
+		size_t crossIdx(boost::int32_t page1Id, boost::int32_t page2Id);
 
 		bool evalPhraseWeights();
 
@@ -96,7 +96,7 @@ namespace scom { namespace impl
 
 
 	///////////////////////////////////////////////////////////////
-	inline boost::int32_t ReportGenerator::crossIdx(boost::int32_t page1Id, boost::int32_t page2Id)
+	inline size_t ReportGenerator::crossIdx(boost::int32_t page1Id, boost::int32_t page2Id)
 	{
 		assert(page1Id > 0);
 		assert(page2Id <= _pageIds.size()+1);
@@ -188,7 +188,7 @@ namespace scom { namespace impl
 	bool ReportGenerator::evalPhraseWeights(std::vector<CrossCounter> &crossCounters, std::deque<PhraseEntry<size> > &phrases)
 	{
 
-		crossCounters.resize(crossIdx(1, _pageIds.size()+1));
+		crossCounters.resize(crossIdx((boost::int32_t)1, (boost::int32_t)_pageIds.size()+1));
 		assert(!crossCounters.empty());
 		memset(&crossCounters[0], 0, crossCounters.size()*sizeof(CrossCounter));
 
@@ -247,6 +247,7 @@ namespace scom { namespace impl
 
 				TLocalCross localCross;
 
+
 				for(crossIter1 = beginRangeIter; crossIter1 != preEndRangeIter; crossIter1++)
 				{
 					for(crossIter2 = crossIter1+1; crossIter2 != endRangeIter; crossIter2++)
@@ -288,7 +289,7 @@ namespace scom { namespace impl
 
 			if(rangeSize > 10)
 			{
-				std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<rangeSize<<std::endl;
+				//std::cout<<"-------- progress "<<end-beginRangeIter<<", "<<rangeSize<<std::endl;
 			}
 			beginRangeIter = endRangeIter;
 		}

@@ -45,17 +45,55 @@ void testScomClient(scom::Service *scom)
 	{
 		std::vector<scom::PageRule> rules;
 
-		scom::PageRule r1 = {
-			"127.0.0.1",
-			scom::PageRule::ea_ignore | scom::PageRule::ek_domain | scom::PageRule::ek_negative,
-			-3, 0, -1};
-		rules.push_back(r1);
-
-		scom::PageRule r4 = {
-			"http://127.0.0.1:8080/index.html",
-			scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
-			0, 10, 2000};
-		rules.push_back(r4);
+		{
+			scom::PageRule r1 = {
+				"http://www.fc-rostov.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+			rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://fckrasnodar.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://forum.auto.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://www.bibika.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://www.passion.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://www.domashniy.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
+		{
+			scom::PageRule r1 = {
+				"http://webmasterok.net/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
+				0, 20, 100};
+				rules.push_back(r1);
+		}
 
 		err = scom->setup(auth, rules);
 		CHECK_ERR(err);

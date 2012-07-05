@@ -126,58 +126,6 @@ namespace scom { namespace impl
 	bool ReportGenerator::fixPageIds()
 	{
 		std::sort(_pageIds.begin(), _pageIds.end());
-		//вылить в базу
-
-		/*
-		//сформировать заготовки страниц
-		{
-			sqlitepp::statement stm(_db, "INSERT INTO page (id) VALUES(?)");
-			stm.prepare();
-
-			for(boost::int32_t pageId(1); pageId<=_pageIds.size(); pageId++)
-			{
-				stm.use_value(1, pageId);
-				stm.exec();
-			}
-		}
-		*/
-
-		/*
-		//сформировать заготовки связей страниц по фразам
-		{
-			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page ("
-				"page1_id, page2_id,"
-				"intersect1_all_volume,"
-				"intersect1_gt1c_volume,"
-				"intersect1_gt1m1_volume,"
-				"intersect1_gt2c_volume,"
-				"intersect1_gt2m2_volume,"
-				"intersect2_all_volume,"
-				"intersect2_gt1c_volume,"
-				"intersect2_gt1m1_volume,"
-				"intersect2_gt2c_volume,"
-				"intersect2_gt2m2_volume,"
-				"intersect3_all_volume,"
-				"intersect3_gt1c_volume,"
-				"intersect3_gt1m1_volume,"
-				"intersect3_gt2c_volume,"
-				"intersect3_gt2m2_volume"
-				") VALUES(?,?,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0)");
-			stm.prepare();
-
-// 			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
-// 			{
-// 				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
-// 				{
-// 					stm.use_value(1, page1Id);//page1_id < page2_id
-// 					stm.use_value(2, page2Id);
-// 					stm.exec();
-// 				}
-// 			}
-		}
-
-		//_db<<"CREATE INDEX page_phrase_page_idx ON page_phrase_page (page1_id, page2_id)";
-*/
 		return _isOk;
 	}
 
@@ -234,9 +182,11 @@ namespace scom { namespace impl
 	/////////////////////////////////////////////////////////////////////////////////
 	bool ReportGenerator::evalPhraseWeights()
 	{
+
+
 		//сортировать фразы, брать участки идентичных фраз и по ним обновлять веса кросса
 
-		if(!evalPhraseWeights(_crossCounters1, _phrases1))
+		if(!evalPhraseWeights(_crossCounters3, _phrases3))
 		{
 			return false;
 		}
@@ -246,9 +196,64 @@ namespace scom { namespace impl
 			return false;
 		}
 
-		if(!evalPhraseWeights(_crossCounters3, _phrases3))
+		if(!evalPhraseWeights(_crossCounters1, _phrases1))
 		{
 			return false;
+		}
+
+
+		//сформировать связи страниц по фразам
+		{
+			sqlitepp::statement stm(_db, "INSERT INTO page_phrase_page ("
+				"page1_id, page2_id,"
+				"intersect1_all_volume,"
+				"intersect1_gt1c_volume,"
+				"intersect1_gt1m1_volume,"
+				"intersect1_gt2c_volume,"
+				"intersect1_gt2m2_volume,"
+				"intersect2_all_volume,"
+				"intersect2_gt1c_volume,"
+				"intersect2_gt1m1_volume,"
+				"intersect2_gt2c_volume,"
+				"intersect2_gt2m2_volume,"
+				"intersect3_all_volume,"
+				"intersect3_gt1c_volume,"
+				"intersect3_gt1m1_volume,"
+				"intersect3_gt2c_volume,"
+				"intersect3_gt2m2_volume"
+				") VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+			stm.prepare();
+
+			for(boost::int32_t page2Id(1); page2Id<=_pageIds.size(); page2Id++)
+			{
+				for(boost::int32_t page1Id(1); page1Id<page2Id; page1Id++)
+				{
+					stm.use_value(1, page1Id);//page1_id < page2_id
+					stm.use_value(2, page2Id);
+
+					size_t cidx = crossIdx(page1Id, page2Id);
+
+					stm.use_value(3, _crossCounters1[cidx]._all);
+					stm.use_value(4, _crossCounters1[cidx]._gt1c);
+					stm.use_value(5, _crossCounters1[cidx]._gt1m1);
+					stm.use_value(6, _crossCounters1[cidx]._gt2c);
+					stm.use_value(7, _crossCounters1[cidx]._gt2m2);
+
+					stm.use_value(8, _crossCounters2[cidx]._all);
+					stm.use_value(9, _crossCounters2[cidx]._gt1c);
+					stm.use_value(10, _crossCounters2[cidx]._gt1m1);
+					stm.use_value(11, _crossCounters2[cidx]._gt2c);
+					stm.use_value(12, _crossCounters2[cidx]._gt2m2);
+
+					stm.use_value(13, _crossCounters3[cidx]._all);
+					stm.use_value(14, _crossCounters3[cidx]._gt1c);
+					stm.use_value(15, _crossCounters3[cidx]._gt1m1);
+					stm.use_value(16, _crossCounters3[cidx]._gt2c);
+					stm.use_value(17, _crossCounters3[cidx]._gt2m2);
+
+					stm.exec();
+				}
+			}
 		}
 
 		return true;

@@ -1064,7 +1064,7 @@ namespace scom { namespace impl
 
 		if(ec)
 		{
-			WLOG("get: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("get: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "get failed")));
 			return;
@@ -1072,7 +1072,7 @@ namespace scom { namespace impl
 		ec = resp.readFirstLine();
 		if(ec)
 		{
-			WLOG("read first line: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("read first line: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read first line failed")));
 			return;
@@ -1082,7 +1082,7 @@ namespace scom { namespace impl
 		if(ec)
 		{
 
-			WLOG("read headers: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("read headers: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read headers failed")));
 			return;
@@ -1110,7 +1110,7 @@ namespace scom { namespace impl
 			}
 			//err, no break
 		default:
-			WLOG("bad status: "<<std::string(resp.firstLine().begin(), resp.firstLine().end())<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("bad status: "<<std::string(resp.firstLine().begin(), resp.firstLine().end())<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad status")));
 			return;
@@ -1119,7 +1119,7 @@ namespace scom { namespace impl
 		http::HeaderValue<http::Unsigned> length = resp.header(http::hn::contentLength);
 		if(length.isCorrect() && length.value() > _maxHttpBodySize)
 		{
-			WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("too big: "<<length.value()<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "too big")));
 			return;
@@ -1128,7 +1128,7 @@ namespace scom { namespace impl
 		const http::client::Response::Segment *contentType = resp.header(http::hn::contentType);
 		if(!isGoodContentType(contentType) && !redirectUri.isOk())
 		{
-			WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("bad ct: "<<(contentType?std::string(contentType->begin(), contentType->end()):std::string("absent"))<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "bad content type")));
 			return;
@@ -1138,7 +1138,7 @@ namespace scom { namespace impl
 		if(ec)
 		{
 
-			WLOG("read body: "<<ec<<", ["<<uri.as<std::string>()<<"]");
+			//WLOG("read body: "<<ec<<", ["<<uri.as<std::string>()<<"]");
 			pgc::Connection c = _db.allocConnection();
 			IF_PGRES_ERROR(return, c.query(_stUpdatePageStatus, utils::MVA(pageId, "read body failed")));
 			return;
