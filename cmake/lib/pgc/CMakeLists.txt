@@ -56,11 +56,11 @@ source_group(src/impl FILES ${SRC_IMPL_HDR})
 include_directories(${PSRC})
 
 find_package(PostgreSQL)
-if(NOT PostgreSQL_FOUND)
+if(NOT POSTGRESQL_FOUND)
 	MESSAGE(FATAL_ERROR "PostgreSQL not found")
 endif()
 #message(STATUS "Found PostgreSQL ${PostgreSQL_LIBRARY}")
-include_directories(${PostgreSQL_INCLUDE_DIRS})
+include_directories(${POSTGRESQL_INCLUDE_DIR})
 
 
 
@@ -84,7 +84,7 @@ use_pch(${PROJECT} ${PSRC}/pch.hpp ${SRC} ${SRC_IMPL})
 
 
 target_link_libraries(${PROJECT} utils async)
-target_link_libraries(${PROJECT} ${PostgreSQL_LIBRARY})
+target_link_libraries(${PROJECT} ${POSTGRESQL_LIBRARIES})
 
 #if(CMAKE_COMPILER_IS_GNUCXX OR CMAKE_COMPILER_IS_CLANG)
 #	target_link_libraries(${PROJECT} ${Boost_LIBRARIES})

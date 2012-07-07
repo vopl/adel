@@ -68,21 +68,28 @@ set(CMAKE_THREAD_PREFER_PTHREAD ON)
 include(FindThreads)
 
 ###################################################################
-find_library(l4cpl log4cplus)
-find_library(l4cpld log4cplusd)
+#find_library(l4cpl log4cplus)
+#find_library(l4cpld log4cplusd)
 
-if("l4cpl-NOTFOUND" STREQUAL "${l4cpl}")
-	message(FATAL_ERROR "log4cplus library not found")
+#if("l4cpl-NOTFOUND" STREQUAL "${l4cpl}")
+#	message(FATAL_ERROR "log4cplus library not found")
+#endif()
+
+#if("l4cpld-NOTFOUND" STREQUAL "${l4cpld}")
+#	message("log4cplus library not found in debug mode, will use release")
+#	set(l4cpld ${l4cpl})
+#endif()
+
+#set(l4cpl optimized ${l4cpl} debug ${l4cpld})
+
+#message(STATUS "Found log4cplus ${l4cpl}")
+
+include(FindLog4cplus)
+if(NOT LOG4CPLUS_FOUND)
+	message(FATAL_ERROR "Log4clpus required")
 endif()
-
-if("l4cpld-NOTFOUND" STREQUAL "${l4cpld}")
-	message("log4cplus library not found in debug mode, will use release")
-	set(l4cpld ${l4cpl})
-endif()
-
-set(l4cpl optimized ${l4cpl} debug ${l4cpld})
-
-message(STATUS "Found log4cplus ${l4cpl}")
+include_directories(${LOG4CPLUS_INCLUDE_DIR})
+set(l4cpl ${LOG4CPLUS_LIBRARIES})
 
 
 include(pch.cmake)

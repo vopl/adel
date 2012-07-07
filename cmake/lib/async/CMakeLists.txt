@@ -76,7 +76,6 @@ include_directories(${PSRC})
 include(CheckFunctionExists)
 include(CheckLibraryExists)
 include(CheckIncludeFiles)
-include(CheckPrototypeDefinition)
 include(CheckTypeSize)
 
 check_type_size("void *" PVOID_SIZE)
@@ -85,6 +84,7 @@ check_type_size("int" INT_SIZE)
 check_include_files (ucontext.h HAVE_UCONTEXT_H)
 
 if(WIN32)
+	include(CheckPrototypeDefinition)
 	check_prototype_definition(
 		CreateFiberEx
 		"LPVOID WINAPI CreateFiberEx(SIZE_T dwStackCommitSize, SIZE_T dwStackReserveSize, DWORD dwFlags, LPFIBER_START_ROUTINE lpStartAddress, LPVOID lpParameter);"
