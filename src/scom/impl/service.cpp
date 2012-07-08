@@ -268,8 +268,8 @@ namespace scom { namespace impl
 		_stPageRuleApplyerSelectPage = pgc::Statement("SELECT p.instance_id FROM page AS p INNER JOIN instance AS i ON (p.instance_id=i.id) WHERE p.access IS NULL AND i.stage=10 AND i.is_started GROUP BY instance_id LIMIT $1");
 		_stUpdatePageStatus = pgc::Statement("UPDATE page SET status=$2::character varying WHERE id=$1::bigint");
 		_stLoaderUpdatePage = pgc::Statement("UPDATE page SET fetch_order=nextval('page_id_seq'::regclass), status=$2, text=$3, ref_page_ids=$4, http_headers=$5, ip=$6, fetch_time=$7 WHERE id=$1");
-		_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
-		_stLoaderInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2) RETURNING id");
+		//_stLoaderSelectPage = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
+		_stLoaderInsertPage = pgc::Statement("SELECT insertPageIfAbsent($1,$2)");
 		//_stLoaderInsertPageRef = pgc::Statement("INSERT INTO page_ref (src_page_id, dst_page_id) VALUES ($1,$2)");
 		_stInsertPageSelectId = pgc::Statement("SELECT id FROM page WHERE instance_id=$1 AND uri=$2");
 		_stInsertPage = pgc::Statement("INSERT INTO page (instance_id, uri) VALUES ($1,$2)");
@@ -1166,8 +1166,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return, c.query(_stBegin));
 
+
 		//IF_PGRES_ERROR(return, c.query(_stLockInstance));
-		IF_PGRES_ERROR(return, c.query(_stLockPage));
+		//IF_PGRES_ERROR(return, c.query(_stLockPage));
 		//IF_PGRES_ERROR(return, c.query(_stLockPageRef));
 
 		//просчитать ссылки и добавить новые страницы
@@ -1181,19 +1182,10 @@ namespace scom { namespace impl
 
 			utils::Variant uri2v = htmlcxx::Uri::encode(htmlcxx::Uri::decode(uri2.unparse(htmlcxx::Uri::REMOVE_FRAGMENT)));
 			res = c.query(
-				_stLoaderSelectPage,
+				_stLoaderInsertPage,
 				utils::MVA(instanceId, uri2v)
 			);
 			IF_PGRES_ERROR(return, res);
-
-			if(!res.rows())
-			{
-				res = c.query(
-					_stLoaderInsertPage,
-					utils::MVA(instanceId, uri2v)
-				);
-				IF_PGRES_ERROR(return, res);
-			}
 
 			utils::Variant page2Id;
 			bool b = res.fetch(page2Id, 0,0);
@@ -1202,6 +1194,7 @@ namespace scom { namespace impl
 			boost::int64_t i64 = page2Id;
 			refPageIds.insert(refPageIds.end(), (char *)&i64, (char *)&i64 + 8);
 		}
+
 
 		res = c.query(
 			_stLoaderUpdatePage,

@@ -31,7 +31,7 @@ namespace po = boost::program_options;
 #define CHECK_ERR(x) if(scom::ee_ok != x) {std::cout<<"scom err: "<<x<<", line "<<__LINE__<<std::endl;}
 void testScomClient(scom::Service *scom)
 {
-	return;
+	//return;
 	scom::Auth auth;
 	scom::EError err;
 
@@ -44,54 +44,62 @@ void testScomClient(scom::Service *scom)
 	//setup
 	{
 		std::vector<scom::PageRule> rules;
-
+/*
 		{
 			scom::PageRule r1 = {
 				"http://www.fc-rostov.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 			rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://fckrasnodar.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 				rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://forum.auto.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 				rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://www.bibika.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 				rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://www.passion.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 				rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://www.domashniy.ru/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
 				rules.push_back(r1);
 		}
 		{
 			scom::PageRule r1 = {
 				"http://webmasterok.net/",
 				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_path,
-				0, 20, 100};
+				0, 20, -1};
+				rules.push_back(r1);
+		}
+*/
+		{
+			scom::PageRule r1 = {
+				"http://www.fc-rostov.ru/",
+				scom::PageRule::ea_useLinks | scom::PageRule::ea_useWords | scom::PageRule::ek_reference,
+				0, 2000, -1};
 				rules.push_back(r1);
 		}
 

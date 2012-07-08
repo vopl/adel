@@ -47,7 +47,7 @@ CREATE INDEX active_host_atime_idx
 CREATE INDEX active_host_name_idx
   ON active_host
   USING btree
-  (name COLLATE pg_catalog."default" );
+  (name);
 
 
 
@@ -92,7 +92,33 @@ CREATE INDEX page_instance_id_idx
 CREATE INDEX page_instance_id_uri_idx
   ON page
   USING btree
-  (instance_id , uri COLLATE pg_catalog."default" );
+  (instance_id , uri);
 
 
 
+CREATE OR REPLACE FUNCTION insertPageIfAbsent(instance_id_ bigint, uri_ varchar)
+    RETURNS bigint
+    LANGUAGE plpgsql
+AS $$
+DECLARE
+	id_ bigint;
+BEGIN
+    LOOP
+        -- first try to select
+        SELECT id FROM page WHERE instance_id=instance_id_ AND uri=uri_ INTO id_;
+        -- check if the row is found
+        IF FOUND THEN
+            RETURN id_;
+        END IF;
+        -- not found so insert the row
+        BEGIN
+            INSERT INTO page (instance_id, uri) VALUES(instance_id_, uri_) RETURNING id INTO id_;
+	    IF FOUND THEN
+		RETURN id_;
+	    END IF;
+            EXCEPTION WHEN unique_violation THEN
+                -- do nothing and loop
+        END;
+    END LOOP;
+END;
+$$;
