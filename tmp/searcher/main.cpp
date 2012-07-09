@@ -1,3 +1,4 @@
+#define _HAS_ITERATOR_DEBUGGING 0
 #include <iostream>
 #include <fstream>
 #include "scom/impl/searcher.hpp"
@@ -29,7 +30,7 @@ int main()
 
 
 	scom::impl::Searcher s(&buf1[0], buf1.size());
-	for(size_t i(0); i<1000; i++)
+	for(size_t i(0); i<10000; i++)
 	{
 		s.reset(&buf2[0], buf2.size());
 	
@@ -45,8 +46,12 @@ int main()
 			assert(pos2 + len <= buf2.size());
 			assert((!memcmp(&buf1[pos1], &buf2[pos2], len)));
 		}
-		return 0;
-		std::cout<<i<<std::endl;
+		//return 0;
+
+		if(!(i%100))
+		{
+			std::cout<<i<<std::endl;
+		}
 	}
 	return 0;
 }
