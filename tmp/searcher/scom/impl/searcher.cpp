@@ -66,7 +66,7 @@ namespace scom { namespace impl
 			}
 			last = cur;
 		}
-		_states.swap(TVStates(_states));
+		//_states.swap(TVStates(_states));
 	}
 
 	//////////////////////////////////////////////////////////////////////////////////

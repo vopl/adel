@@ -37,7 +37,7 @@ int main()
 		size_t pos1, pos2, len;
 		while(s.next(pos1, pos2, len))
 		{
-			//if(len>1000000)
+			if(len>1000000)
 			{
 				std::cout<<pos1<<", "<<pos2<<", "<<len<<std::endl;
 			}
