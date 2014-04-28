@@ -54,7 +54,8 @@ namespace net { namespace impl
 		{
 			typedef asio::detail::wrapped_handler<
 				asio::io_service::strand,
-				async::AsioBridge<Handler> > WrappedHandler;
+                async::AsioBridge<Handler>,
+                    asio::detail::is_continuation_if_running> WrappedHandler;
 			_sslStrand->dispatch(
 				bind(&TSocketSsl::async_read_some<Buffer, WrappedHandler>, _socketSsl.get(), b, _sslStrand->wrap(async::bridge(h))));
 		}
@@ -73,7 +74,8 @@ namespace net { namespace impl
 		{
 			typedef asio::detail::wrapped_handler<
 				asio::io_service::strand,
-				async::AsioBridge<Handler> > WrappedHandler;
+                async::AsioBridge<Handler>,
+                    asio::detail::is_continuation_if_running> WrappedHandler;
 
 			void (*method)(TSocketSsl&, const Buffer&, BOOST_ASIO_MOVE_ARG(WrappedHandler)) = 
 				&boost::asio::async_write<TSocketSsl, Buffer, WrappedHandler>;

@@ -278,10 +278,10 @@ namespace utils
 
 		class Accumuler
 		{
-			mutable std::string &text;
+			std::string *text;
 		public:
 			Accumuler(std::string &res)
-				: text(res)
+				: text(&res)
 			{
 
 			}
@@ -292,13 +292,13 @@ namespace utils
 				char buf[8];
 				ssize_t size = utf8proc_encode_char(code, (::uint8_t *)buf);
 				buf[size] = 0;
-				text += buf;
+				*text += buf;
 			}
 
 			template <typename Context>
 			void operator()(char c, Context&, bool&) const
 			{
-				text += c;
+				*text += c;
 			}
 		};
 

@@ -35,14 +35,14 @@ namespace utils
 	template <class Base>
 	typename Base::ImplPtr ImplAccess<Base>::impl()
 	{
-		return boost::dynamic_pointer_cast<typename Base::ImplPtr::value_type>(Base::_impl);
+        return boost::dynamic_pointer_cast<typename Base::ImplPtr::element_type>(Base::_impl);
 	}
 
 	//////////////////////////////////////////////////////////////////////////
 	template <class Base>
 	ImplAccess<Base>::operator typename Base::ImplPtr()
 	{
-		return boost::dynamic_pointer_cast<typename Base::ImplPtr::value_type>(Base::_impl);
+        return boost::dynamic_pointer_cast<typename Base::ImplPtr::element_type>(Base::_impl);
 	}
 }
 

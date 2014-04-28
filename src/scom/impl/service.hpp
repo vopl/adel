@@ -112,11 +112,11 @@ namespace scom { namespace impl
 		pgc::Statement _stCommit;
 		pgc::Statement _stRollback;
 
-		//pgc::Statement _stLockInstance;
-		//pgc::Statement _stLockPageRule;
+        pgc::Statement _stLockInstance;
+        pgc::Statement _stLockPageRule;
 		pgc::Statement _stLockPage;
 		//pgc::Statement _stLockPageRef;
-		//pgc::Statement _stLockActiveHost;
+        pgc::Statement _stLockActiveHost;
 
 		pgc::Statement _stCreateInsertInstance;
 		pgc::Statement _stPingSelectInstance;

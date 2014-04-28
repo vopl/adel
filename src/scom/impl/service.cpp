@@ -215,11 +215,11 @@ namespace scom { namespace impl
 		_stPingSelectPagesProcessed = pgc::Statement("SELECT count(*) FROM page WHERE instance_id=$1 AND (access=2 OR access=4 OR access=6) AND (status IS NOT NULL AND status<>'pend')");
 
 		_stPingUpdateInstance = pgc::Statement("UPDATE instance SET atime=CURRENT_TIMESTAMP WHERE id=$1");
-		//_stLockInstance = pgc::Statement("LOCK instance IN EXCLUSIVE MODE");
-		//_stLockPageRule = pgc::Statement("LOCK page_rule IN EXCLUSIVE MODE");
+        _stLockInstance = pgc::Statement("LOCK instance IN EXCLUSIVE MODE");
+        _stLockPageRule = pgc::Statement("LOCK page_rule IN EXCLUSIVE MODE");
 		_stLockPage = pgc::Statement("LOCK page IN EXCLUSIVE MODE");
 		//_stLockPageRef = pgc::Statement("LOCK page_ref IN EXCLUSIVE MODE");
-		//_stLockActiveHost = pgc::Statement("LOCK active_host IN EXCLUSIVE MODE");
+        _stLockActiveHost = pgc::Statement("LOCK active_host IN EXCLUSIVE MODE");
 
 		_stSetupSelectInstance = pgc::Statement("SELECT stage FROM instance "
 			"WHERE id=$1 AND password=$2");
@@ -411,8 +411,8 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
 
 		res = c.query(
@@ -584,9 +584,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
 		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
 
 		res = c.query(
@@ -636,7 +636,7 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
 
 		res = c.query(
 			_stStopSelectInstance, utils::MVA(auth._id, auth._secret));
@@ -679,9 +679,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return ee_internalError, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
-		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRule));
+        IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPage));
 		//IF_PGRES_ERROR(return ee_internalError, c.query(_stLockPageRef));
 
 		res = c.query(
@@ -759,9 +759,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return true, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return true, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return true, c.query(_stLockPage));
-		//IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
+        IF_PGRES_ERROR(return true, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return true, c.query(_stLockPage));
+        IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
 
 		pgc::Result res;
 
@@ -902,8 +902,8 @@ namespace scom { namespace impl
 		pgc::Connection c = _db.allocConnection();
 		IF_PGRES_ERROR(return true, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return true, c.query(_stLockPage));
-		//IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
+        IF_PGRES_ERROR(return true, c.query(_stLockPage));
+        IF_PGRES_ERROR(return true, c.query(_stLockActiveHost));
 
 		pgc::Result res = c.query(_stHostDeleteOld, utils::Variant(_activeHostDeleteTimeout));
 		IF_PGRES_ERROR(return false, res);
@@ -920,9 +920,9 @@ namespace scom { namespace impl
 
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return false, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return false, c.query(_stLockPageRule));
-		//IF_PGRES_ERROR(return false, c.query(_stLockPage));
+        IF_PGRES_ERROR(return false, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return false, c.query(_stLockPageRule));
+        IF_PGRES_ERROR(return false, c.query(_stLockPage));
 		//IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
 
 		pgc::Result res = c.query(_stPageRuleApplyerSelectPage, utils::Variant(_pagesToLoadGranula));
@@ -1167,9 +1167,9 @@ namespace scom { namespace impl
 		IF_PGRES_ERROR(return, c.query(_stBegin));
 
 
-		//IF_PGRES_ERROR(return, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return, c.query(_stLockPage));
-		//IF_PGRES_ERROR(return, c.query(_stLockPageRef));
+        IF_PGRES_ERROR(return, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return, c.query(_stLockPage));
+        //IF_PGRES_ERROR(return, c.query(_stLockPageRef));
 
 		//просчитать ссылки и добавить новые страницы
 		std::vector<char> refPageIds;
@@ -1281,7 +1281,7 @@ namespace scom { namespace impl
 					if(p.first)
 					{
 						htmlcxx::Uri uri(htmlcxx::HTML::convert_link(p.second, base));
-						if(uri.isOk())
+                        if(uri.isOk() && uri.hostname()=="www.fc-rostov.ru")
 						{
 							uris->push_back(uri);
 						}
@@ -1352,8 +1352,8 @@ namespace scom { namespace impl
 		//транзакция
 		IF_PGRES_ERROR(return false, c.query(_stBegin));
 
-		//IF_PGRES_ERROR(return false, c.query(_stLockInstance));
-		//IF_PGRES_ERROR(return false, c.query(_stLockPage));
+        IF_PGRES_ERROR(return false, c.query(_stLockInstance));
+        IF_PGRES_ERROR(return false, c.query(_stLockPage));
 		//IF_PGRES_ERROR(return false, c.query(_stLockPageRef));
 
 		//	выбрать один инстанс в состоянии load который все загрузил

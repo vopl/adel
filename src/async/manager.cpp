@@ -150,7 +150,7 @@ namespace async
 
 //Безусловное завершение
 #ifdef SIGKILL
-		//ss.add(SIGKILL);
+        ss.add(SIGKILL);
 #endif
 
 //Сигнал «Quit» с терминала (Ctrl-\)
@@ -177,7 +177,7 @@ namespace async
 				ILOG("exit request");
 				bStop = true;
 				break;
-			case EOF:
+            case EOF:
 				bStop = true;
 				break;
 			default:

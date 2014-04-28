@@ -1,5 +1,6 @@
 syntax: regexp
 ^build/
+^cmake-build/
 ^bin/
 ^Debug/
 ^Release/
@@ -8,3 +9,5 @@ syntax: regexp
 ^log/
 ^statics/
 ^tmp/
+syntax: glob
+cmake/CMakeLists.txt.user
